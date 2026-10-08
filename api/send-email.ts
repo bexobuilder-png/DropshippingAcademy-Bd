@@ -389,8 +389,22 @@ export async function handleSendEmailCore(body: SendEmailBody): Promise<{
     });
   }
 
+  // Ensure the sender identifier prominently displays 'Dropshipping Academy'
+  // with a valid email address matching the authenticated SMTP server.
+  const authenticatedUser = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  let senderEmail = authenticatedUser || 'support@dropshippingacademy.io';
+
+  if (process.env.EMAIL_FROM) {
+    const fromMatch = process.env.EMAIL_FROM.match(/<([^>]+)>/);
+    if (fromMatch && fromMatch[1]) {
+      senderEmail = fromMatch[1].trim();
+    } else if (process.env.EMAIL_FROM.includes('@')) {
+      senderEmail = process.env.EMAIL_FROM.trim();
+    }
+  }
+
   const mailOptions = {
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER || 'Dropshipping Academy <support@dropshippingacademy.io>',
+    from: `"Dropshipping Academy" <${senderEmail}>`,
     to: email,
     subject: emailContent.subject,
     html: emailContent.html,
