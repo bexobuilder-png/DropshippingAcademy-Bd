@@ -651,6 +651,85 @@ export function saveFounderStoryConfig(story: FounderStoryConfig): void {
   }
 }
 
+// ============================================================================
+// GENERAL SITE CONTENT SYNCHRONIZATION (Tools, Bento Results, Curriculum, Testimonials, FAQs)
+// ============================================================================
+export async function fetchSiteSectionContent<T>(
+  sectionKey: string,
+  fallbackDefault: T
+): Promise<T> {
+  const localKey = `da_site_content_${sectionKey}_v1`;
+  try {
+    const rawLocal = localStorage.getItem(localKey);
+    if (rawLocal) {
+      return JSON.parse(rawLocal) as T;
+    }
+  } catch {
+    // Ignore
+  }
+
+  if (!isSupabaseConfigured) {
+    return fallbackDefault;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('content_json')
+      .eq('section_key', sectionKey)
+      .single();
+
+    if (!error && data && data.content_json) {
+      const parsed = data.content_json as T;
+      try {
+        localStorage.setItem(localKey, JSON.stringify(parsed));
+      } catch {
+        // Ignore
+      }
+      return parsed;
+    }
+  } catch {
+    // Ignore
+  }
+
+  return fallbackDefault;
+}
+
+export async function saveSiteSectionContent<T>(
+  sectionKey: string,
+  content: T
+): Promise<{ success: boolean; error?: string }> {
+  const localKey = `da_site_content_${sectionKey}_v1`;
+  try {
+    localStorage.setItem(localKey, JSON.stringify(content));
+    window.dispatchEvent(new Event(`site-content-updated-${sectionKey}`));
+  } catch {
+    // Ignore
+  }
+
+  if (!isSupabaseConfigured) {
+    return { success: true };
+  }
+
+  try {
+    const { error } = await supabase.from('site_content').upsert(
+      {
+        section_key: sectionKey,
+        content_json: content as any,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'section_key' }
+    );
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to save site content.' };
+  }
+}
+
 /**
  * Compresses an uploaded image file via HTML5 Canvas into an optimized portrait JPEG Data URL.
  */

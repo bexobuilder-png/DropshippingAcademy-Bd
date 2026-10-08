@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+  CURRICULUM_TABS_BN,
+  CURRICULUM_TABS_EN,
+  FAQ_ITEMS_BN,
+  FAQ_ITEMS_EN,
+  FEATURED_RESULTS_BN,
+  FEATURED_RESULTS_EN,
+  TESTIMONIALS_BN,
+  TESTIMONIALS_EN,
+  TOOL_CATEGORIES_BN,
+  TOOL_CATEGORIES_EN,
   getCurriculumTabs,
   getFaqItems,
   getFeaturedResults,
@@ -12,6 +22,7 @@ import { FounderProfile, getLocalizedFounderStory } from '../config/founders';
 import { useLanguage } from '../context/LanguageContext';
 import {
   fetchFoundersList,
+  fetchSiteSectionContent,
   loadLocalFounders,
 } from '../services/admin';
 import { saveHeroEmailPrefill } from '../services/waitlist';
@@ -41,6 +52,12 @@ export const HomePage: React.FC = () => {
     loadLocalFounders()
   );
 
+  const [toolCategories, setToolCategories] = useState(() => getToolCategories(lang));
+  const [featuredResults, setFeaturedResults] = useState(() => getFeaturedResults(lang));
+  const [curriculumTabs, setCurriculumTabs] = useState(() => getCurriculumTabs(lang));
+  const [testimonials, setTestimonials] = useState(() => getTestimonials(lang));
+  const [faqItems, setFaqItems] = useState(() => getFaqItems(lang));
+
   useEffect(() => {
     let mounted = true;
     fetchFoundersList().then((list) => {
@@ -56,6 +73,57 @@ export const HomePage: React.FC = () => {
       window.removeEventListener('founders-updated', handleFoundersUpdated);
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      fetchSiteSectionContent('tool_categories_bn', TOOL_CATEGORIES_BN),
+      fetchSiteSectionContent('tool_categories_en', TOOL_CATEGORIES_EN),
+      fetchSiteSectionContent('featured_results_bn', FEATURED_RESULTS_BN),
+      fetchSiteSectionContent('featured_results_en', FEATURED_RESULTS_EN),
+      fetchSiteSectionContent('curriculum_tabs_bn', CURRICULUM_TABS_BN),
+      fetchSiteSectionContent('curriculum_tabs_en', CURRICULUM_TABS_EN),
+      fetchSiteSectionContent('testimonials_bn', TESTIMONIALS_BN),
+      fetchSiteSectionContent('testimonials_en', TESTIMONIALS_EN),
+      fetchSiteSectionContent('faq_items_bn', FAQ_ITEMS_BN),
+      fetchSiteSectionContent('faq_items_en', FAQ_ITEMS_EN),
+    ]).then(([tcBn, tcEn, frBn, frEn, ctBn, ctEn, tsBn, tsEn, fqBn, fqEn]) => {
+      if (!mounted) return;
+      setToolCategories(lang === 'bn' ? tcBn : tcEn);
+      setFeaturedResults(lang === 'bn' ? frBn : frEn);
+      setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
+      setTestimonials(lang === 'bn' ? tsBn : tsEn);
+      setFaqItems(lang === 'bn' ? fqBn : fqEn);
+    });
+
+    const reloadContent = () => {
+      Promise.all([
+        fetchSiteSectionContent('tool_categories_bn', TOOL_CATEGORIES_BN),
+        fetchSiteSectionContent('tool_categories_en', TOOL_CATEGORIES_EN),
+        fetchSiteSectionContent('featured_results_bn', FEATURED_RESULTS_BN),
+        fetchSiteSectionContent('featured_results_en', FEATURED_RESULTS_EN),
+        fetchSiteSectionContent('curriculum_tabs_bn', CURRICULUM_TABS_BN),
+        fetchSiteSectionContent('curriculum_tabs_en', CURRICULUM_TABS_EN),
+        fetchSiteSectionContent('testimonials_bn', TESTIMONIALS_BN),
+        fetchSiteSectionContent('testimonials_en', TESTIMONIALS_EN),
+        fetchSiteSectionContent('faq_items_bn', FAQ_ITEMS_BN),
+        fetchSiteSectionContent('faq_items_en', FAQ_ITEMS_EN),
+      ]).then(([tcBn, tcEn, frBn, frEn, ctBn, ctEn, tsBn, tsEn, fqBn, fqEn]) => {
+        if (!mounted) return;
+        setToolCategories(lang === 'bn' ? tcBn : tcEn);
+        setFeaturedResults(lang === 'bn' ? frBn : frEn);
+        setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
+        setTestimonials(lang === 'bn' ? tsBn : tsEn);
+        setFaqItems(lang === 'bn' ? fqBn : fqEn);
+      });
+    };
+
+    window.addEventListener('site-content-updated', reloadContent);
+    return () => {
+      mounted = false;
+      window.removeEventListener('site-content-updated', reloadContent);
+    };
+  }, [lang]);
 
   useEffect(() => {
     if (location.hash) {
@@ -86,11 +154,6 @@ export const HomePage: React.FC = () => {
     navigate('/join');
   };
 
-  const toolCategories = getToolCategories(lang);
-  const featuredResults = getFeaturedResults(lang);
-  const curriculumTabs = getCurriculumTabs(lang);
-  const testimonials = getTestimonials(lang);
-  const faqItems = getFaqItems(lang);
   const founderStory = getLocalizedFounderStory(lang);
 
   return (

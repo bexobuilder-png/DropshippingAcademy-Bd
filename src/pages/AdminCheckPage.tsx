@@ -9,6 +9,7 @@ import {
   deleteWaitlistEntry,
   fetchAllWaitlistUsers,
   fetchFoundersList,
+  fetchSiteSectionContent,
   FounderStoryConfig,
   getAdminSessionEmail,
   loadFounderStoryConfig,
@@ -17,12 +18,30 @@ import {
   removeFounderById,
   restoreDefaultFoundersList,
   saveFounderStoryConfig,
+  saveSiteSectionContent,
   sendAdminLoginOtp,
   signOutAdmin,
   updateExistingFounder,
   updateWaitlistStatus,
   verifyAdminLoginOtp,
 } from '../services/admin';
+import {
+  CURRICULUM_TABS_BN,
+  CURRICULUM_TABS_EN,
+  FAQ_ITEMS_BN,
+  FAQ_ITEMS_EN,
+  FEATURED_RESULTS_BN,
+  FEATURED_RESULTS_EN,
+  TESTIMONIALS_BN,
+  TESTIMONIALS_EN,
+  TOOL_CATEGORIES_BN,
+  TOOL_CATEGORIES_EN,
+  ToolCategoryItem,
+  BentoResultItem,
+  CurriculumTabItem,
+  TestimonialItem,
+  FaqItem,
+} from '../config/content';
 import { maskEmailAddress, WaitlistDbRow } from '../services/waitlist';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -91,7 +110,55 @@ export const AdminCheckPage: React.FC = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Control Center active tab
-  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders'>('waitlist');
+  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content'>('waitlist');
+  const [contentLang, setContentLang] = useState<'bn' | 'en'>('bn');
+  const [contentSubTab, setContentSubTab] = useState<'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'>('bento');
+
+  const [adminTools, setAdminTools] = useState<ToolCategoryItem[]>(TOOL_CATEGORIES_BN);
+  const [adminBento, setAdminBento] = useState<BentoResultItem[]>(FEATURED_RESULTS_BN);
+  const [adminCurriculum, setAdminCurriculum] = useState<CurriculumTabItem[]>(CURRICULUM_TABS_BN);
+  const [adminTestimonials, setAdminTestimonials] = useState<TestimonialItem[]>(TESTIMONIALS_BN);
+  const [adminFaqs, setAdminFaqs] = useState<FaqItem[]>(FAQ_ITEMS_BN);
+  const [siteContentNotice, setSiteContentNotice] = useState('');
+  const [isSavingSection, setIsSavingSection] = useState(false);
+
+  useEffect(() => {
+    if (!adminEmail) return;
+    const langKey = contentLang;
+    Promise.all([
+      fetchSiteSectionContent(`tool_categories_${langKey}`, langKey === 'bn' ? TOOL_CATEGORIES_BN : TOOL_CATEGORIES_EN),
+      fetchSiteSectionContent(`featured_results_${langKey}`, langKey === 'bn' ? FEATURED_RESULTS_BN : FEATURED_RESULTS_EN),
+      fetchSiteSectionContent(`curriculum_tabs_${langKey}`, langKey === 'bn' ? CURRICULUM_TABS_BN : CURRICULUM_TABS_EN),
+      fetchSiteSectionContent(`testimonials_${langKey}`, langKey === 'bn' ? TESTIMONIALS_BN : TESTIMONIALS_EN),
+      fetchSiteSectionContent(`faq_items_${langKey}`, langKey === 'bn' ? FAQ_ITEMS_BN : FAQ_ITEMS_EN),
+    ]).then(([toolsData, bentoData, currData, testData, faqData]) => {
+      setAdminTools(toolsData);
+      setAdminBento(bentoData);
+      setAdminCurriculum(currData);
+      setAdminTestimonials(testData);
+      setAdminFaqs(faqData);
+    });
+  }, [adminEmail, contentLang]);
+
+  const handleSaveSectionData = async (sectionBaseKey: string, data: any) => {
+    setIsSavingSection(true);
+    setSiteContentNotice('');
+    const fullKey = `${sectionBaseKey}_${contentLang}`;
+    const res = await saveSiteSectionContent(fullKey, data);
+    setIsSavingSection(false);
+    if (!res.success) {
+      setSiteContentNotice(`Failed to save: ${res.error || 'Unknown error'}`);
+    } else {
+      setSiteContentNotice(
+        t(
+          `"${sectionBaseKey}" (${contentLang.toUpperCase()}) সফলভাবে সংরক্ষণ করা হয়েছে এবং সমস্ত ডিভাইসে সিঙ্ক হয়েছে!`,
+          `Successfully saved "${sectionBaseKey}" (${contentLang.toUpperCase()}) & synced across all devices!`
+        )
+      );
+      window.dispatchEvent(new Event('site-content-updated'));
+      setTimeout(() => setSiteContentNotice(''), 4500);
+    }
+  };
 
   // Waitlist Data State
   const [waitlistRows, setWaitlistRows] = useState<WaitlistDbRow[]>([]);
@@ -781,6 +848,20 @@ export const AdminCheckPage: React.FC = () => {
               `প্রতিষ্ঠাতা কন্ট্রোল সেন্টার (${founders.length})`,
               `Founders Control Center (${founders.length})`
             )}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'content'}
+            onClick={() => setActiveTab('content')}
+            className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+              activeTab === 'content'
+                ? 'bg-[#171412] text-[#fbf9ef]'
+                : 'text-[#171412] hover:bg-[#ebe9df]'
+            }`}
+          >
+            {t('সাইট কন্টেন্ট এডিটর', 'Site Content Editor')}
           </button>
         </div>
 
@@ -1519,6 +1600,380 @@ export const AdminCheckPage: React.FC = () => {
                 </div>
               </form>
             </div>
+          </section>
+        )}
+
+        {/* =====================================================================
+            TAB 3: SITE CONTENT EDITOR (Bento, Curriculum, Testimonials, FAQs)
+        ===================================================================== */}
+        {activeTab === 'content' && (
+          <section aria-label="Site content editor" className="flex flex-col gap-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412]">
+              <div>
+                <h2 className="specimen-h3 text-[#171412]">
+                  {t('ওয়েবসাইট কন্টেন্ট এডিটর', 'Website Content Editor')}
+                </h2>
+                <p className="text-[14px] text-[#171412]/80 mt-1">
+                  {t(
+                    'বেন্টো ফিচার, কারিকুলাম, মতামত ও সাধারণ জিজ্ঞাসা পরিবর্তন করুন। সমস্ত ডিভাইসে তাৎক্ষণিকভাবে সিঙ্ক হবে।',
+                    'Edit bento features, curriculum modules, testimonials, and FAQs. Changes sync instantly across all user devices.'
+                  )}
+                </p>
+              </div>
+
+              {/* Language Switcher for Content Editor */}
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-bold text-[#171412]">Language:</span>
+                <button
+                  type="button"
+                  onClick={() => setContentLang('bn')}
+                  className={`px-4 py-2 rounded-[50px] text-[13px] font-bold border transition-colors cursor-pointer ${
+                    contentLang === 'bn'
+                      ? 'bg-[#171412] text-[#fbf9ef] border-[#171412]'
+                      : 'bg-[#fff] text-[#171412] border-[#171412]/30 hover:bg-[#ffc765]'
+                  }`}
+                >
+                  বাংলা (BN)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentLang('en')}
+                  className={`px-4 py-2 rounded-[50px] text-[13px] font-bold border transition-colors cursor-pointer ${
+                    contentLang === 'en'
+                      ? 'bg-[#171412] text-[#fbf9ef] border-[#171412]'
+                      : 'bg-[#fff] text-[#171412] border-[#171412]/30 hover:bg-[#ffc765]'
+                  }`}
+                >
+                  English (EN)
+                </button>
+              </div>
+            </div>
+
+            {siteContentNotice && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="p-4 rounded-[12px] bg-[#ffc765]/40 border-2 border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between"
+              >
+                <span>{siteContentNotice}</span>
+                <button
+                  type="button"
+                  onClick={() => setSiteContentNotice('')}
+                  className="text-[12px] underline cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* Content Section Sub-tabs */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-[#171412]/15 pb-4">
+              {(
+                [
+                  { id: 'bento', labelBn: 'বেন্টো ফিচার কার্ড', labelEn: 'Bento Features' },
+                  { id: 'curriculum', labelBn: 'কারিকুলাম মডিউল', labelEn: 'Curriculum' },
+                  { id: 'testimonials', labelBn: 'ছাত্র মতামত', labelEn: 'Testimonials' },
+                  { id: 'faq', labelBn: 'সাধারণ জিজ্ঞাসা', labelEn: 'FAQs' },
+                ] as const
+              ).map((sub) => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setContentSubTab(sub.id as any)}
+                  className={`min-h-[40px] px-5 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+                    contentSubTab === sub.id
+                      ? 'bg-[#ff7722] text-[#171412] border border-[#171412]'
+                      : 'bg-[#f2f0e7] text-[#171412] border border-[#171412]/20 hover:bg-[#ebe9df]'
+                  }`}
+                >
+                  {t(sub.labelBn, sub.labelEn)}
+                </button>
+              ))}
+            </div>
+
+            {/* 1. Bento Features Editor */}
+            {contentSubTab === 'bento' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                    Editing Bento Grid Features ({contentLang.toUpperCase()})
+                  </h3>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`featured_results_${contentLang}`, adminBento)}
+                  >
+                    Save & Sync Bento Features
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {adminBento.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
+                        <span>Card #{index + 1} ({item.id})</span>
+                        <span>Type: {item.type}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          id={`bento-tag-${index}`}
+                          label="Tag / Kicker"
+                          value={item.tag}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminBento((prev) =>
+                              prev.map((b, i) => (i === index ? { ...b, tag: val } : b))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`bento-metric-${index}`}
+                          label="Metric / Stat Badge"
+                          value={item.metric}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminBento((prev) =>
+                              prev.map((b, i) => (i === index ? { ...b, metric: val } : b))
+                            );
+                          }}
+                        />
+                      </div>
+                      <Input
+                        id={`bento-title-${index}`}
+                        label="Card Title"
+                        value={item.title}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAdminBento((prev) =>
+                            prev.map((b, i) => (i === index ? { ...b, title: val } : b))
+                          );
+                        }}
+                      />
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[14px] font-bold text-[#171412]">Subcopy / Description</label>
+                        <textarea
+                          rows={2}
+                          value={item.subcopy}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminBento((prev) =>
+                              prev.map((b, i) => (i === index ? { ...b, subcopy: val } : b))
+                            );
+                          }}
+                          className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/25 text-[14px]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Curriculum Editor */}
+            {contentSubTab === 'curriculum' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                    Editing Curriculum Modules ({contentLang.toUpperCase()})
+                  </h3>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`curriculum_tabs_${contentLang}`, adminCurriculum)}
+                  >
+                    Save & Sync Curriculum
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-6">
+                  {adminCurriculum.map((tab, index) => (
+                    <div
+                      key={tab.id}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
+                        <span>Module Step {tab.stepNumber} ({tab.id})</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          id={`curr-label-${index}`}
+                          label="Tab Label"
+                          value={tab.label}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminCurriculum((prev) =>
+                              prev.map((c, i) => (i === index ? { ...c, label: val } : c))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`curr-headline-${index}`}
+                          label="Module Headline"
+                          value={tab.headline}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminCurriculum((prev) =>
+                              prev.map((c, i) => (i === index ? { ...c, headline: val } : c))
+                            );
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[14px] font-bold text-[#171412]">Module Description</label>
+                        <textarea
+                          rows={3}
+                          value={tab.description}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminCurriculum((prev) =>
+                              prev.map((c, i) => (i === index ? { ...c, description: val } : c))
+                            );
+                          }}
+                          className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/25 text-[14px]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Testimonials Editor */}
+            {contentSubTab === 'testimonials' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                    Editing Student Testimonials ({contentLang.toUpperCase()})
+                  </h3>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`testimonials_${contentLang}`, adminTestimonials)}
+                  >
+                    Save & Sync Testimonials
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {adminTestimonials.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Input
+                          id={`test-author-${index}`}
+                          label="Author Name"
+                          value={item.author}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminTestimonials((prev) =>
+                              prev.map((t, i) => (i === index ? { ...t, author: val } : t))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`test-role-${index}`}
+                          label="Author Role"
+                          value={item.role}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminTestimonials((prev) =>
+                              prev.map((t, i) => (i === index ? { ...t, role: val } : t))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`test-tag-${index}`}
+                          label="Tag Badge"
+                          value={item.tag}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminTestimonials((prev) =>
+                              prev.map((t, i) => (i === index ? { ...t, tag: val } : t))
+                            );
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[14px] font-bold text-[#171412]">Testimonial Quote</label>
+                        <textarea
+                          rows={3}
+                          value={item.quote}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminTestimonials((prev) =>
+                              prev.map((t, i) => (i === index ? { ...t, quote: val } : t))
+                            );
+                          }}
+                          className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/25 text-[14px]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 4. FAQs Editor */}
+            {contentSubTab === 'faq' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                    Editing Frequently Asked Questions ({contentLang.toUpperCase()})
+                  </h3>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`faq_items_${contentLang}`, adminFaqs)}
+                  >
+                    Save & Sync FAQs
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-6">
+                  {adminFaqs.map((faq, index) => (
+                    <div
+                      key={faq.id}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <Input
+                        id={`faq-q-${index}`}
+                        label={`Question #${index + 1}`}
+                        value={faq.question}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAdminFaqs((prev) =>
+                            prev.map((f, i) => (i === index ? { ...f, question: val } : f))
+                          );
+                        }}
+                      />
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[14px] font-bold text-[#171412]">Answer</label>
+                        <textarea
+                          rows={3}
+                          value={faq.answer}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminFaqs((prev) =>
+                              prev.map((f, i) => (i === index ? { ...f, answer: val } : f))
+                            );
+                          }}
+                          className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/25 text-[14px]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
       </div>

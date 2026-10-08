@@ -109,11 +109,37 @@ create policy "Public can view founders"
   to anon, authenticated
   using (true);
 
--- Only authorized admins (bexobuilder@gmail.com & rohit007jsr@gmail.com) can insert, update, or delete founders
-drop policy if exists "Authenticated admin can manage founders" on public.founders;
 drop policy if exists "Authorized admins can manage founders" on public.founders;
 create policy "Authorized admins can manage founders"
-  on public.founders
+  on public.founders for all to authenticated
+  using (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'))
+  with check (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'));
+
+-- ============================================================================
+-- TABLE 3: public.site_content (Managed from /check Admin Control Center)
+-- Stores editable content for Bento Results, Curriculum, Testimonials, FAQs, Tools
+-- ============================================================================
+create table if not exists public.site_content (
+  section_key text primary key,
+  content_json jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_content enable row level security;
+
+grant select on table public.site_content to anon, authenticated;
+grant insert, update, delete on table public.site_content to authenticated;
+
+drop policy if exists "Public can view site content" on public.site_content;
+create policy "Public can view site content"
+  on public.site_content
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "Authorized admins can manage site content" on public.site_content;
+create policy "Authorized admins can manage site content"
+  on public.site_content
   for all
   to authenticated
   using (
@@ -122,3 +148,4 @@ create policy "Authorized admins can manage founders"
   with check (
     lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com')
   );
+
