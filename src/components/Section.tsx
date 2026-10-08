@@ -25,7 +25,7 @@ export const Section: React.FC<SectionProps> = ({
     <section
       id={id}
       aria-label={ariaLabel}
-      className={`py-16 md:py-24 lg:py-[120px] ${hairlineTop ? 'hairline-t' : ''} ${className}`}
+      className={`py-16 md:py-24 lg:py-[120px] scroll-mt-20 ${hairlineTop ? 'hairline-t' : ''} ${className}`}
     >
       <motion.div
         initial={reducedMotion ? false : { opacity: 0, y: 16 }}

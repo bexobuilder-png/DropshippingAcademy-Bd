@@ -50,13 +50,13 @@ export const Navigation: React.FC = () => {
             onClick={() => {
               if (isHomePage) window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="inline-flex items-center gap-2.5 sm:gap-3 text-[#171412] group shrink-0"
+            className="inline-flex items-center gap-2 text-[#171412] group shrink-0 min-w-0"
           >
             <BrandBadgeMark
-              className="w-9 h-9 md:w-11 md:h-11 transition-transform duration-200 group-hover:scale-105"
+              className="w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 transition-transform duration-200 group-hover:scale-105 shrink-0"
               decorative={true}
             />
-            <span className="font-display text-[16px] sm:text-[19px] md:text-[20px] font-extrabold tracking-[-0.02em] text-[#171412] whitespace-nowrap">
+            <span className="font-display text-[14px] sm:text-[17px] md:text-[20px] font-extrabold tracking-[-0.02em] text-[#171412] truncate max-w-[120px] sm:max-w-none">
               {t('ড্রপশিপিং একাডেমি', 'Dropshipping Academy')}
             </span>
           </Link>
@@ -120,11 +120,21 @@ export const Navigation: React.FC = () => {
 
             <Button
               variant="primary"
-              onClick={() => navigate('/join')}
-              className="px-4 sm:px-5"
+              onClick={() => {
+                if (isHomePage) {
+                  const el = document.getElementById('hero-waitlist-email') || document.getElementById('hero');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (el instanceof HTMLInputElement) el.focus();
+                    return;
+                  }
+                }
+                navigate('/join');
+              }}
+              className="px-3 sm:px-4 py-2 text-[12px] sm:text-[14px] shrink-0 whitespace-nowrap min-h-[44px]"
               aria-label={t('ওয়েটলিস্টে যুক্ত হোন', 'Join the waitlist')}
             >
-              {t('ওয়েটলিস্টে যুক্ত হোন', 'Join the waitlist')}
+              {t('যোগ দিন', 'Join')}
             </Button>
           </div>
         </div>
@@ -164,7 +174,8 @@ export const Navigation: React.FC = () => {
       {isHomePage && (
         <nav
           aria-label="Mobile section navigation"
-          className="xl:hidden fixed bottom-0 inset-x-0 z-30 h-12 bg-[#fbf9ef]/95 backdrop-blur-sm border-t border-[#171412]/15 flex items-center justify-around px-2"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          className="xl:hidden fixed bottom-0 inset-x-0 z-50 h-14 bg-[#fbf9ef]/95 backdrop-blur-sm border-t border-[#171412]/15 flex items-center justify-around px-2"
         >
           {RAIL_ITEMS.map(({ id, labelBn, labelEn, targetId, Icon }) => {
             const label = t(labelBn, labelEn);
@@ -174,10 +185,10 @@ export const Navigation: React.FC = () => {
                 type="button"
                 onClick={() => handleAnchorScroll(targetId)}
                 aria-label={label}
-                className="min-w-[44px] min-h-[44px] px-2.5 flex items-center gap-1.5 text-[12px] font-bold text-[#171412] hover:text-[#813502] cursor-pointer"
+                className="min-w-[44px] min-h-[44px] px-2 flex items-center justify-center gap-1 text-[12px] font-bold text-[#171412] hover:text-[#813502] cursor-pointer whitespace-nowrap"
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span>{label}</span>
+                <span className="truncate">{label}</span>
               </button>
             );
           })}

@@ -25,7 +25,7 @@ export const BentoCard: React.FC<BentoCardProps> = ({ item }) => {
         whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-40px' }}
         transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
-        className={`${item.spanClass} rounded-[12px] bg-[#3d2fa9] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border-2 border-[#171412]`}
+        className={`${item.spanClass} w-full max-w-full box-border rounded-[12px] bg-[#3d2fa9] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border-2 border-[#171412]`}
       >
         <div>
           {/* Clean unboxed metadata header */}
@@ -83,7 +83,7 @@ export const BentoCard: React.FC<BentoCardProps> = ({ item }) => {
       whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
-      className={`${item.spanClass} rounded-[12px] bg-[#171412] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border border-[#171412]`}
+      className={`${item.spanClass} w-full max-w-full box-border rounded-[12px] bg-[#171412] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border border-[#171412]`}
     >
       <div>
         {/* Unboxed top-left metadata tag + benchmark indicator */}

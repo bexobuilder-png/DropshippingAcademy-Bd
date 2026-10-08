@@ -30,18 +30,18 @@
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 16px;
-    line-height: 1.35;
+    line-height: 1.5;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
     background-color: var(--bg);
     color: var(--base);
-    min-height: 100vh;
-    overflow-x: hidden;
+    min-height: 100dvh;
+    overflow-x: clip;
   }
 
   /* Focus ring contract: 2px solid --orange, 2px offset */
@@ -63,7 +63,7 @@
 .specimen-h1 {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(44px, 8vw, 108px);
+  font-size: clamp(32px, 7vw, 108px);
   line-height: 0.96;
   letter-spacing: -0.03em;
   text-wrap: balance;
@@ -72,7 +72,7 @@
 .specimen-h2 {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(40px, 7.2vw, 98px);
+  font-size: clamp(28px, 6vw, 98px);
   line-height: 0.98;
   letter-spacing: -0.03em;
   text-wrap: balance;

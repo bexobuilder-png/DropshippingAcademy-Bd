@@ -1001,9 +1001,9 @@ export const AdminCheckPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="rounded-[12px] bg-[#fff] border-2 border-[#171412] overflow-hidden">
-                <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
-                  <table className="w-full text-left border-collapse min-w-[840px]">
+              <div className="rounded-[12px] bg-[#fff] border-2 border-[#171412] overflow-hidden max-w-full">
+                <div className="overflow-x-auto w-full -webkit-overflow-scrolling-touch">
+                  <table id="content-table" className="w-full text-left border-collapse min-w-[840px]">
                     <thead>
                       <tr className="bg-[#171412] text-[#fbf9ef] text-[11px] sm:text-[12px] font-bold uppercase tracking-wider">
                         <th className="py-3 px-3 whitespace-nowrap">#</th>

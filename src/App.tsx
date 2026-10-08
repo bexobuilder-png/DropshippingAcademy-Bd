@@ -65,7 +65,7 @@ export default function App() {
             Skip to main content
           </a>
 
-          <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412]">
+          <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412] pb-16 sm:pb-0">
             <Navigation />
             <div className="flex-1">
               <Suspense

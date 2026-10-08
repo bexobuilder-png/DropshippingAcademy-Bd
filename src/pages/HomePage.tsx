@@ -164,7 +164,7 @@ export const HomePage: React.FC = () => {
       <section
         id="hero"
         aria-label="Hero introduction"
-        className="relative pt-10 pb-16 md:pt-16 md:pb-24 lg:pt-20 lg:pb-32"
+        className="relative pt-10 pb-16 md:pt-16 md:pb-24 lg:pt-20 lg:pb-32 scroll-mt-20"
       >
         <div className="specimen-container relative">
           {/* Corner Swiss Stamp Sticker at Left Edge */}
@@ -175,13 +175,13 @@ export const HomePage: React.FC = () => {
           <div className="grid-24 gap-y-8">
             <div className="col-span-24 xl:col-start-3 xl:col-span-21">
               {/* Editorial Kicker */}
-              <div className="flex flex-wrap items-center gap-2 text-[13px] font-bold text-[#813502] mb-5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] sm:text-[13px] font-bold text-[#813502] mb-5">
                 <span>
                   {t('ব্যাচ-ভিত্তিক অপারেটিং সিস্টেম', 'Cohort-Based Operating System')}
                 </span>
-                <span aria-hidden="true">·</span>
+                <span aria-hidden="true" className="text-[#813502]/60">·</span>
                 <span>{t('প্রফিট ও ইউনিট ইকোনমিক্স', 'Unit Economics First')}</span>
-                <span aria-hidden="true">·</span>
+                <span aria-hidden="true" className="text-[#813502]/60">·</span>
                 <span>{t('ওয়েটলিস্ট চলছে', 'Waitlist Now Open')}</span>
               </div>
 
@@ -238,15 +238,15 @@ export const HomePage: React.FC = () => {
                     )}
                     aria-invalid={heroEmailError ? 'true' : 'false'}
                     aria-describedby={heroEmailError ? 'hero-email-error' : undefined}
-                    className="flex-1 min-h-[44px] px-4 py-2 rounded-[50px] bg-transparent text-[#171412] text-[15px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
+                    className="flex-1 h-[52px] min-h-[52px] px-4 py-2 rounded-[50px] bg-transparent text-[#171412] text-[16px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
                   />
                   <Button
                     type="submit"
                     variant="primary"
-                    className="w-full sm:w-auto px-6"
+                    className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
                   >
                     <span>{t('ওয়েটলিস্টে যুক্ত হোন', 'Join waitlist')}</span>
-                    <ArrowRightSvgIcon className="w-4 h-4" />
+                    <ArrowRightSvgIcon className="w-4 h-4 shrink-0" />
                   </Button>
                 </div>
 
@@ -592,14 +592,53 @@ export const HomePage: React.FC = () => {
               </p>
 
               <div className="mt-8">
-                <Button
-                  variant="orange"
-                  size="lg"
-                  onClick={() => navigate('/join')}
+                <form
+                  onSubmit={handleHeroSubmit}
+                  noValidate
+                  className="w-full max-w-[540px]"
                 >
-                  <span>{t('ওয়েটলিস্টে যুক্ত হোন', 'Join the waitlist')}</span>
-                  <ArrowRightSvgIcon className="w-4 h-4" />
-                </Button>
+                  <label htmlFor="cta-waitlist-email" className="sr-only">
+                    {t(
+                      'ওয়েটলিস্টে যুক্ত হতে আপনার ইমেইল দিন',
+                      'Email address to join the waitlist'
+                    )}
+                  </label>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#fbf9ef] border-2 border-[#ffc765] shadow-sm">
+                    <input
+                      id="cta-waitlist-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={heroEmail}
+                      onChange={(e) => {
+                        setHeroEmail(e.target.value);
+                        if (heroEmailError) setHeroEmailError('');
+                      }}
+                      placeholder={t(
+                        'আপনার ইমেইল ঠিকানা লিখুন...',
+                        'Enter your email address...'
+                      )}
+                      className="flex-1 h-[52px] min-h-[52px] px-4 py-2 rounded-[50px] bg-transparent text-[#171412] text-[16px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
+                    />
+                    <Button
+                      type="submit"
+                      variant="orange"
+                      className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
+                    >
+                      <span>{t('ওয়েটলিস্টে যুক্ত হোন', 'Join waitlist')}</span>
+                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0" />
+                    </Button>
+                  </div>
+                  {heroEmailError && (
+                    <p
+                      role="alert"
+                      aria-live="polite"
+                      className="text-[13px] font-bold text-[#ffc765] mt-2 pl-3"
+                    >
+                      {heroEmailError}
+                    </p>
+                  )}
+                </form>
               </div>
             </div>
 
