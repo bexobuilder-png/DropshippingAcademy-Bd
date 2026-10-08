@@ -1,6 +1,8 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import type { TestimonialItem } from '../config/content';
 import { useLanguage } from '../context/LanguageContext';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { StarRatingSvg } from './svg/NavIcons';
 
 export interface TestimonialCardProps {
@@ -16,11 +18,16 @@ const ROTATION_CLASSES: Record<number, string> = {
 
 export const TestimonialCard: React.FC<TestimonialCardProps> = ({ item }) => {
   const { t } = useLanguage();
+  const reducedMotion = useReducedMotion();
   const rotationClass = ROTATION_CLASSES[item.rotation] || 'md:rotate-0';
 
   return (
-    <article
+    <motion.article
       tabIndex={0}
+      initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
       className={`snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-full rounded-[12px] bg-[#fff] text-[#171412] p-6 border-2 border-[#171412] flex flex-col justify-between transition-transform duration-200 ease-out transform ${rotationClass} hover:rotate-0 focus-visible:rotate-0 hover:z-10`}
     >
       <div>
@@ -76,6 +83,6 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ item }) => {
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };

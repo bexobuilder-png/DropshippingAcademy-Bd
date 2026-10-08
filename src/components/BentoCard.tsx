@@ -1,6 +1,8 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import type { BentoResultItem } from '../config/content';
 import { useLanguage } from '../context/LanguageContext';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import {
   ProductBoxIllustration,
   RevenueChartIllustration,
@@ -14,10 +16,15 @@ export interface BentoCardProps {
 
 export const BentoCard: React.FC<BentoCardProps> = ({ item }) => {
   const { t } = useLanguage();
+  const reducedMotion = useReducedMotion();
 
   if (item.type === 'testimonial') {
     return (
-      <article
+      <motion.article
+        initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+        whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
         className={`${item.spanClass} rounded-[12px] bg-[#3d2fa9] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border-2 border-[#171412]`}
       >
         <div>
@@ -66,12 +73,16 @@ export const BentoCard: React.FC<BentoCardProps> = ({ item }) => {
             <div className="text-[13px] text-[#fbc59d]">{item.authorRole}</div>
           </div>
         </div>
-      </article>
+      </motion.article>
     );
   }
 
   return (
-    <article
+    <motion.article
+      initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
       className={`${item.spanClass} rounded-[12px] bg-[#171412] text-[#fbf9ef] p-6 sm:p-8 flex flex-col justify-between border border-[#171412]`}
     >
       <div>
@@ -100,6 +111,6 @@ export const BentoCard: React.FC<BentoCardProps> = ({ item }) => {
         {item.illustrationType === 'storefront' && <StorefrontIllustration />}
         {item.illustrationType === 'shipping-route' && <ShippingRouteIllustration />}
       </div>
-    </article>
+    </motion.article>
   );
 };
