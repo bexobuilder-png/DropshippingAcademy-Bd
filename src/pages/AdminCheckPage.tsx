@@ -921,25 +921,25 @@ export const AdminCheckPage: React.FC = () => {
               </div>
             ) : (
               <div className="rounded-[12px] bg-[#fff] border-2 border-[#171412] overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+                  <table className="w-full text-left border-collapse min-w-[840px]">
                     <thead>
-                      <tr className="bg-[#171412] text-[#fbf9ef] text-[12px] font-bold">
-                        <th className="py-3.5 px-4 whitespace-nowrap">#</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Full Name</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Email Address</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Phone Number</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">WhatsApp</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Date of Birth</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Consent</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Joined At</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
-                        <th className="py-3.5 px-4 whitespace-nowrap text-right">
+                      <tr className="bg-[#171412] text-[#fbf9ef] text-[11px] sm:text-[12px] font-bold uppercase tracking-wider">
+                        <th className="py-3 px-3 whitespace-nowrap">#</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Full Name</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Email Address</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Phone Number</th>
+                        <th className="py-3 px-3 whitespace-nowrap">WhatsApp</th>
+                        <th className="py-3 px-3 whitespace-nowrap">DOB & Age</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Consent</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Joined At</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Status</th>
+                        <th className="py-3 px-3 whitespace-nowrap text-right">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#171412]/12 text-[14px]">
+                    <tbody className="divide-y divide-[#171412]/12 text-[13px] sm:text-[14px]">
                       {filteredWaitlist.map((user, idx) => {
                         const age = calculateAge(user.date_of_birth);
                         const waClean = user.whatsapp.replace(/\D/g, '');
@@ -950,29 +950,29 @@ export const AdminCheckPage: React.FC = () => {
                             key={user.id}
                             className="hover:bg-[#fbf9ef] transition-colors align-top"
                           >
-                            <td className="py-4 px-4 font-bold text-[#813502] tabular-nums">
+                            <td className="py-3.5 px-3 font-bold text-[#813502] tabular-nums">
                               {String(idx + 1).padStart(2, '0')}
                             </td>
 
-                            <td className="py-4 px-4">
-                              <div className="font-display text-[15px] font-extrabold text-[#171412] whitespace-nowrap">
+                            <td className="py-3.5 px-3">
+                              <div className="font-display text-[14px] sm:text-[15px] font-extrabold text-[#171412] whitespace-nowrap">
                                 {user.first_name} {user.last_name}
                               </div>
-                              <div className="text-[11px] text-[#171412]/60 font-mono mt-0.5">
+                              <div className="text-[10px] text-[#171412]/60 font-mono mt-0.5">
                                 ID: {user.id.slice(0, 8)}
                               </div>
                             </td>
 
-                            <td className="py-4 px-4">
+                            <td className="py-3.5 px-3">
                               <a
                                 href={`mailto:${user.email}`}
-                                className="font-semibold text-[#171412] underline underline-offset-2 hover:text-[#813502]"
+                                className="font-semibold text-[#171412] underline underline-offset-2 hover:text-[#813502] break-all"
                               >
                                 {user.email}
                               </a>
                             </td>
 
-                            <td className="py-4 px-4 tabular-nums whitespace-nowrap">
+                            <td className="py-3.5 px-3 tabular-nums whitespace-nowrap">
                               <a
                                 href={`tel:${user.phone}`}
                                 className="hover:underline text-[#171412]"
@@ -981,7 +981,7 @@ export const AdminCheckPage: React.FC = () => {
                               </a>
                             </td>
 
-                            <td className="py-4 px-4 tabular-nums whitespace-nowrap">
+                            <td className="py-3.5 px-3 tabular-nums whitespace-nowrap">
                               <div className="flex flex-col gap-1">
                                 <span className="font-semibold text-[#171412]">
                                   {user.whatsapp}
@@ -991,36 +991,36 @@ export const AdminCheckPage: React.FC = () => {
                                     href={`https://wa.me/${waClean}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[12px] font-bold text-[#813502] underline underline-offset-2 hover:text-[#171412]"
+                                    className="text-[11px] font-bold text-[#813502] underline underline-offset-2 hover:text-[#171412]"
                                   >
-                                    Open WhatsApp
+                                    WhatsApp
                                   </a>
                                 )}
                               </div>
                             </td>
 
-                            <td className="py-4 px-4 tabular-nums whitespace-nowrap">
+                            <td className="py-3.5 px-3 tabular-nums whitespace-nowrap">
                               <div className="font-medium text-[#171412]">
                                 {user.date_of_birth}
                               </div>
                               {age !== null && (
-                                <div className="text-[12px] text-[#813502] font-bold">
-                                  {age} years old
+                                <div className="text-[11px] text-[#813502] font-bold">
+                                  {age} yrs
                                 </div>
                               )}
                             </td>
 
-                            <td className="py-4 px-4 whitespace-nowrap">
-                              <span className="text-[13px] font-bold text-[#171412]">
-                                {user.consent_accepted ? 'Accepted' : 'No'}
+                            <td className="py-3.5 px-3 whitespace-nowrap">
+                              <span className="text-[12px] font-bold text-[#171412]">
+                                {user.consent_accepted ? 'Yes' : 'No'}
                               </span>
                             </td>
 
-                            <td className="py-4 px-4 tabular-nums text-[13px] text-[#171412]/80 whitespace-nowrap">
+                            <td className="py-3.5 px-3 tabular-nums text-[12px] text-[#171412]/85 whitespace-nowrap">
                               {formatDateTime(user.created_at)}
                             </td>
 
-                            <td className="py-4 px-4 whitespace-nowrap">
+                            <td className="py-3.5 px-3 whitespace-nowrap">
                               <select
                                 aria-label={`Status for ${user.first_name} ${user.last_name}`}
                                 value={user.status}
@@ -1033,7 +1033,7 @@ export const AdminCheckPage: React.FC = () => {
                                       | 'contacted'
                                   )
                                 }
-                                className="min-h-[36px] px-2.5 py-1 rounded-[8px] bg-[#f2f0e7] border border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
+                                className="min-h-[34px] px-2 py-1 rounded-[6px] bg-[#f2f0e7] border border-[#171412]/30 text-[12px] font-bold text-[#171412] cursor-pointer"
                               >
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
@@ -1041,28 +1041,28 @@ export const AdminCheckPage: React.FC = () => {
                               </select>
                             </td>
 
-                            <td className="py-4 px-4 text-right whitespace-nowrap">
+                            <td className="py-3.5 px-3 text-right whitespace-nowrap">
                               {!isConfirmingDelete ? (
                                 <button
                                   type="button"
                                   onClick={() => setConfirmDeleteUserId(user.id)}
-                                  className="min-h-[36px] px-3 py-1 rounded-[8px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] cursor-pointer"
+                                  className="min-h-[34px] px-2.5 py-1 rounded-[6px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] cursor-pointer"
                                 >
                                   Delete
                                 </button>
                               ) : (
-                                <div className="inline-flex items-center gap-1.5">
+                                <div className="inline-flex items-center gap-1">
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteUser(user.id)}
-                                    className="min-h-[34px] px-2.5 py-1 rounded-[6px] bg-[#ff3c34] text-[#fff] text-[12px] font-bold cursor-pointer"
+                                    className="min-h-[32px] px-2 py-1 rounded-[4px] bg-[#ff3c34] text-[#fff] text-[11px] font-bold cursor-pointer"
                                   >
                                     Confirm
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setConfirmDeleteUserId(null)}
-                                    className="min-h-[34px] px-2.5 py-1 rounded-[6px] bg-[#f2f0e7] text-[#171412] text-[12px] font-bold cursor-pointer"
+                                    className="min-h-[32px] px-2 py-1 rounded-[4px] bg-[#f2f0e7] text-[#171412] text-[11px] font-bold cursor-pointer"
                                   >
                                     Cancel
                                   </button>

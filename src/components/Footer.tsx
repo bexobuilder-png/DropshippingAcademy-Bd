@@ -62,12 +62,6 @@ export const Footer: React.FC = () => {
             >
               {t('যোগাযোগ', 'Contact')}
             </a>
-            <Link
-              to="/check"
-              className="min-h-[44px] inline-flex items-center text-[#813502] hover:underline underline-offset-4"
-            >
-              {t('অ্যাডমিন', 'Admin')}
-            </Link>
           </nav>
         </div>
 

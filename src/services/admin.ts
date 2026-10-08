@@ -387,7 +387,6 @@ export async function fetchFoundersList(): Promise<FounderProfile[]> {
       .order('created_at', { ascending: true });
 
     if (error) {
-      // If `public.founders` table hasn't been created yet in Supabase, use local state
       return loadLocalFounders();
     }
 
@@ -397,7 +396,36 @@ export async function fetchFoundersList(): Promise<FounderProfile[]> {
       return mapped;
     }
 
-    // If Supabase table is empty, check if admin explicitly deleted all founders
+    // If Supabase table is empty, seed it with DEFAULT_FOUNDERS so all devices share them
+    try {
+      const seedPayloads = DEFAULT_FOUNDERS.map((f, index) => ({
+        name: f.name,
+        role: f.role,
+        specialty: f.specialty,
+        short_bio: f.shortBio,
+        photo_url: f.photo,
+        alt: f.alt,
+        rotation_class: f.rotationClass,
+        backdrop_color: f.backdropColor,
+        sort_order: index + 1,
+      }));
+
+      const { data: insertedData, error: insertError } = await supabase
+        .from('founders')
+        .insert(seedPayloads)
+        .select('*');
+
+      if (!insertError && insertedData && insertedData.length > 0) {
+        const mapped = (insertedData as SupabaseFounderRow[]).map(
+          mapRowToFounderProfile
+        );
+        saveLocalFounders(mapped, false);
+        return mapped;
+      }
+    } catch {
+      // Ignore seeding error
+    }
+
     const isCleared = localStorage.getItem(FOUNDERS_CLEARED_KEY) === 'true';
     if (isCleared) {
       return [];
@@ -570,6 +598,32 @@ export async function removeAllFounders(): Promise<{ success: boolean }> {
  */
 export async function restoreDefaultFoundersList(): Promise<FounderProfile[]> {
   saveLocalFounders(DEFAULT_FOUNDERS, false);
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase
+        .from('founders')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      const seedPayloads = DEFAULT_FOUNDERS.map((f, index) => ({
+        name: f.name,
+        role: f.role,
+        specialty: f.specialty,
+        short_bio: f.shortBio,
+        photo_url: f.photo,
+        alt: f.alt,
+        rotation_class: f.rotationClass,
+        backdrop_color: f.backdropColor,
+        sort_order: index + 1,
+      }));
+
+      await supabase.from('founders').insert(seedPayloads);
+    } catch {
+      // Ignore
+    }
+  }
+
   return DEFAULT_FOUNDERS;
 }
 
