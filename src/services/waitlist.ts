@@ -202,6 +202,18 @@ export interface VerifyAndInsertResult {
  * Step 2: Verify the 6-digit email OTP (`verifyOtp`), insert the row into `public.waitlist`
  * with `user_id = session.user.id`, clear sessionStorage draft, and sign out.
  */
+async function triggerConfirmationEmail(email: string, firstName: string, lastName: string) {
+  try {
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, firstName, lastName }),
+    });
+  } catch {
+    // Non-blocking email trigger
+  }
+}
+
 export async function verifyEmailOtpAndInsertWaitlist(
   token: string,
   formData: WaitlistFormValues
@@ -231,6 +243,7 @@ export async function verifyEmailOtpAndInsertWaitlist(
     saveConfirmedWaitlist(confirmed);
     appendLocalWaitlistEntry(formData);
     clearWaitlistDraft();
+    triggerConfirmationEmail(normalizedEmail, formData.firstName.trim(), formData.lastName.trim());
     return { success: true, alreadyOnWaitlist: false };
   }
 
@@ -307,6 +320,8 @@ export async function verifyEmailOtpAndInsertWaitlist(
     appendLocalWaitlistEntry(formData);
     clearWaitlistDraft();
     await supabase.auth.signOut();
+
+    triggerConfirmationEmail(normalizedEmail, formData.firstName.trim(), formData.lastName.trim());
 
     return {
       success: true,
