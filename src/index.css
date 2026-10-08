@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fbf9ef;
+  --bg-d: #f2f0e7;
+  --bg-darker: #ebe9df;
+  --base: #171412;
+  --grey: #8e827c;
+  --muted: #c6b2a6;
+  --orange: #ff7722;
+  --orange-soft: #fbc59d;
+  --brown: #813502;
+  --yellow: #ffc765;
+  --purple: #3d2fa9;
+  --red: #ff3c34;
+  --white: #fff;
+  --gradient-base: #eee1d7;
+
+  --ease-primary: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-secondary: cubic-bezier(0.36, 0.33, 0, 1);
+
+  --font-display: "Bricolage Grotesque", "Noto Sans Bengali", "Hind Siliguri", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Instrument Sans", "Hind Siliguri", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--base);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.35;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--base);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Focus ring contract: 2px solid --orange, 2px offset */
+  *:focus-visible {
+    outline: 2px solid var(--orange) !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Specimen Display Typography */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.specimen-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 8vw, 108px);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.specimen-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 7.2vw, 98px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.specimen-h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 25px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Swiss 24-column macro-grid helper */
+.grid-24 {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+}
+
+/* Container contract: max 1440px, 16px mobile / 32px desktop padding */
+.specimen-container {
+  width: 100%;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .specimen-container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* Hairline Swiss border */
+.hairline-t {
+  border-top: 1px solid rgba(23, 20, 18, 0.12);
+}
+
+.hairline-b {
+  border-bottom: 1px solid rgba(23, 20, 18, 0.12);
+}
+
+.hairline-border {
+  border: 1px solid rgba(23, 20, 18, 0.12);
+}
+
+/* Hide scrollbar for mobile snap carousels while keeping accessibility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

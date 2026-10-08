@@ -1,0 +1,6 @@
+{
+  "name": "Dropshipping Academy",
+  "description": "The learning partner for ambitious dropshippers. Learn to find winning products, build high-converting stores, and scale profitably with paid ads.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
