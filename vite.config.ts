@@ -1,11 +1,47 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig, Plugin } from 'vite';
+import { handleSendEmailCore } from './api/send-email';
+
+function devEmailApiPlugin(): Plugin {
+  return {
+    name: 'dev-email-api-plugin',
+    configureServer(server) {
+      server.middlewares.use('/api/send-email', (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+          return;
+        }
+
+        let bodyRaw = '';
+        req.on('data', (chunk: Buffer | string) => {
+          bodyRaw += chunk.toString();
+        });
+
+        req.on('end', async () => {
+          try {
+            const body = bodyRaw ? JSON.parse(bodyRaw) : {};
+            const result = await handleSendEmailCore(body);
+            res.statusCode = result.statusCode;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result.data));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err?.message || 'Server Error' }));
+          }
+        });
+      });
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), devEmailApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

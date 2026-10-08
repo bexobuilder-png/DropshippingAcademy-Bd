@@ -16,7 +16,7 @@ export interface WaitlistDbRow {
   whatsapp: string;
   email: string;
   consent_accepted: boolean;
-  status: 'pending' | 'approved' | 'contacted';
+  status: 'pending' | 'approved' | 'rejected' | 'contacted';
   created_at: string;
 }
 
@@ -207,7 +207,12 @@ async function triggerConfirmationEmail(email: string, firstName: string, lastNa
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, firstName, lastName }),
+      body: JSON.stringify({
+        email,
+        firstName,
+        lastName,
+        action: 'waitlist_confirmed',
+      }),
     });
   } catch {
     // Non-blocking email trigger

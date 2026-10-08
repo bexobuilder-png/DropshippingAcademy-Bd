@@ -20,6 +20,7 @@ import {
   saveFounderStoryConfig,
   saveSiteSectionContent,
   sendAdminLoginOtp,
+  sendWaitlistStatusEmail,
   signOutAdmin,
   updateExistingFounder,
   updateWaitlistStatus,
@@ -166,10 +167,23 @@ export const AdminCheckPage: React.FC = () => {
   const [waitlistError, setWaitlistError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending' | 'approved' | 'contacted'
+    'all' | 'pending' | 'approved' | 'rejected' | 'contacted'
   >('all');
   const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(null);
   const [csvExportNotice, setCsvExportNotice] = useState('');
+
+  // Email Notification & Custom Status Update Modal State
+  const [emailModalUser, setEmailModalUser] = useState<WaitlistDbRow | null>(null);
+  const [emailModalAction, setEmailModalAction] = useState<'approved' | 'rejected'>('approved');
+  const [emailModalSubject, setEmailModalSubject] = useState('');
+  const [emailModalCustomMessage, setEmailModalCustomMessage] = useState('');
+  const [emailModalSendEmail, setEmailModalSendEmail] = useState(true);
+  const [isSendingStatusEmail, setIsSendingStatusEmail] = useState(false);
+  const [emailStatusFeedback, setEmailStatusFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
 
   // Founders Control Center State
   const [founders, setFounders] = useState<FounderProfile[]>([]);
@@ -330,18 +344,98 @@ export const AdminCheckPage: React.FC = () => {
     const total = waitlistRows.length;
     const pending = waitlistRows.filter((r) => r.status === 'pending').length;
     const approved = waitlistRows.filter((r) => r.status === 'approved').length;
+    const rejected = waitlistRows.filter((r) => r.status === 'rejected').length;
     const contacted = waitlistRows.filter((r) => r.status === 'contacted').length;
-    return { total, pending, approved, contacted };
+    return { total, pending, approved, rejected, contacted };
   }, [waitlistRows]);
+
+  const openEmailModal = (
+    user: WaitlistDbRow,
+    action: 'approved' | 'rejected'
+  ) => {
+    setEmailModalUser(user);
+    setEmailModalAction(action);
+    setEmailModalSendEmail(true);
+    setShowEmailPreview(false);
+
+    if (action === 'approved') {
+      setEmailModalSubject('অভিনন্দন! ড্রপশিপিং একাডেমিতে আপনার আবেদন অনুমোদিত হয়েছে 🎉');
+      setEmailModalCustomMessage(
+        'আপনার প্রোফাইল ও উদ্যোক্তা হওয়ার আগ্রহ পর্যালোচনা করে কোহর্ট ০১ ব্যাচে আপনার আবেদন অনুমোদিত করা হয়েছে। পরবর্তী ৪৮ ঘণ্টার মধ্যে বিস্তারিত অনবোর্ডিং নির্দেশনা ও ব্যাচ শিডিউল পাঠানো হবে।'
+      );
+    } else {
+      setEmailModalSubject('ড্রপশিপিং একাডেমি আবেদন সংক্রান্ত আপডেট 📋');
+      setEmailModalCustomMessage(
+        'সীমিত আসন ও ব্যাপক সংখ্যক প্রার্থীর কারণে এই কোহর্টে আপনার আবেদনটি এই মুহূর্তে বিবেচনা করা সম্ভব হয়নি। পরবর্তী কোহর্টে আবেদনের জন্য আপনাকে আন্তরিক অনুরোধ জানাচ্ছি।'
+      );
+    }
+  };
 
   const handleStatusChange = async (
     id: string,
-    newStatus: 'pending' | 'approved' | 'contacted'
+    newStatus: 'pending' | 'approved' | 'rejected' | 'contacted'
   ) => {
+    if (newStatus === 'approved' || newStatus === 'rejected') {
+      const user = waitlistRows.find((r) => r.id === id);
+      if (user) {
+        openEmailModal(user, newStatus);
+        return;
+      }
+    }
+
     setWaitlistRows((prev) =>
       prev.map((row) => (row.id === id ? { ...row, status: newStatus } : row))
     );
     await updateWaitlistStatus(id, newStatus);
+  };
+
+  const handleConfirmStatusAndEmail = async () => {
+    if (!emailModalUser) return;
+    setIsSendingStatusEmail(true);
+    setEmailStatusFeedback(null);
+
+    const targetUser = emailModalUser;
+    const action = emailModalAction;
+    const sendEmail = emailModalSendEmail;
+    const customMessage = emailModalCustomMessage.trim();
+    const subject = emailModalSubject.trim();
+
+    // 1. Update Database & Local state
+    setWaitlistRows((prev) =>
+      prev.map((row) => (row.id === targetUser.id ? { ...row, status: action } : row))
+    );
+    await updateWaitlistStatus(targetUser.id, action);
+
+    // 2. Dispatch Bangla email via Nodemailer if checked
+    let emailResultText = '';
+    if (sendEmail) {
+      const mailRes = await sendWaitlistStatusEmail({
+        email: targetUser.email,
+        firstName: targetUser.first_name,
+        lastName: targetUser.last_name,
+        action,
+        customMessage,
+        subject,
+      });
+
+      if (mailRes.success) {
+        emailResultText = mailRes.simulated
+          ? ' (ইমেইল সিমুলেট করা হয়েছে)'
+          : ' (বাংলা আপডেট ইমেইল সফলভাবে পাঠানো হয়েছে)';
+      } else {
+        emailResultText = ` (ইমেইল পাঠাতে ত্রুটি: ${mailRes.error})`;
+      }
+    }
+
+    setIsSendingStatusEmail(false);
+    setEmailModalUser(null);
+
+    const actionText = action === 'approved' ? 'অনুমোদিত' : 'প্রত্যাখ্যাত';
+    setEmailStatusFeedback({
+      type: 'success',
+      message: `"${targetUser.first_name} ${targetUser.last_name}"-এর আবেদন সফলভাবে ${actionText} করা হয়েছে${emailResultText}।`,
+    });
+    setTimeout(() => setEmailStatusFeedback(null), 6000);
   };
 
   const handleDeleteUser = async (id: string) => {
@@ -790,6 +884,34 @@ export const AdminCheckPage: React.FC = () => {
           </div>
         </div>
 
+        {emailStatusFeedback && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={`mb-6 p-4 rounded-[12px] border-2 text-[14px] font-bold flex items-center justify-between gap-3 ${
+              emailStatusFeedback.type === 'success'
+                ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#1b5e20]'
+                : 'bg-[#fff8f8] border-[#ff3c34] text-[#ff3c34]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {emailStatusFeedback.type === 'success' ? (
+                <CheckSvgIcon className="w-5 h-5 text-[#2e7d32] shrink-0" />
+              ) : (
+                <AlertCircleSvgIcon className="w-5 h-5 text-[#ff3c34] shrink-0" />
+              )}
+              <span>{emailStatusFeedback.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEmailStatusFeedback(null)}
+              className="text-[12px] underline cursor-pointer"
+            >
+              {t('বন্ধ করুন', 'Dismiss')}
+            </button>
+          </div>
+        )}
+
         {csvExportNotice && (
           <div
             role="status"
@@ -871,39 +993,50 @@ export const AdminCheckPage: React.FC = () => {
         {activeTab === 'waitlist' && (
           <section aria-label="Waitlist users directory">
             {/* Summary Metrics Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-8">
+              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-4 sm:p-5">
                 <div className="text-[12px] font-bold text-[#813502]">
-                  Total Waitlist Users
+                  Total Waitlist
                 </div>
-                <div className="font-display text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
+                <div className="font-display text-[32px] sm:text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
                   {metrics.total}
                 </div>
               </div>
 
-              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-5">
+              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-4 sm:p-5">
                 <div className="text-[12px] font-bold text-[#813502]">
                   Pending Cohort
                 </div>
-                <div className="font-display text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
+                <div className="font-display text-[32px] sm:text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
                   {metrics.pending}
                 </div>
               </div>
 
-              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-5">
-                <div className="text-[12px] font-bold text-[#813502]">
-                  Approved Applicants
+              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#2e7d32]/30 p-4 sm:p-5">
+                <div className="text-[12px] font-bold text-[#1b5e20] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#2e7d32]"></span>
+                  Approved
                 </div>
-                <div className="font-display text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
+                <div className="font-display text-[32px] sm:text-[36px] font-extrabold text-[#1b5e20] tabular-nums mt-1">
                   {metrics.approved}
                 </div>
               </div>
 
-              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-5">
-                <div className="text-[12px] font-bold text-[#813502]">
-                  Contacted (Email / WhatsApp)
+              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#b91c1c]/30 p-4 sm:p-5">
+                <div className="text-[12px] font-bold text-[#991b1b] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#ef4444]"></span>
+                  Rejected
                 </div>
-                <div className="font-display text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
+                <div className="font-display text-[32px] sm:text-[36px] font-extrabold text-[#991b1b] tabular-nums mt-1">
+                  {metrics.rejected}
+                </div>
+              </div>
+
+              <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-4 sm:p-5">
+                <div className="text-[12px] font-bold text-[#813502]">
+                  Contacted
+                </div>
+                <div className="font-display text-[32px] sm:text-[36px] font-extrabold text-[#171412] tabular-nums mt-1">
                   {metrics.contacted}
                 </div>
               </div>
@@ -929,7 +1062,7 @@ export const AdminCheckPage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {(['all', 'pending', 'approved', 'contacted'] as const).map((st) => (
+                {(['all', 'pending', 'approved', 'rejected', 'contacted'] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
@@ -940,7 +1073,7 @@ export const AdminCheckPage: React.FC = () => {
                         : 'bg-[#f2f0e7] text-[#171412] border border-[#171412]/15 hover:bg-[#ebe9df]'
                     }`}
                   >
-                    {st}
+                    {st === 'approved' ? '✓ Approved' : st === 'rejected' ? '✕ Rejected' : st}
                   </button>
                 ))}
 
@@ -1102,53 +1235,118 @@ export const AdminCheckPage: React.FC = () => {
                             </td>
 
                             <td className="py-3.5 px-3 whitespace-nowrap">
-                              <select
-                                aria-label={`Status for ${user.first_name} ${user.last_name}`}
-                                value={user.status}
-                                onChange={(e) =>
-                                  handleStatusChange(
-                                    user.id,
-                                    e.target.value as
-                                      | 'pending'
-                                      | 'approved'
-                                      | 'contacted'
-                                  )
-                                }
-                                className="min-h-[34px] px-2 py-1 rounded-[6px] bg-[#f2f0e7] border border-[#171412]/30 text-[12px] font-bold text-[#171412] cursor-pointer"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="contacted">Contacted</option>
-                              </select>
+                              <div className="flex flex-col gap-1.5">
+                                {user.status === 'approved' && (
+                                  <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-[50px] text-[11px] font-bold bg-[#e8f5e9] text-[#1b5e20] border border-[#2e7d32]/40">
+                                    ✓ Approved
+                                  </span>
+                                )}
+                                {user.status === 'rejected' && (
+                                  <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-[50px] text-[11px] font-bold bg-[#fef2f2] text-[#991b1b] border border-[#ef4444]/40">
+                                    ✕ Rejected
+                                  </span>
+                                )}
+                                {user.status === 'pending' && (
+                                  <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-[50px] text-[11px] font-bold bg-[#fff9e6] text-[#813502] border border-[#ff7722]/40">
+                                    ⏳ Pending
+                                  </span>
+                                )}
+                                {user.status === 'contacted' && (
+                                  <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-[50px] text-[11px] font-bold bg-[#eff6ff] text-[#1e40af] border border-[#3b82f6]/40">
+                                    💬 Contacted
+                                  </span>
+                                )}
+
+                                <select
+                                  aria-label={`Status for ${user.first_name} ${user.last_name}`}
+                                  value={user.status}
+                                  onChange={(e) =>
+                                    handleStatusChange(
+                                      user.id,
+                                      e.target.value as
+                                        | 'pending'
+                                        | 'approved'
+                                        | 'rejected'
+                                        | 'contacted'
+                                    )
+                                  }
+                                  className="min-h-[30px] px-2 py-0.5 rounded-[6px] bg-[#f2f0e7] border border-[#171412]/30 text-[11px] font-bold text-[#171412] cursor-pointer"
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="approved">Approve & Email</option>
+                                  <option value="rejected">Reject & Email</option>
+                                  <option value="contacted">Contacted</option>
+                                </select>
+                              </div>
                             </td>
 
                             <td className="py-3.5 px-3 text-right whitespace-nowrap">
-                              {!isConfirmingDelete ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setConfirmDeleteUserId(user.id)}
-                                  className="min-h-[34px] px-2.5 py-1 rounded-[6px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] cursor-pointer"
-                                >
-                                  Delete
-                                </button>
-                              ) : (
-                                <div className="inline-flex items-center gap-1">
+                              <div className="inline-flex items-center gap-1.5">
+                                {user.status !== 'approved' && (
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteUser(user.id)}
-                                    className="min-h-[32px] px-2 py-1 rounded-[4px] bg-[#ff3c34] text-[#fff] text-[11px] font-bold cursor-pointer"
+                                    onClick={() => openEmailModal(user, 'approved')}
+                                    title="অনুমোদন করুন ও বাংলা ইমেইল পাঠান"
+                                    className="min-h-[30px] px-2.5 py-1 rounded-[6px] bg-[#2e7d32] hover:bg-[#1b5e20] text-[#fff] text-[11px] font-bold transition-colors cursor-pointer"
                                   >
-                                    Confirm
+                                    Approve
                                   </button>
+                                )}
+
+                                {user.status !== 'rejected' && (
                                   <button
                                     type="button"
-                                    onClick={() => setConfirmDeleteUserId(null)}
-                                    className="min-h-[32px] px-2 py-1 rounded-[4px] bg-[#f2f0e7] text-[#171412] text-[11px] font-bold cursor-pointer"
+                                    onClick={() => openEmailModal(user, 'rejected')}
+                                    title="প্রত্যাখ্যান করুন ও বাংলা ইমেইল পাঠান"
+                                    className="min-h-[30px] px-2.5 py-1 rounded-[6px] bg-[#f2f0e7] hover:bg-[#fee2e2] text-[#991b1b] border border-[#ef4444]/40 text-[11px] font-bold transition-colors cursor-pointer"
                                   >
-                                    Cancel
+                                    Reject
                                   </button>
-                                </div>
-                              )}
+                                )}
+
+                                {(user.status === 'approved' || user.status === 'rejected') && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openEmailModal(
+                                        user,
+                                        user.status === 'rejected' ? 'rejected' : 'approved'
+                                      )
+                                    }
+                                    title="কাস্টম বার্তা সহ পুনরায় বাংলা ইমেইল পাঠান"
+                                    className="min-h-[30px] px-2.5 py-1 rounded-[6px] bg-[#ffc765] hover:bg-[#ffb732] text-[#171412] border border-[#171412]/40 text-[11px] font-bold transition-colors cursor-pointer"
+                                  >
+                                    📧 Email
+                                  </button>
+                                )}
+
+                                {!isConfirmingDelete ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteUserId(user.id)}
+                                    className="min-h-[30px] px-2 py-1 rounded-[6px] text-[11px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] cursor-pointer"
+                                  >
+                                    Delete
+                                  </button>
+                                ) : (
+                                  <div className="inline-flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(user.id)}
+                                      className="min-h-[28px] px-2 py-0.5 rounded-[4px] bg-[#ff3c34] text-[#fff] text-[10px] font-bold cursor-pointer"
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteUserId(null)}
+                                      className="min-h-[28px] px-2 py-0.5 rounded-[4px] bg-[#f2f0e7] text-[#171412] text-[10px] font-bold cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1975,6 +2173,253 @@ export const AdminCheckPage: React.FC = () => {
               </div>
             )}
           </section>
+        )}
+
+        {/* =====================================================================
+            MODAL: BANGLA CUSTOM EMAIL & STATUS UPDATE NOTIFICATION
+        ===================================================================== */}
+        {emailModalUser && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="email-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="relative w-full max-w-2xl bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8 max-h-[92vh] overflow-y-auto">
+              
+              {/* Modal Top Bar */}
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-[50px] text-[11px] font-extrabold uppercase tracking-wide border ${
+                        emailModalAction === 'approved'
+                          ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/40'
+                          : 'bg-[#fef2f2] text-[#991b1b] border-[#ef4444]/40'
+                      }`}
+                    >
+                      {emailModalAction === 'approved' ? '✓ অনুমোদন (Approved)' : '✕ প্রত্যাখ্যান (Rejected)'}
+                    </span>
+                    <span className="text-[12px] font-bold text-[#813502]">
+                      Nodemailer Bangla Email
+                    </span>
+                  </div>
+                  <h2
+                    id="email-modal-title"
+                    className="font-display text-[22px] sm:text-[26px] font-extrabold text-[#171412] leading-tight"
+                  >
+                    {emailModalAction === 'approved'
+                      ? 'আবেদন অনুমোদন ও বাংলা ইমেইল নোটিফিকেশন'
+                      : 'আবেদন প্রত্যাখ্যান ও বাংলা ইমেইল নোটিফিকেশন'}
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setEmailModalUser(null)}
+                  disabled={isSendingStatusEmail}
+                  className="w-9 h-9 rounded-full bg-[#f2f0e7] hover:bg-[#e2e0d7] border border-[#171412]/30 flex items-center justify-center text-[#171412] font-bold transition-colors cursor-pointer shrink-0"
+                  aria-label="Close modal"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Recipient Details Pill */}
+              <div className="p-3.5 rounded-[12px] bg-[#fbf9ef] border border-[#171412]/20 mb-5 text-[13px]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-[#813502]">প্রাপক: </span>
+                    <strong className="text-[#171412]">
+                      {emailModalUser.first_name} {emailModalUser.last_name}
+                    </strong>
+                    <span className="text-[#171412]/60 font-mono text-[11px] ml-1.5">
+                      ({emailModalUser.email})
+                    </span>
+                  </div>
+                  <div className="text-[12px] text-[#171412]/75">
+                    WhatsApp: <span className="font-semibold text-[#171412]">{emailModalUser.whatsapp}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Switcher */}
+              <div className="mb-5">
+                <label className="block text-[12px] font-bold text-[#813502] mb-1.5">
+                  স্ট্যাটাস ও নোটিফিকেশন ধরন:
+                </label>
+                <div className="inline-flex p-1 rounded-[10px] bg-[#f2f0e7] border border-[#171412]/20 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailModalAction('approved');
+                      setEmailModalSubject('অভিনন্দন! ড্রপশিপিং একাডেমিতে আপনার আবেদন অনুমোদিত হয়েছে 🎉');
+                      setEmailModalCustomMessage(
+                        'আপনার প্রোফাইল ও উদ্যোক্তা হওয়ার আগ্রহ পর্যালোচনা করে কোহর্ট ০১ ব্যাচে আপনার আবেদন অনুমোদিত করা হয়েছে। পরবর্তী ৪৮ ঘণ্টার মধ্যে বিস্তারিত অনবোর্ডিং নির্দেশনা ও ব্যাচ শিডিউল পাঠানো হবে।'
+                      );
+                    }}
+                    className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-[8px] text-[12px] font-extrabold transition-colors cursor-pointer ${
+                      emailModalAction === 'approved'
+                        ? 'bg-[#2e7d32] text-[#fff]'
+                        : 'text-[#171412] hover:bg-[#fff]/50'
+                    }`}
+                  >
+                    ✓ অনুমোদন (Approve)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailModalAction('rejected');
+                      setEmailModalSubject('ড্রপশিপিং একাডেমি আবেদন সংক্রান্ত আপডেট 📋');
+                      setEmailModalCustomMessage(
+                        'সীমিত আসন ও ব্যাপক সংখ্যক প্রার্থীর কারণে এই কোহর্টে আপনার আবেদনটি এই মুহূর্তে বিবেচনা করা সম্ভব হয়নি। পরবর্তী কোহর্টে আবেদনের জন্য আপনাকে আন্তরিক অনুরোধ জানাচ্ছি।'
+                      );
+                    }}
+                    className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-[8px] text-[12px] font-extrabold transition-colors cursor-pointer ${
+                      emailModalAction === 'rejected'
+                        ? 'bg-[#991b1b] text-[#fff]'
+                        : 'text-[#171412] hover:bg-[#fff]/50'
+                    }`}
+                  >
+                    ✕ প্রত্যাখ্যান (Reject)
+                  </button>
+                </div>
+              </div>
+
+              {/* Email Form Fields */}
+              <div className="flex flex-col gap-4 mb-5">
+                <div>
+                  <label htmlFor="modal-email-subject" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    ইমেইল সাবজেক্ট (Email Subject in Bangla):
+                  </label>
+                  <input
+                    id="modal-email-subject"
+                    type="text"
+                    value={emailModalSubject}
+                    onChange={(e) => setEmailModalSubject(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    placeholder="বাংলা ইমেইল সাবজেক্ট লিখুন..."
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <label htmlFor="modal-custom-message" className="text-[13px] font-bold text-[#171412]">
+                      কাস্টম বার্তা / আপডেট নোট (Custom Bangla Message):
+                    </label>
+                    <span className="text-[11px] text-[#813502] font-semibold">
+                      ইমেইলের ভেতর হাইলাইট বক্সে প্রদর্শিত হবে
+                    </span>
+                  </div>
+                  <textarea
+                    id="modal-custom-message"
+                    rows={4}
+                    value={emailModalCustomMessage}
+                    onChange={(e) => setEmailModalCustomMessage(e.target.value)}
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                    placeholder="এখানে আবেদনকারীর জন্য কোনো কাস্টম আপডেট, কারণ, কোহর্ট শুরুর তারিখ বা দিকনির্দেশনা লিখুন..."
+                  />
+                  <p className="text-[11px] text-[#171412]/65 mt-1">
+                    টিপস: আপনি চাইলে এটি পরিবর্তন করতে পারেন অথবা ডিফল্ট বার্তাটি ব্যবহার করতে পারেন।
+                  </p>
+                </div>
+
+                {/* Send via Nodemailer Checkbox */}
+                <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fbf9ef] border border-[#171412]/20 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={emailModalSendEmail}
+                    onChange={(e) => setEmailModalSendEmail(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
+                  />
+                  <span className="text-[13px] font-bold text-[#171412]">
+                    Nodemailer দিয়ে আবেদনকারীর ইমেইলে এই বাংলা বার্তাটি পাঠান
+                  </span>
+                </label>
+
+                {/* Preview Toggle */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailPreview((prev) => !prev)}
+                    className="text-[12px] font-extrabold text-[#813502] hover:text-[#171412] underline underline-offset-4 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{showEmailPreview ? '▲ ইমেইল প্রিভিউ লুকান' : '👁️ বাংলা ইমেইল লাইভ প্রিভিউ দেখুন'}</span>
+                  </button>
+                </div>
+
+                {/* Email Live Preview Box */}
+                {showEmailPreview && (
+                  <div className="p-4 rounded-[12px] bg-[#fbf9ef] border-2 border-[#171412] text-[13px] leading-relaxed max-h-72 overflow-y-auto">
+                    <div className="p-3 bg-[#171412] text-[#fbf9ef] rounded-[8px] mb-3 text-center">
+                      <div className="font-bold text-[14px]">Dropshipping Academy</div>
+                      <div className="text-[11px] opacity-80">
+                        {emailModalAction === 'approved' ? '✅ আবেদন অনুমোদন নোটিফিকেশন' : 'ℹ️ আবেদন সংক্রান্ত নোটিফিকেশন'}
+                      </div>
+                    </div>
+
+                    <div className="font-bold text-[15px] mb-2 text-[#171412]">
+                      প্রিয় {emailModalUser.first_name} {emailModalUser.last_name},
+                    </div>
+
+                    <p className="text-[#171412]/90 mb-3">
+                      {emailModalAction === 'approved'
+                        ? 'আমরা আনন্দের সাথে জানাচ্ছি যে ড্রপশিপিং একাডেমি (Dropshipping Academy) কোহর্ট ০১-এর জন্য আপনার আবেদনটি সফলভাবে অনুমোদিত হয়েছে!'
+                        : 'ড্রপশিপিং একাডেমিতে আগ্রহ প্রকাশের জন্য আপনাকে ধন্যবাদ। অত্যন্ত সতর্কতার সাথে পর্যালোচনার পর দুঃখের সাথে জানাচ্ছি যে, এই কোহর্টে সীমিত আসনের কারণে এই মুহূর্তে আপনার আবেদনটি গ্রহণ করা সম্ভব হয়নি।'}
+                    </p>
+
+                    {emailModalCustomMessage.trim() && (
+                      <div
+                        className={`p-3 rounded-[8px] border my-3 ${
+                          emailModalAction === 'approved'
+                            ? 'bg-[#fff9e6] border-[#ff7722] text-[#813502]'
+                            : 'bg-[#f3f4f6] border-[#6b7280] text-[#1f2937]'
+                        }`}
+                      >
+                        <div className="font-bold text-[12px] mb-1">
+                          {emailModalAction === 'approved' ? '📢 অ্যাডমিন বার্তা ও নির্দেশনা:' : '📝 অ্যাডমিন মন্তব্য:'}
+                        </div>
+                        <div className="whitespace-pre-line text-[13px]">{emailModalCustomMessage.trim()}</div>
+                      </div>
+                    )}
+
+                    <div className="text-[12px] text-[#171412]/70 pt-2 border-t border-[#171412]/15">
+                      সাপোর্ট: support@dropshippingacademy.io
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-[#171412]/15">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEmailModalUser(null)}
+                  disabled={isSendingStatusEmail}
+                >
+                  বাতিল করুন
+                </Button>
+
+                <Button
+                  type="button"
+                  variant={emailModalAction === 'approved' ? 'primary' : 'orange'}
+                  isLoading={isSendingStatusEmail}
+                  loadingText="ইমেইল পাঠানো হচ্ছে..."
+                  onClick={handleConfirmStatusAndEmail}
+                >
+                  <span>
+                    {emailModalAction === 'approved'
+                      ? 'অনুমোদন নিশ্চিত করুন ও ইমেইল পাঠান'
+                      : 'প্রত্যাখ্যান নিশ্চিত করুন ও ইমেইল পাঠান'}
+                  </span>
+                  <ArrowRightSvgIcon className="w-4 h-4" />
+                </Button>
+              </div>
+
+            </div>
+          </div>
         )}
       </div>
     </main>

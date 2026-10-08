@@ -20,9 +20,13 @@ create table if not exists public.waitlist (
   whatsapp text not null,
   email text unique not null,
   consent_accepted boolean not null default false check (consent_accepted = true),
-  status text not null default 'pending' check (status in ('pending', 'approved', 'contacted')),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'contacted')),
   created_at timestamptz not null default now()
 );
+
+-- Note: If you have already created public.waitlist table previously, run this one-line migration in Supabase SQL Editor:
+-- alter table public.waitlist drop constraint if exists waitlist_status_check;
+-- alter table public.waitlist add constraint waitlist_status_check check (status in ('pending', 'approved', 'rejected', 'contacted'));
 
 create index if not exists idx_waitlist_user_id on public.waitlist(user_id);
 create index if not exists idx_waitlist_email on public.waitlist(email);

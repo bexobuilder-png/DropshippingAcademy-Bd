@@ -235,11 +235,11 @@ export async function fetchAllWaitlistUsers(): Promise<{
 }
 
 /**
- * Updates a waitlist applicant's status ('pending' | 'approved' | 'contacted').
+ * Updates a waitlist applicant's status ('pending' | 'approved' | 'rejected' | 'contacted').
  */
 export async function updateWaitlistStatus(
   id: string,
-  status: 'pending' | 'approved' | 'contacted'
+  status: 'pending' | 'approved' | 'rejected' | 'contacted'
 ): Promise<{ success: boolean; error?: string }> {
   // Update local fallback if present
   try {
@@ -269,6 +269,59 @@ export async function updateWaitlistStatus(
     return { success: true };
   } catch {
     return { success: false, error: 'Failed to update status.' };
+  }
+}
+
+export interface StatusEmailParams {
+  email: string;
+  firstName: string;
+  lastName?: string;
+  action: 'approved' | 'rejected';
+  customMessage?: string;
+  subject?: string;
+}
+
+/**
+ * Sends a custom status update email (Approved or Rejected) in Bangla via Nodemailer.
+ */
+export async function sendWaitlistStatusEmail(params: StatusEmailParams): Promise<{
+  success: boolean;
+  simulated?: boolean;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: params.email,
+        firstName: params.firstName,
+        lastName: params.lastName || '',
+        action: params.action,
+        customMessage: params.customMessage || '',
+        subject: params.subject,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || 'ইমেইল পাঠাতে ব্যর্থ হয়েছে।',
+      };
+    }
+
+    return {
+      success: true,
+      simulated: !!data.simulated,
+      message: data.message,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'নেটওয়ার্কের কারণে ইমেইল পাঠানো যায়নি।',
+    };
   }
 }
 
