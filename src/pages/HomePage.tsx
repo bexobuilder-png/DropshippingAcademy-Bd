@@ -7,16 +7,21 @@ import {
   FAQ_ITEMS_EN,
   FEATURED_RESULTS_BN,
   FEATURED_RESULTS_EN,
+  HERO_SLIDES_BN,
+  HERO_SLIDES_EN,
   TESTIMONIALS_BN,
   TESTIMONIALS_EN,
   TOOL_CATEGORIES_BN,
   TOOL_CATEGORIES_EN,
+  WHY_CHOOSE_US_ITEMS_BN,
+  WHY_CHOOSE_US_ITEMS_EN,
   getCurriculumTabs,
   getFaqItems,
   getFeaturedResults,
+  getHeroSlides,
   getTestimonials,
   getToolCategories,
-  PLACEHOLDER_CONTENT,
+  getWhyChooseUsItems,
 } from '../config/content';
 import { FounderProfile, getLocalizedFounderStory } from '../config/founders';
 import { useLanguage } from '../context/LanguageContext';
@@ -24,20 +29,19 @@ import {
   fetchFoundersList,
   fetchSiteSectionContent,
   loadLocalFounders,
+  subscribeToRealtimeSiteContent,
 } from '../services/admin';
 import { saveHeroEmailPrefill } from '../services/waitlist';
 import { Accordion } from '../components/Accordion';
 import { BentoCard } from '../components/BentoCard';
 import { Button } from '../components/Button';
+import { HeroSlider } from '../components/HeroSlider';
+import { WhyChooseUsBar } from '../components/WhyChooseUsBar';
+import { ContactSection } from '../components/ContactSection';
 import { Section } from '../components/Section';
 import { Tabs } from '../components/Tabs';
 import { TestimonialCard } from '../components/TestimonialCard';
-import {
-  HeroCornerStamp,
-  HeroInlineBoxBadge,
-} from '../components/svg/BrandLogo';
-import { KeychainIllustration } from '../components/svg/KeychainIllustration';
-import { ArrowDownCurvedIcon, ArrowRightSvgIcon } from '../components/svg/NavIcons';
+import { ArrowRightSvgIcon, CheckSvgIcon } from '../components/svg/NavIcons';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -52,6 +56,8 @@ export const HomePage: React.FC = () => {
     loadLocalFounders()
   );
 
+  const [heroSlides, setHeroSlides] = useState(() => getHeroSlides(lang));
+  const [whyChooseUs, setWhyChooseUs] = useState(() => getWhyChooseUsItems(lang));
   const [toolCategories, setToolCategories] = useState(() => getToolCategories(lang));
   const [featuredResults, setFeaturedResults] = useState(() => getFeaturedResults(lang));
   const [curriculumTabs, setCurriculumTabs] = useState(() => getCurriculumTabs(lang));
@@ -76,28 +82,13 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([
-      fetchSiteSectionContent('tool_categories_bn', TOOL_CATEGORIES_BN),
-      fetchSiteSectionContent('tool_categories_en', TOOL_CATEGORIES_EN),
-      fetchSiteSectionContent('featured_results_bn', FEATURED_RESULTS_BN),
-      fetchSiteSectionContent('featured_results_en', FEATURED_RESULTS_EN),
-      fetchSiteSectionContent('curriculum_tabs_bn', CURRICULUM_TABS_BN),
-      fetchSiteSectionContent('curriculum_tabs_en', CURRICULUM_TABS_EN),
-      fetchSiteSectionContent('testimonials_bn', TESTIMONIALS_BN),
-      fetchSiteSectionContent('testimonials_en', TESTIMONIALS_EN),
-      fetchSiteSectionContent('faq_items_bn', FAQ_ITEMS_BN),
-      fetchSiteSectionContent('faq_items_en', FAQ_ITEMS_EN),
-    ]).then(([tcBn, tcEn, frBn, frEn, ctBn, ctEn, tsBn, tsEn, fqBn, fqEn]) => {
-      if (!mounted) return;
-      setToolCategories(lang === 'bn' ? tcBn : tcEn);
-      setFeaturedResults(lang === 'bn' ? frBn : frEn);
-      setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
-      setTestimonials(lang === 'bn' ? tsBn : tsEn);
-      setFaqItems(lang === 'bn' ? fqBn : fqEn);
-    });
 
-    const reloadContent = () => {
+    const loadAllContent = () => {
       Promise.all([
+        fetchSiteSectionContent('hero_slides_bn', HERO_SLIDES_BN),
+        fetchSiteSectionContent('hero_slides_en', HERO_SLIDES_EN),
+        fetchSiteSectionContent('why_choose_us_bn', WHY_CHOOSE_US_ITEMS_BN),
+        fetchSiteSectionContent('why_choose_us_en', WHY_CHOOSE_US_ITEMS_EN),
         fetchSiteSectionContent('tool_categories_bn', TOOL_CATEGORIES_BN),
         fetchSiteSectionContent('tool_categories_en', TOOL_CATEGORIES_EN),
         fetchSiteSectionContent('featured_results_bn', FEATURED_RESULTS_BN),
@@ -108,20 +99,47 @@ export const HomePage: React.FC = () => {
         fetchSiteSectionContent('testimonials_en', TESTIMONIALS_EN),
         fetchSiteSectionContent('faq_items_bn', FAQ_ITEMS_BN),
         fetchSiteSectionContent('faq_items_en', FAQ_ITEMS_EN),
-      ]).then(([tcBn, tcEn, frBn, frEn, ctBn, ctEn, tsBn, tsEn, fqBn, fqEn]) => {
-        if (!mounted) return;
-        setToolCategories(lang === 'bn' ? tcBn : tcEn);
-        setFeaturedResults(lang === 'bn' ? frBn : frEn);
-        setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
-        setTestimonials(lang === 'bn' ? tsBn : tsEn);
-        setFaqItems(lang === 'bn' ? fqBn : fqEn);
-      });
+      ]).then(
+        ([
+          hsBn,
+          hsEn,
+          wcBn,
+          wcEn,
+          tcBn,
+          tcEn,
+          frBn,
+          frEn,
+          ctBn,
+          ctEn,
+          tsBn,
+          tsEn,
+          fqBn,
+          fqEn,
+        ]) => {
+          if (!mounted) return;
+          setHeroSlides(lang === 'bn' ? hsBn : hsEn);
+          setWhyChooseUs(lang === 'bn' ? wcBn : wcEn);
+          setToolCategories(lang === 'bn' ? tcBn : tcEn);
+          setFeaturedResults(lang === 'bn' ? frBn : frEn);
+          setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
+          setTestimonials(lang === 'bn' ? tsBn : tsEn);
+          setFaqItems(lang === 'bn' ? fqBn : fqEn);
+        }
+      );
     };
 
-    window.addEventListener('site-content-updated', reloadContent);
+    loadAllContent();
+
+    // Subscribe to real-time changes from the server/Supabase
+    const unsubscribe = subscribeToRealtimeSiteContent(() => {
+      if (mounted) {
+        loadAllContent();
+      }
+    });
+
     return () => {
       mounted = false;
-      window.removeEventListener('site-content-updated', reloadContent);
+      unsubscribe();
     };
   }, [lang]);
 
@@ -157,182 +175,65 @@ export const HomePage: React.FC = () => {
   const founderStory = getLocalizedFounderStory(lang);
 
   return (
-    <main id="main-content" className="overflow-x-hidden">
+    <main id="main-content" className="overflow-x-hidden bg-[#070f1a] text-white">
       {/* =====================================================================
-          2. HERO SECTION (Specimen Macrostructure)
+          1. HERO SECTION (Full-Width Interactive Slider Immediately Upon Entry)
       ===================================================================== */}
       <section
         id="hero"
-        aria-label="Hero introduction"
-        className="relative pt-10 pb-16 md:pt-16 md:pb-24 lg:pt-20 lg:pb-32 scroll-mt-20"
+        aria-label="Hero slider introduction"
+        className="relative pt-6 pb-12 md:pt-10 md:pb-16 lg:pt-12 lg:pb-20 scroll-mt-20"
       >
         <div className="specimen-container relative">
-          {/* Corner Swiss Stamp Sticker at Left Edge */}
-          <div className="hidden lg:block absolute -left-4 xl:left-2 top-2 -rotate-12 pointer-events-none select-none">
-            <HeroCornerStamp className="w-28 h-28" />
-          </div>
-
-          <div className="grid-24 gap-y-8">
-            <div className="col-span-24 xl:col-start-3 xl:col-span-21">
-              {/* Editorial Kicker */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] sm:text-[13px] font-bold text-[#813502] mb-5">
-                <span>
-                  {t('ব্যাচ-ভিত্তিক অপারেটিং সিস্টেম', 'Cohort-Based Operating System')}
-                </span>
-                <span aria-hidden="true" className="text-[#813502]/60">·</span>
-                <span>{t('প্রফিট ও ইউনিট ইকোনমিক্স', 'Unit Economics First')}</span>
-                <span aria-hidden="true" className="text-[#813502]/60">·</span>
-                <span>{t('ওয়েটলিস্ট চলছে', 'Waitlist Now Open')}</span>
-              </div>
-
-              {/* Giant H1 with Inline Circular Orange Box SVG Badge */}
-              {lang === 'bn' ? (
-                <h1 className="specimen-h1 text-[#171412]">
-                  উচ্চাকাঙ্ক্ষী ড্রপশিপারদের
-                  <HeroInlineBoxBadge />
-                  শেখার বিশ্বস্ত সহযোগী
-                </h1>
-              ) : (
-                <h1 className="specimen-h1 text-[#171412]">
-                  The learning partner
-                  <HeroInlineBoxBadge />
-                  for ambitious dropshippers
-                </h1>
-              )}
-            </div>
-
-            {/* Subcopy + Compact Pill Email Form */}
-            <div className="col-span-24 xl:col-start-3 xl:col-span-18 mt-2 md:mt-4 flex flex-col gap-6">
-              <p className="text-[18px] md:text-[22px] font-medium text-[#171412] leading-[1.35] max-w-[52ch]">
-                {t(
-                  'আমরা নতুনদের একদম শুরু থেকে ধাপে ধাপে উইনিং প্রোডাক্ট খোঁজা, প্রফেশনাল স্টোর তৈরি এবং অ্যাডের মাধ্যমে সেলস স্কেল করা শেখাই।',
-                  'We teach beginners to find winning products, build stores, and scale with ads, step by step.'
-                )}
-              </p>
-
-              <form
-                onSubmit={handleHeroSubmit}
-                noValidate
-                className="w-full max-w-[540px]"
-              >
-                <label htmlFor="hero-waitlist-email" className="sr-only">
-                  {t(
-                    'ওয়েটলিস্টে যুক্ত হতে আপনার ইমেইল দিন',
-                    'Email address to join the waitlist'
-                  )}
-                </label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#fff] border-2 border-[#171412] shadow-sm">
-                  <input
-                    id="hero-waitlist-email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    value={heroEmail}
-                    onChange={(e) => {
-                      setHeroEmail(e.target.value);
-                      if (heroEmailError) setHeroEmailError('');
-                    }}
-                    placeholder={t(
-                      'আপনার ইমেইল ঠিকানা লিখুন...',
-                      'Enter your email address...'
-                    )}
-                    aria-invalid={heroEmailError ? 'true' : 'false'}
-                    aria-describedby={heroEmailError ? 'hero-email-error' : undefined}
-                    className="flex-1 h-[52px] min-h-[52px] px-4 py-2 rounded-[50px] bg-transparent text-[#171412] text-[16px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
-                  />
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
-                  >
-                    <span>{t('ওয়েটলিস্টে যুক্ত হোন', 'Join waitlist')}</span>
-                    <ArrowRightSvgIcon className="w-4 h-4 shrink-0" />
-                  </Button>
-                </div>
-
-                {heroEmailError && (
-                  <p
-                    id="hero-email-error"
-                    role="alert"
-                    aria-live="polite"
-                    className="text-[13px] font-bold text-[#ff3c34] mt-2 pl-3"
-                  >
-                    {heroEmailError}
-                  </p>
-                )}
-              </form>
-            </div>
-          </div>
-
-          {/* Tool Categories Wordmark Cloud Row */}
-          <div className="mt-14 md:mt-20 pt-8 hairline-t">
-            <div className="text-[12px] font-bold text-[#813502] mb-4">
-              {t(
-                'আধুনিক ই-কমার্স ও পেইড মার্কেটিং টুলসের সমন্বয়ে তৈরি',
-                'Built around the modern e-commerce stack'
-              )}
-            </div>
-            <ul
-              aria-label="Supported e-commerce platforms and ad networks"
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
-            >
-              {toolCategories.map((tool) => (
-                <li
-                  key={tool.id}
-                  className="py-3 px-4 rounded-[12px] bg-[#f2f0e7] border border-[#171412]/12 flex flex-col justify-between"
-                >
-                  <span className="font-display text-[18px] md:text-[20px] font-extrabold text-[#171412] tracking-[-0.03em]">
-                    {tool.name}
-                  </span>
-                  <span className="text-[12px] text-[#171412]/75 mt-1">
-                    {tool.category}
-                  </span>
-                </li>
-              ))}
-            </ul>
+          {/* Main Hero Slider */}
+          <div className="mb-6 lg:mb-8">
+            <HeroSlider
+              slides={heroSlides}
+              onCtaClick={() => navigate('/join')}
+            />
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          3. FEATURED RESULTS (Bento Grid of Dark #171412 Cards + Purple Card)
+          2. WHY CHOOSE US (5 Core Pillars)
+      ===================================================================== */}
+      <section
+        id="why-choose"
+        aria-label="Why Choose Dropshipping Academy BD"
+        className="py-14 md:py-20 bg-[#070f1a] border-t border-b border-white/10"
+      >
+        <div className="specimen-container">
+          <WhyChooseUsBar items={whyChooseUs} />
+        </div>
+      </section>
+
+      {/* =====================================================================
+          3. FEATURED RESULTS (Selected Benchmarks Bento Grid)
       ===================================================================== */}
       <Section id="results" ariaLabel="Featured results and curriculum benchmarks">
         <div className="flex flex-col gap-4 mb-10 md:mb-14">
           <div className="flex flex-wrap items-end justify-between gap-6">
-            <div>
-              {lang === 'bn' ? (
-                <h2 className="specimen-h2 text-[#171412]">
-                  নির্বাচিত <span className="text-[#8e827c]">ফলাফল</span>
-                </h2>
-              ) : (
-                <h2 className="specimen-h2 text-[#171412]">
-                  Featured <span className="text-[#8e827c]">results</span>
-                </h2>
-              )}
-              <div className="mt-4 flex items-center gap-3 text-[#171412]">
-                <ArrowDownCurvedIcon className="w-7 h-7 text-[#ff7722] shrink-0" />
-                <p className="text-[16px] md:text-[18px] font-medium text-[#171412]">
-                  {t(
-                    'প্রতিটি শিক্ষার্থী যে অপারেটিং লক্ষ্যমাত্রা ও প্রফিট মার্জিন অর্জনের জন্য কাজ করে।',
-                    'The operating benchmarks and unit economics every student builds toward.'
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {PLACEHOLDER_CONTENT && (
-              <p className="text-[13px] text-[#813502] font-semibold max-w-[40ch]">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+                <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+                {t('রিয়েল আউটপুট ও বেঞ্চমার্ক', 'Real Outputs & Benchmarks')}
+              </span>
+              <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+                {t('নির্বাচিত', 'Featured')}{' '}
+                <span className="text-[#00d27a]">{t('ফলাফল', 'Results')}</span>
+              </h2>
+              <p className="mt-4 text-[15px] sm:text-[17px] text-slate-300 font-medium leading-[1.6]">
                 {t(
-                  'বিঃদ্রঃ নিচের পরিসংখ্যান ও বেটা রিভিউগুলো আমাদের কারিকুলামের লক্ষ্যমাত্রা ও নমুনা প্রিভিউ।',
-                  'Note: Metrics and beta quotes below represent curriculum targets and placeholder previews.'
+                  'প্রতিটি শিক্ষার্থী যে অপারেটিং লক্ষ্যমাত্রা ও প্রফিট মার্জিন অর্জনের জন্য কাজ করে।',
+                  'The operating benchmarks and unit economics every student builds toward.'
                 )}
               </p>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* 24-Column Swiss Bento Grid */}
+        {/* 24-Column Modern Dark Bento Grid */}
         <div className="grid-24 gap-4 md:gap-6">
           {featuredResults.map((item) => (
             <BentoCard key={item.id} item={item} />
@@ -341,16 +242,55 @@ export const HomePage: React.FC = () => {
       </Section>
 
       {/* =====================================================================
-          4. WHAT YOU'LL LEARN (Purple Card with Accessible Tabs + Tilted Tiles)
+          4.5. MODERN E-COMMERCE TOOLS STACK
+      ===================================================================== */}
+      <section className="py-12 md:py-16 bg-[#0a1626] border-t border-b border-white/10">
+        <div className="specimen-container">
+          <div className="text-center max-w-xl mx-auto mb-8">
+            <span className="text-[13px] font-bold text-[#00d27a] uppercase tracking-wider">
+              {t('গ্লোবাল ই-কমার্স ইকোসিস্টেম', 'Global E-Commerce Ecosystem')}
+            </span>
+            <h3 className="font-display text-[22px] sm:text-[26px] font-extrabold text-white mt-1">
+              {t(
+                'আধুনিক ই-কমার্স ও পেইড মার্কেটিং টুলসের সমন্বয়ে তৈরি',
+                'Built around the modern global e-commerce stack'
+              )}
+            </h3>
+          </div>
+          <ul
+            aria-label="Supported e-commerce platforms and ad networks"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4"
+          >
+            {toolCategories.map((tool) => (
+              <li
+                key={tool.id}
+                className="py-4 px-4 rounded-[16px] bg-[#0d1e33] border border-white/10 hover:border-[#00d27a]/50 shadow-md flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 group"
+              >
+                <span className="font-display text-[17px] md:text-[19px] font-extrabold text-white group-hover:text-[#00d27a] tracking-tight transition-colors">
+                  {tool.name}
+                </span>
+                <span className="text-[12px] text-slate-400 font-medium mt-1">
+                  {tool.category}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          5. WHAT YOU'LL LEARN (Curriculum Tabs)
       ===================================================================== */}
       <Section id="learn" ariaLabel="What you will learn curriculum">
-        <div className="mb-10 md:mb-14">
-          <h2 className="specimen-h2 text-[#171412]">
-            <span className="block">
-              {t('আপনি যা যা শিখবেন।', "What you'll learn.")}
-            </span>
-            <span className="block text-[#813502] mt-1">
-              {t('দ্রুত এগিয়ে যাওয়ার কৌশল।', 'Our ways to move fast.')}
+        <div className="mb-10 md:mb-14 max-w-2xl">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+            <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+            {t('স্টেপ-বাই-স্টেপ রোডম্যাপ', 'Step-by-Step Roadmap')}
+          </span>
+          <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+            <span className="block">{t('আপনি যা যা শিখবেন।', "What you'll learn.")}</span>
+            <span className="block text-[#00d27a] mt-1">
+              {t('দ্রুত এগিয়ে যাওয়ার বাস্তব কৌশল।', 'Practical ways to move fast.')}
             </span>
           </h2>
         </div>
@@ -359,35 +299,31 @@ export const HomePage: React.FC = () => {
       </Section>
 
       {/* =====================================================================
-          5. TRUSTED BY FUTURE STORE OWNERS (Fanned/Rotated Cards)
+          6. TRUSTED BY FUTURE STORE OWNERS (Testimonials)
       ===================================================================== */}
       <Section id="reviews" ariaLabel="Trusted by future store owners">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
-          <div>
-            <h2 className="specimen-h2 text-[#171412]">
-              {t(
-                'ভবিষ্যৎ স্টোর উদ্যোক্তাদের আস্থা',
-                'Trusted by future store owners'
-              )}
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+              {t('শিক্ষার্থীদের অভিজ্ঞতা', 'Student Testimonials')}
+            </span>
+            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+              {t('ভবিষ্যৎ স্টোর উদ্যোক্তাদের', 'Trusted by Future')}{' '}
+              <span className="text-[#00d27a]">{t('আস্থা', 'Store Owners')}</span>
             </h2>
-            <p className="mt-4 text-[16px] md:text-[18px] text-[#171412] max-w-[54ch]">
+            <p className="mt-4 text-[15px] sm:text-[17px] text-slate-300 font-medium max-w-[54ch]">
               {t(
-                'যারা আমাদের প্রোডাক্ট ভ্যালিডেশন স্কোরকার্ড এবং স্টোরফ্রন্ট ওয়্যারফ্রেম আগেভাগে ব্যবহার করে দেখেছেন।',
-                'Early beta readers who tested our product validation scorecards and storefront wireframes.'
+                'যারা আমাদের প্রোডাক্ট ভ্যালিডেশন স্কোরকার্ড এবং স্টোরফ্রন্ট ওয়্যারফ্রেম ব্যবহার করে এগিয়ে গেছেন।',
+                'Beta students who tested our product validation scorecards and live storefront systems.'
               )}
             </p>
           </div>
-
-          {PLACEHOLDER_CONTENT && (
-            <span className="text-[13px] font-bold text-[#813502]">
-              {t('বেটা প্রিভিউ মতামত', 'Sample Beta Previews')}
-            </span>
-          )}
         </div>
 
         <div
           aria-label="Beta reader feedback cards"
-          className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar py-4 md:py-8 px-1"
+          className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar py-4 md:py-6 px-1"
         >
           {testimonials.map((item) => (
             <TestimonialCard key={item.id} item={item} />
@@ -396,115 +332,86 @@ export const HomePage: React.FC = () => {
       </Section>
 
       {/* =====================================================================
-          5.5. FAQ ACCORDION (Between Sections 5 and 6, Linked from Left Rail)
-      ===================================================================== */}
-      <Section id="faq" ariaLabel="Frequently asked questions">
-        <div className="grid-24 gap-y-10">
-          <div className="col-span-24 lg:col-span-9">
-            <div className="text-[13px] font-bold text-[#813502] mb-3">
-              {t('সাধারণ জিজ্ঞাসা', 'Common Questions')}
-            </div>
-            <h2 className="font-display text-[38px] sm:text-[52px] font-extrabold text-[#171412] leading-[1.02] tracking-[-0.03em] text-balance">
-              {t(
-                'যুক্ত হওয়ার আগে যা জানা প্রয়োজন।',
-                'Everything you need to know before joining.'
-              )}
-            </h2>
-            <p className="mt-4 text-[16px] text-[#171412]/85 leading-[1.45] max-w-[38ch]">
-              {t(
-                'প্রাথমিক মূলধন, সময় বা আন্তর্জাতিক সাপ্লায়ার নিয়ে আপনার মনে কোনো প্রশ্ন থাকলে নিচের উত্তরগুলো দেখুন।',
-                'Have a specific question about capital requirements, time commitment, or international suppliers? Read our straightforward answers.'
-              )}
-            </p>
-          </div>
-
-          <div className="col-span-24 lg:col-start-11 lg:col-span-14">
-            <Accordion items={faqItems} />
-          </div>
-        </div>
-      </Section>
-
-      {/* =====================================================================
-          6. SMALL TEAM, BIG RESULTS (FOUNDERS OVERLAPPING HEADLINE)
+          7. ABOUT US & FOUNDERS
       ===================================================================== */}
       <Section id="about" ariaLabel="Small team, big results — The Founders">
         <div className="relative">
-          {/* Giant Full-Width Headline */}
-          <div className="text-center">
-            <div className="text-[13px] font-bold text-[#813502] mb-3">
+          {/* Section Header */}
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
               {t('অভিজ্ঞ অপারেটরদের সরাসরি গাইডলাইন', 'Operators Teaching Operators')}
-            </div>
-            <h2 className="font-display text-[48px] sm:text-[76px] lg:text-[108px] font-extrabold text-[#171412] leading-[0.9] tracking-[-0.04em] uppercase select-none">
-              {founderStory.headline}
+            </span>
+            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+              {t('আমাদের', 'About')}{' '}
+              <span className="text-[#00d27a]">{t('সম্পর্কে ও টিম', 'Our Team')}</span>
             </h2>
+            <p className="mt-3 text-[15px] sm:text-[17px] text-slate-300 font-medium">
+              {founderStory.headline}
+            </p>
           </div>
 
-          {/* Founder Photos Overlapping the Headline in Tilted Frames */}
+          {/* Founders Grid */}
           {foundersList.length > 0 && (
-            <div className="mt-6 sm:-mt-4 lg:-mt-10 relative z-10 flex flex-wrap items-center justify-center gap-10 sm:gap-12 lg:gap-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {foundersList.map((founder, idx) => {
                 const imageFailed = Boolean(failedImages[founder.id]);
                 return (
                   <div
                     key={founder.id}
-                    className={`flex flex-col items-center max-w-[300px] sm:max-w-[320px] w-full transition-transform duration-300 ${founder.rotationClass} hover:rotate-0`}
+                    className="rounded-[22px] bg-[#0d1e33] border border-white/10 hover:border-[#00d27a]/50 p-6 flex flex-col items-center text-center shadow-xl hover:shadow-[0_12px_35px_rgba(0,210,122,0.12)] transition-all duration-300 group"
                   >
-                    {/* Colored Backdrop Card Frame */}
-                    <div
-                      style={{ backgroundColor: founder.backdropColor }}
-                      className="w-full p-3 rounded-[12px] border-2 border-[#171412] shadow-md"
-                    >
-                      <div className="relative w-full aspect-[3/4] rounded-[8px] overflow-hidden bg-[#171412]">
-                        {!imageFailed ? (
-                          <img
-                            src={founder.photo}
-                            alt={founder.alt}
-                            width={360}
-                            height={480}
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                            onError={() =>
-                              setFailedImages((prev) => ({
-                                ...prev,
-                                [founder.id]: true,
-                              }))
-                            }
-                            className="w-full h-full object-cover object-center"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#171412] text-[#fbf9ef]">
-                            <span className="font-display text-[36px] font-extrabold text-[#ff7722]">
-                              0{idx + 1}
-                            </span>
-                            <span className="mt-2 font-display text-[18px] font-bold">
-                              {founder.name}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    {/* Founder Photo */}
+                    <div className="relative w-36 h-48 sm:w-44 sm:h-56 rounded-[16px] overflow-hidden bg-[#06101c] border-2 border-[#00d27a]/40 shadow-md mb-5 group-hover:scale-102 transition-transform">
+                      {!imageFailed ? (
+                        <img
+                          src={founder.photo}
+                          alt={founder.alt}
+                          width={360}
+                          height={480}
+                          loading="lazy"
+                          onError={() =>
+                            setFailedImages((prev) => ({
+                              ...prev,
+                              [founder.id]: true,
+                            }))
+                          }
+                          className="w-full h-full object-cover object-center"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#0d1e33] text-white">
+                          <span className="font-display text-[28px] font-extrabold text-[#00d27a]">
+                            0{idx + 1}
+                          </span>
+                          <span className="mt-2 font-display text-[15px] font-bold">
+                            {founder.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Name + Role Pill Chip Under Photo */}
-                    <div className="mt-4 px-5 py-2.5 rounded-[50px] bg-[#171412] text-[#fbf9ef] text-center border border-[#171412] shadow-sm">
-                      <div className="font-display text-[15px] font-extrabold leading-tight">
-                        {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
-                      </div>
-                      <div className="text-[12px] text-[#fbc59d] mt-0.5">
-                        {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
-                      </div>
+                    {/* Name & Role */}
+                    <h3 className="font-display text-[20px] font-extrabold text-white leading-tight">
+                      {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
+                    </h3>
+                    <div className="text-[13px] text-[#00d27a] font-bold mt-1">
+                      {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
                     </div>
+
+                    <p className="mt-3 text-[14px] text-slate-300 leading-[1.5] max-w-[34ch]">
+                      {lang === 'en' && founder.shortBioEn
+                        ? founder.shortBioEn
+                        : founder.shortBio}
+                    </p>
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Founder Story Paragraph + "Meet the team" CTA */}
-          <div className="mt-12 md:mt-16 max-w-3xl mx-auto text-center">
-            <p className="font-display text-[22px] sm:text-[26px] font-extrabold text-[#171412] leading-[1.25] tracking-[-0.02em]">
-              {founderStory.lead}
-            </p>
-            <p className="mt-4 text-[16px] text-[#171412]/90 leading-[1.5]">
+          {/* Story Paragraph & CTA */}
+          <div className="mt-12 md:mt-14 max-w-2xl mx-auto text-center">
+            <p className="text-[16px] text-slate-300 leading-[1.6]">
               {founderStory.body}
             </p>
 
@@ -514,7 +421,6 @@ export const HomePage: React.FC = () => {
                   variant="outline"
                   onClick={() => setShowTeamBios((prev) => !prev)}
                   aria-expanded={showTeamBios}
-                  aria-controls="founder-bios-drawer"
                 >
                   {showTeamBios
                     ? t('পরিচিতি সংক্ষিপ্ত করুন', 'Hide founder bios')
@@ -522,33 +428,30 @@ export const HomePage: React.FC = () => {
                 </Button>
               )}
               <Button variant="primary" onClick={() => navigate('/join')}>
-                {t('ওয়েটলিস্টে যুক্ত হোন', 'Join the waitlist')}
+                {t('রেজিস্ট্রেশন করুন', 'Register Now')}
               </Button>
             </div>
 
-            {/* Expandable Founder Bios Drawer */}
+            {/* Expandable Bio Drawer */}
             {showTeamBios && foundersList.length > 0 && (
-              <div
-                id="founder-bios-drawer"
-                className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left"
-              >
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                 {foundersList.map((founder) => (
                   <div
                     key={`bio-${founder.id}`}
-                    className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6"
+                    className="rounded-[16px] bg-[#0d1e33] border border-white/10 p-6 shadow-lg"
                   >
-                    <div className="text-[12px] font-bold text-[#813502]">
+                    <div className="text-[12px] font-bold text-[#00d27a]">
                       {lang === 'en' && founder.specialtyEn
                         ? founder.specialtyEn
                         : founder.specialty}
                     </div>
-                    <h3 className="font-display text-[22px] font-extrabold text-[#171412] mt-1">
+                    <h4 className="font-display text-[20px] font-extrabold text-white mt-1">
                       {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
-                    </h3>
-                    <p className="text-[14px] text-[#171412]/80 mt-0.5 mb-3">
+                    </h4>
+                    <p className="text-[13px] text-slate-400 mt-0.5 mb-3">
                       {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
                     </p>
-                    <p className="text-[15px] text-[#171412] leading-[1.45]">
+                    <p className="text-[14px] text-slate-300 leading-[1.55]">
                       {lang === 'en' && founder.shortBioEn
                         ? founder.shortBioEn
                         : founder.shortBio}
@@ -562,32 +465,70 @@ export const HomePage: React.FC = () => {
       </Section>
 
       {/* =====================================================================
-          7. FINAL CTA SECTION ("Make every day pay for itself!")
+          8. FAQ ACCORDION (সাধারণ জিজ্ঞাসা)
       ===================================================================== */}
-      <Section
+      <Section id="faq" ariaLabel="Frequently asked questions">
+        <div className="grid-24 gap-y-10">
+          <div className="col-span-24 lg:col-span-9">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+              {t('সাধারণ জিজ্ঞাসা', 'Common Questions')}
+            </span>
+            <h2 className="font-display text-[32px] sm:text-[44px] font-extrabold text-white leading-[1.08] tracking-[-0.03em] text-balance">
+              {t(
+                'যুক্ত হওয়ার আগে যা জানা প্রয়োজন।',
+                'Everything you need to know before joining.'
+              )}
+            </h2>
+            <p className="mt-4 text-[15px] sm:text-[16px] text-slate-300 leading-[1.6] max-w-[38ch]">
+              {t(
+                'প্রাথমিক মূলধন, সময় বা আন্তর্জাতিক সাপ্লায়ার নিয়ে আপনার মনে কোনো প্রশ্ন থাকলে সরাসরি নিচের উত্তরগুলো দেখে নিতে পারেন।',
+                'Have a specific question about capital, time commitment, or international suppliers? Read our clear answers.'
+              )}
+            </p>
+          </div>
+
+          <div className="col-span-24 lg:col-start-11 lg:col-span-14">
+            <Accordion items={faqItems} />
+          </div>
+        </div>
+      </Section>
+
+      {/* =====================================================================
+          9. FINAL REGISTRATION CTA BANNER
+      ===================================================================== */}
+      <section
         id="final-cta"
-        ariaLabel="Join the Dropshipping Academy waitlist"
-        className="bg-[#f2f0e7]"
+        aria-label="Join Dropshipping Academy"
+        className="py-16 md:py-24 bg-[#070f1a]"
       >
-        <div className="rounded-[12px] bg-[#171412] text-[#fbf9ef] p-8 sm:p-12 lg:p-16 border-2 border-[#171412]">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
-            <div className="max-w-3xl">
-              <div className="text-[13px] font-bold text-[#ffc765] mb-4">
-                {t(
-                  'পরবর্তী ব্যাচে ভর্তি · সীমিত ওয়েটলিস্ট আসন',
-                  'Next Cohort Enrollment · Limited Waitlist Spots'
-                )}
+        <div className="specimen-container">
+          <div className="rounded-[24px] bg-gradient-to-br from-[#0c233c] via-[#091a2e] to-[#05111d] text-white p-8 sm:p-12 lg:p-16 border border-[#00d27a]/30 shadow-2xl relative overflow-hidden">
+            {/* Ambient emerald blur */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#00d27a]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] font-extrabold uppercase tracking-wide mb-4">
+                <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+                <span>
+                  {t(
+                    'পরবর্তী ব্যাচে ভর্তি · সীমিত আসন',
+                    'Next Cohort Enrollment · Limited Seats'
+                  )}
+                </span>
               </div>
-              <h2 className="specimen-h2 text-[#fbf9ef]">
+
+              <h2 className="font-display text-[32px] sm:text-[46px] lg:text-[54px] font-extrabold text-white leading-[1.08] tracking-[-0.03em]">
                 {t(
                   'প্রতিটি দিনকে লাভজনক করে তুলুন!',
                   'Make every day pay for itself!'
                 )}
               </h2>
-              <p className="mt-6 text-[17px] md:text-[19px] text-[#fbf9ef]/85 leading-[1.4] max-w-[50ch]">
+
+              <p className="mt-4 text-[16px] sm:text-[18px] text-slate-300 leading-[1.6] max-w-[50ch]">
                 {t(
-                  'মাত্র ২ মিনিটে ওয়েটলিস্টে আপনার স্থান নিশ্চিত করুন। ইমেইল ভেরিফাই করুন এবং নতুন ব্যাচ শুরু হওয়ার সাথে সাথে হোয়াটসঅ্যাপ ও ইমেইলে আপডেট পান।',
-                  'Reserve your spot on the waitlist in under two minutes. Verify your email and get notified on WhatsApp and email the moment doors open.'
+                  'মাত্র ২ মিনিটে আপনার স্থান নিশ্চিত করুন। ইমেইল ভেরিফাই করুন এবং নতুন ব্যাচ শুরু হওয়ার সাথে সাথে সকল আপডেট পান।',
+                  'Reserve your spot in under two minutes. Verify your email and get notified the moment live doors open.'
                 )}
               </p>
 
@@ -595,7 +536,7 @@ export const HomePage: React.FC = () => {
                 <form
                   onSubmit={handleHeroSubmit}
                   noValidate
-                  className="w-full max-w-[540px]"
+                  className="w-full max-w-[520px]"
                 >
                   <label htmlFor="cta-waitlist-email" className="sr-only">
                     {t(
@@ -603,7 +544,7 @@ export const HomePage: React.FC = () => {
                       'Email address to join the waitlist'
                     )}
                   </label>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#fbf9ef] border-2 border-[#ffc765] shadow-sm">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#081424] border border-white/20 shadow-lg focus-within:border-[#00d27a]">
                     <input
                       id="cta-waitlist-email"
                       type="email"
@@ -618,22 +559,22 @@ export const HomePage: React.FC = () => {
                         'আপনার ইমেইল ঠিকানা লিখুন...',
                         'Enter your email address...'
                       )}
-                      className="flex-1 h-[52px] min-h-[52px] px-4 py-2 rounded-[50px] bg-transparent text-[#171412] text-[16px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
+                      className="flex-1 h-[52px] min-h-[52px] px-5 py-2 rounded-[50px] bg-transparent text-white text-[15px] font-medium placeholder:text-slate-400 focus:outline-none"
                     />
                     <Button
                       type="submit"
-                      variant="orange"
+                      variant="primary"
                       className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
                     >
-                      <span>{t('ওয়েটলিস্টে যুক্ত হোন', 'Join waitlist')}</span>
-                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0" />
+                      <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
+                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#070f1a]" />
                     </Button>
                   </div>
                   {heroEmailError && (
                     <p
                       role="alert"
                       aria-live="polite"
-                      className="text-[13px] font-bold text-[#ffc765] mt-2 pl-3"
+                      className="text-[13px] font-bold text-red-400 mt-2 pl-3"
                     >
                       {heroEmailError}
                     </p>
@@ -641,14 +582,14 @@ export const HomePage: React.FC = () => {
                 </form>
               </div>
             </div>
-
-            {/* Keychain with Small Box Charm SVG Illustration */}
-            <div className="shrink-0 self-center lg:self-auto bg-[#fbf9ef] p-6 rounded-[12px] border-2 border-[#ff7722]">
-              <KeychainIllustration className="w-36 h-36 md:w-44 md:h-44" />
-            </div>
           </div>
         </div>
-      </Section>
+      </section>
+
+      {/* =====================================================================
+          10. CONTACT CHANNELS (যোগাযোগের মাধ্যম - WhatsApp, Hotline, Email, Message)
+      ===================================================================== */}
+      <ContactSection />
     </main>
   );
 };

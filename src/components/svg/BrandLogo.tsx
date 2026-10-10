@@ -7,6 +7,72 @@ interface SvgProps {
 }
 
 /**
+ * Green Graduation Cap Icon matching the user's Dropshipping Academy BD branding.
+ */
+export const GraduationCapIcon: React.FC<{ className?: string }> = ({
+  className = 'w-9 h-9',
+}) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Cap diamond */}
+    <path
+      d="M24 6L4 16L24 26L44 16L24 6Z"
+      fill="#10b981"
+      stroke="#ffffff"
+      strokeWidth="2.5"
+      strokeLinejoin="round"
+    />
+    {/* Cap under crown */}
+    <path
+      d="M10 20V31C10 36 16.5 40 24 40C31.5 40 38 36 38 31V20"
+      fill="#059669"
+      stroke="#ffffff"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Tassel */}
+    <path
+      d="M40 17V33M37.5 33H42.5"
+      stroke="#34d399"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+    {/* Center button */}
+    <circle cx="24" cy="16" r="2.5" fill="#ffffff" />
+  </svg>
+);
+
+/**
+ * Brand Lockup: Green graduation cap + Dropshipping Academy BD wordmark.
+ */
+export const DropshippingAcademyBdLogo: React.FC<{
+  className?: string;
+  isDark?: boolean;
+}> = ({ className = 'h-10', isDark = true }) => (
+  <div className={`inline-flex items-center gap-2.5 ${className}`}>
+    <GraduationCapIcon className="w-9 h-9 sm:w-10 sm:h-10 shrink-0" />
+    <div className="flex flex-col leading-tight select-none">
+      <span
+        className={`font-display text-[15px] sm:text-[17px] font-black tracking-tight ${
+          isDark ? 'text-white' : 'text-[#0f172a]'
+        }`}
+      >
+        Dropshipping
+      </span>
+      <span className="font-display text-[14px] sm:text-[16px] font-black text-[#10b981] tracking-tight">
+        Academy BD
+      </span>
+    </div>
+  </div>
+);
+
+/**
  * Round SVG badge mark: isometric parcel box + upward growth arrow.
  * Used in Top Nav, Footer, and SVG Favicon.
  */

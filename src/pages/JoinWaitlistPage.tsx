@@ -240,13 +240,13 @@ export const JoinWaitlistPage: React.FC = () => {
   };
 
   return (
-    <main id="main-content" className="py-10 md:py-16 lg:py-20">
+    <main id="main-content" className="py-10 md:py-16 lg:py-20 bg-[#070f1a] text-white">
       <div className="specimen-container max-w-3xl">
         {/* Progress Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between gap-4 text-[13px] font-bold text-[#813502] mb-3">
+          <div className="flex items-center justify-between gap-4 text-[13px] font-bold text-[#00d27a] mb-3">
             <span>{t('ওয়েটলিস্ট নিবন্ধন', 'Waitlist Application')}</span>
-            <span aria-live="polite" className="tabular-nums">
+            <span aria-live="polite" className="tabular-nums font-extrabold">
               {t(`ধাপ ${step} / ২`, `Step ${step} of 2`)}
             </span>
           </div>
@@ -257,10 +257,10 @@ export const JoinWaitlistPage: React.FC = () => {
             aria-valuemin={1}
             aria-valuemax={2}
             aria-label={`Step ${step} of 2`}
-            className="w-full h-2.5 rounded-full bg-[#ebe9df] overflow-hidden border border-[#171412]/20"
+            className="w-full h-2 rounded-full bg-white/10 overflow-hidden border border-white/10"
           >
             <div
-              className={`h-full bg-[#ff7722] transition-all duration-300 ${
+              className={`h-full bg-gradient-to-r from-[#00d27a] to-[#10b981] transition-all duration-300 ${
                 step === 1 ? 'w-1/2' : 'w-full'
               }`}
             />
@@ -268,13 +268,13 @@ export const JoinWaitlistPage: React.FC = () => {
         </div>
 
         {/* Main Card */}
-        <div className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-10">
+        <div className="rounded-[24px] bg-[#0d1e33] border border-white/10 shadow-2xl p-6 sm:p-10 text-white">
           {step === 1 ? (
             <>
-              <h1 className="font-display text-[34px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.0] tracking-[-0.03em] mb-3">
+              <h1 className="font-display text-[32px] sm:text-[44px] font-extrabold text-white leading-[1.05] tracking-[-0.03em] mb-3">
                 {t('ওয়েটলিস্টে যুক্ত হোন।', 'Join the waitlist.')}
               </h1>
-              <p className="text-[16px] text-[#171412]/85 leading-[1.45] mb-8">
+              <p className="text-[15px] sm:text-[16px] text-slate-300 leading-[1.6] mb-8">
                 {t(
                   'নিচে আপনার সঠিক তথ্য দিন। আপনার আসন নিশ্চিত করতে আমরা আপনার ইমেইলে একটি ৬-ডিজিটের ভেরিফিকেশন কোড পাঠাবো।',
                   'Enter your contact details below. We will send a 6-digit verification code to your email to lock in your spot.'
@@ -497,13 +497,13 @@ export const JoinWaitlistPage: React.FC = () => {
                STEP 2: VERIFY EMAIL WITH 6-DIGIT OTP
             ================================================================= */
             <div>
-              <h1 className="font-display text-[34px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.0] tracking-[-0.03em] mb-3">
+              <h1 className="font-display text-[32px] sm:text-[44px] font-extrabold text-white leading-[1.05] tracking-[-0.03em] mb-3">
                 {t('আপনার ইমেইল ভেরিফাই করুন।', 'Verify your email.')}
               </h1>
 
-              <p className="text-[16px] text-[#171412]/90 leading-[1.45] mb-2">
+              <p className="text-[15px] sm:text-[16px] text-slate-300 leading-[1.5] mb-2">
                 {t('আমরা ৬-ডিজিটের একটি কোড পাঠিয়েছি ', 'We sent a 6-digit code to ')}
-                <strong className="font-bold text-[#171412]">
+                <strong className="font-bold text-[#00d27a]">
                   {maskEmailAddress(formData.email)}
                 </strong>
                 {t(' ঠিকানায়।', '.')}
@@ -517,7 +517,7 @@ export const JoinWaitlistPage: React.FC = () => {
                     setOtpError('');
                     setOtpStatusMsg('');
                   }}
-                  className="min-h-[44px] inline-flex items-center text-[13px] font-bold text-[#813502] underline underline-offset-4 hover:text-[#171412] cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center text-[13px] font-bold text-[#00d27a] underline underline-offset-4 hover:text-[#00ba6c] cursor-pointer"
                 >
                   {t('ইমেইল ঠিকানা পরিবর্তন করুন', 'Change email address')}
                 </button>
@@ -526,7 +526,7 @@ export const JoinWaitlistPage: React.FC = () => {
               {!isSupabaseConfigured && (
                 <div
                   role="status"
-                  className="mb-6 p-4 rounded-[12px] bg-[#ffc765]/35 border border-[#171412]/30 text-[13px] text-[#171412]"
+                  className="mb-6 p-4 rounded-[12px] bg-amber-500/10 border border-amber-500/30 text-[13px] text-amber-300"
                 >
                   <strong>Preview Mode:</strong>{' '}
                   {t(
@@ -540,9 +540,9 @@ export const JoinWaitlistPage: React.FC = () => {
                 <div
                   role="status"
                   aria-live="polite"
-                  className="mb-6 p-4 rounded-[12px] bg-[#fbf9ef] border-2 border-[#171412] text-[14px] font-bold text-[#171412] flex items-center gap-2.5"
+                  className="mb-6 p-4 rounded-[12px] bg-[#00d27a]/15 border border-[#00d27a]/40 text-[14px] font-bold text-[#00d27a] flex items-center gap-2.5"
                 >
-                  <CheckSvgIcon className="w-5 h-5 text-[#813502] shrink-0" />
+                  <CheckSvgIcon className="w-5 h-5 text-[#00d27a] shrink-0" />
                   <span>{otpStatusMsg}</span>
                 </div>
               )}

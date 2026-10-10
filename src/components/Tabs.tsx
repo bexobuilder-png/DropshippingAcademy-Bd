@@ -41,13 +41,13 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
 
   return (
     <div className="w-full">
-      {/* Main Purple Card */}
-      <div className="rounded-[12px] bg-[#3d2fa9] text-[#fbf9ef] p-6 sm:p-8 lg:p-12 border-2 border-[#171412]">
+      {/* Main Modern Dark Card */}
+      <div className="rounded-[24px] bg-gradient-to-br from-[#0d1f33] via-[#091728] to-[#06101c] text-white p-6 sm:p-8 lg:p-12 border border-white/10 shadow-2xl">
         {/* Accessible Tablist */}
         <div
           role="tablist"
           aria-label="Dropshipping Academy curriculum stages"
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 mb-8 border-b border-[#fbf9ef]/20"
+          className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-4 mb-8 border-b border-white/10"
         >
           {items.map((tab, idx) => {
             const isSelected = idx === activeIndex;
@@ -65,10 +65,10 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => setActiveIndex(idx)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                className={`min-h-[44px] px-5 py-2.5 rounded-[50px] text-[13px] font-bold whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                className={`min-h-[44px] px-5 py-2.5 rounded-[50px] text-[13px] font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#ffc765] text-[#171412] shadow-sm'
-                    : 'bg-[#171412]/35 text-[#fbf9ef] hover:bg-[#171412]/55'
+                    ? 'bg-[#00d27a] text-[#070f1a] font-extrabold shadow-lg shadow-[#00d27a]/25 scale-102'
+                    : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white border border-white/10'
                 }`}
               >
                 <span className="tabular-nums mr-1.5 opacity-80">{tab.stepNumber}.</span>
@@ -88,26 +88,27 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
         >
           {/* Left Column: Headline, Description, Deliverables */}
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="text-[13px] font-bold text-[#ffc765] tracking-tight">
-              {t('ধাপ', 'Stage')} {activeItem.stepNumber} · {activeItem.label}
+            <div className="text-[13px] font-extrabold text-[#00d27a] tracking-wide inline-flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00d27a]"></span>
+              <span>{t('ধাপ', 'Stage')} {activeItem.stepNumber} · {activeItem.label}</span>
             </div>
 
-            <h3 className="font-display text-[28px] sm:text-[36px] lg:text-[42px] font-extrabold text-[#fbf9ef] leading-[1.08] tracking-[-0.02em] text-balance">
+            <h3 className="font-display text-[28px] sm:text-[36px] lg:text-[42px] font-extrabold text-white leading-[1.1] tracking-[-0.02em] text-balance">
               {activeItem.headline}
             </h3>
 
-            <p className="text-[16px] text-[#fbf9ef]/90 leading-[1.45] max-w-[60ch]">
+            <p className="text-[16px] text-slate-300 leading-[1.6] max-w-[60ch]">
               {activeItem.description}
             </p>
 
-            <div className="pt-2 border-t border-[#fbf9ef]/15">
-              <div className="text-[12px] font-bold text-[#fbc59d] mb-3">
+            <div className="pt-4 border-t border-white/10">
+              <div className="text-[13px] font-bold text-slate-400 mb-3 uppercase tracking-wider">
                 {t('অন্তর্ভুক্ত টেমপ্লেট ও সিস্টেমসমূহ:', 'Included Templates & Systems:')}
               </div>
-              <ul className="flex flex-col gap-2.5">
+              <ul className="flex flex-col gap-3">
                 {activeItem.deliverables.map((deliv) => (
-                  <li key={deliv} className="flex items-start gap-2.5 text-[15px] text-[#fbf9ef]">
-                    <span className="w-5 h-5 rounded-full bg-[#ff7722] text-[#171412] flex items-center justify-center shrink-0 mt-0.5">
+                  <li key={deliv} className="flex items-start gap-3 text-[15px] text-slate-200">
+                    <span className="w-5 h-5 rounded-full bg-[#00d27a]/20 text-[#00d27a] border border-[#00d27a]/40 flex items-center justify-center shrink-0 mt-0.5">
                       <CheckSvgIcon className="w-3.5 h-3.5" />
                     </span>
                     <span>{deliv}</span>
@@ -117,55 +118,55 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
             </div>
           </div>
 
-          {/* Right Column: 3 Tilted Illustrated SVG Tiles (Black, Orange-Soft, Yellow) */}
-          <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center items-stretch py-2">
-            {/* Tile 1: Black (#171412) */}
-            <div className="rounded-[12px] bg-[#171412] text-[#fbf9ef] p-5 border border-[#fbf9ef]/20 flex items-center justify-between gap-4 transform -rotate-2 hover:rotate-0 transition-transform duration-200">
+          {/* Right Column: 3 Metric Cards */}
+          <div className="lg:col-span-5 flex flex-col gap-4 justify-center py-2">
+            {/* Tile 1 */}
+            <div className="rounded-[16px] bg-[#0b1726] border border-white/10 hover:border-[#00d27a]/40 p-5 flex items-center justify-between gap-4 transition-all shadow-md group">
               <div>
-                <div className="text-[12px] font-medium text-[#fbc59d]">
+                <div className="text-[12px] font-semibold text-slate-400">
                   {activeItem.tiles.blackTitle}
                 </div>
-                <div className="font-display text-[24px] font-extrabold text-[#fbf9ef] leading-tight tabular-nums mt-1">
+                <div className="font-display text-[24px] font-extrabold text-[#00d27a] leading-tight tabular-nums mt-1">
                   {activeItem.tiles.blackStat}
                 </div>
               </div>
-              <TileAnalyticsIcon className="w-11 h-11 shrink-0" />
+              <div className="w-12 h-12 rounded-full bg-[#00d27a]/15 text-[#00d27a] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <TileAnalyticsIcon className="w-6 h-6" />
+              </div>
             </div>
 
-            {/* Tile 2: Orange-Soft (#fbc59d) */}
-            <div className="rounded-[12px] bg-[#fbc59d] text-[#171412] p-5 border-2 border-[#171412] flex items-center justify-between gap-4 transform rotate-2 hover:rotate-0 transition-transform duration-200">
+            {/* Tile 2 */}
+            <div className="rounded-[16px] bg-[#0b1726] border border-white/10 hover:border-amber-400/40 p-5 flex items-center justify-between gap-4 transition-all shadow-md group">
               <div>
-                <div className="text-[12px] font-bold text-[#813502]">
+                <div className="text-[12px] font-semibold text-slate-400">
                   {activeItem.tiles.orangeTitle}
                 </div>
-                <div className="font-display text-[24px] font-extrabold text-[#171412] leading-tight tabular-nums mt-1">
+                <div className="font-display text-[24px] font-extrabold text-amber-400 leading-tight tabular-nums mt-1">
                   {activeItem.tiles.orangeStat}
                 </div>
               </div>
-              <TileCompassIcon className="w-11 h-11 shrink-0" />
+              <div className="w-12 h-12 rounded-full bg-amber-400/15 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <TileCompassIcon className="w-6 h-6" />
+              </div>
             </div>
 
-            {/* Tile 3: Yellow (#ffc765) */}
-            <div className="rounded-[12px] bg-[#ffc765] text-[#171412] p-5 border-2 border-[#171412] flex items-center justify-between gap-4 transform -rotate-1 hover:rotate-0 transition-transform duration-200">
+            {/* Tile 3 */}
+            <div className="rounded-[16px] bg-[#0b1726] border border-white/10 hover:border-sky-400/40 p-5 flex items-center justify-between gap-4 transition-all shadow-md group">
               <div>
-                <div className="text-[12px] font-bold text-[#813502]">
+                <div className="text-[12px] font-semibold text-slate-400">
                   {activeItem.tiles.yellowTitle}
                 </div>
-                <div className="font-display text-[24px] font-extrabold text-[#171412] leading-tight tabular-nums mt-1">
+                <div className="font-display text-[24px] font-extrabold text-sky-400 leading-tight tabular-nums mt-1">
                   {activeItem.tiles.yellowStat}
                 </div>
               </div>
-              <TileBoltIcon className="w-11 h-11 shrink-0" />
+              <div className="w-12 h-12 rounded-full bg-sky-400/15 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <TileBoltIcon className="w-6 h-6" />
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Reference Brown Shadow Bar sitting directly under the purple card */}
-      <div
-        aria-hidden="true"
-        className="h-3.5 mx-4 sm:mx-8 rounded-b-[12px] bg-[#813502] border-x-2 border-b-2 border-[#171412]"
-      />
     </div>
   );
 };

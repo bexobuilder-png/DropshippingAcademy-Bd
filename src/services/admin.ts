@@ -712,6 +712,47 @@ export async function fetchSiteSectionContent<T>(
   fallbackDefault: T
 ): Promise<T> {
   const localKey = `da_site_content_${sectionKey}_v1`;
+
+  // If Supabase is configured, always fetch latest from database in real time
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('site_content')
+        .select('content_json')
+        .eq('section_key', sectionKey)
+        .maybeSingle();
+
+      if (!error && data && data.content_json) {
+        const parsed = data.content_json as T;
+        try {
+          localStorage.setItem(localKey, JSON.stringify(parsed));
+        } catch {
+          // Ignore
+        }
+        return parsed;
+      }
+
+      // If database row does not exist yet, seed it into public.site_content
+      if (!error && (!data || !data.content_json)) {
+        try {
+          await supabase.from('site_content').upsert(
+            {
+              section_key: sectionKey,
+              content_json: fallbackDefault as any,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'section_key' }
+          );
+        } catch {
+          // Ignore seeding error
+        }
+      }
+    } catch {
+      // Ignore network error and fall back to local storage
+    }
+  }
+
+  // Fallback to local storage if available
   try {
     const rawLocal = localStorage.getItem(localKey);
     if (rawLocal) {
@@ -721,31 +762,55 @@ export async function fetchSiteSectionContent<T>(
     // Ignore
   }
 
+  return fallbackDefault;
+}
+
+/**
+ * Subscribes to real-time updates from Supabase `public.site_content` table.
+ */
+export function subscribeToRealtimeSiteContent(
+  onUpdate: (sectionKey: string, contentJson: any) => void
+): () => void {
   if (!isSupabaseConfigured) {
-    return fallbackDefault;
+    const handler = (e: Event) => {
+      onUpdate('all', null);
+    };
+    window.addEventListener('site-content-updated', handler);
+    return () => window.removeEventListener('site-content-updated', handler);
   }
 
   try {
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('content_json')
-      .eq('section_key', sectionKey)
-      .single();
+    const channel = supabase
+      .channel('realtime:site_content')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_content' },
+        (payload) => {
+          if (payload.new && (payload.new as any).section_key) {
+            const key = (payload.new as any).section_key;
+            const content = (payload.new as any).content_json;
+            try {
+              localStorage.setItem(`da_site_content_${key}_v1`, JSON.stringify(content));
+            } catch {
+              // Ignore
+            }
+            onUpdate(key, content);
+            window.dispatchEvent(new Event('site-content-updated'));
+          }
+        }
+      )
+      .subscribe();
 
-    if (!error && data && data.content_json) {
-      const parsed = data.content_json as T;
-      try {
-        localStorage.setItem(localKey, JSON.stringify(parsed));
-      } catch {
-        // Ignore
-      }
-      return parsed;
-    }
+    const localHandler = () => onUpdate('all', null);
+    window.addEventListener('site-content-updated', localHandler);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('site-content-updated', localHandler);
+    };
   } catch {
-    // Ignore
+    return () => {};
   }
-
-  return fallbackDefault;
 }
 
 export async function saveSiteSectionContent<T>(

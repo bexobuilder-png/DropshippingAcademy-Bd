@@ -7,7 +7,7 @@ import type { Language } from '../context/LanguageContext';
  * with PLACEHOLDER_CONTENT = true so you can easily identify and replace them
  * with verified student metrics before launch.
  */
-export const PLACEHOLDER_CONTENT = true;
+export const PLACEHOLDER_CONTENT = false;
 
 export interface ToolCategoryItem {
   id: string;
@@ -592,6 +592,394 @@ export const FAQ_ITEMS_EN: FaqItem[] = [
   },
 ];
 
+// ============================================================================
+// COURSES CATALOG (Real-time Database Synchronized with Supabase)
+// ============================================================================
+
+export interface CourseItem {
+  id: string;
+  badge?: string;
+  badgeType?: 'popular' | 'upcoming' | 'new';
+  title: string;
+  titleEn?: string;
+  description: string;
+  descriptionEn?: string;
+  date: string;
+  dateEn?: string;
+  time: string;
+  timeEn?: string;
+  originalPrice: number;
+  discountedPrice: number;
+  image: string;
+  seatsTotal?: number;
+  seatsBooked?: number;
+}
+
+export const DEFAULT_COURSES_BN: CourseItem[] = [
+  {
+    id: 'course-dropshipping-basic',
+    badge: 'জনপ্রিয়',
+    badgeType: 'popular',
+    title: 'ড্রপশিপিং ব্যবসার বেসিক কোর্স',
+    titleEn: 'Dropshipping Business Fundamentals',
+    description: 'ড্রপশিপিং কী, কীভাবে শুরু করবেন, প্রোডাক্ট রিসার্চ, সাপ্লায়ার এবং অর্ডার ম্যানেজমেন্ট শিখুন।',
+    descriptionEn: 'Learn dropshipping essentials, niche validation, verified suppliers, and automated store operations.',
+    date: '১৫ আগস্ট ২০২৫',
+    dateEn: '15 August 2025',
+    time: 'সন্ধ্যা ৭:০০ - ৯:০০',
+    timeEn: '7:00 PM - 9:00 PM',
+    originalPrice: 5000,
+    discountedPrice: 2999,
+    image: '/images/course_dropshipping_basic_1791567728755.jpg',
+    seatsTotal: 50,
+    seatsBooked: 42,
+  },
+  {
+    id: 'course-shopify-ecommerce',
+    badge: 'নতুন',
+    badgeType: 'new',
+    title: 'ই-কমার্স ও Shopify কোর্স',
+    titleEn: 'E-Commerce & Shopify Store Mastery',
+    description: 'Shopify দিয়ে নিজের অনলাইন স্টোর তৈরি, থিম কাস্টমাইজ, পেমেন্ট গেটওয়ে এবং অর্ডার ম্যানেজমেন্ট।',
+    descriptionEn: 'Build high-converting Shopify stores from scratch, custom theme setups, local/global payments, and automated fulfillments.',
+    date: '২০ আগস্ট ২০২৫',
+    dateEn: '20 August 2025',
+    time: 'রাত ৮:০০ - ১০:০০',
+    timeEn: '8:00 PM - 10:00 PM',
+    originalPrice: 8000,
+    discountedPrice: 5999,
+    image: '/images/course_shopify_ecommerce_1791567740931.jpg',
+    seatsTotal: 40,
+    seatsBooked: 35,
+  },
+  {
+    id: 'course-digital-marketing',
+    badge: 'আপকামিং',
+    badgeType: 'upcoming',
+    title: 'ডিজিটাল মার্কেটিং ও ফেসবুক অ্যাডস কোর্স',
+    titleEn: 'Digital Marketing & Meta Ads Blueprint',
+    description: 'Facebook Ads, Instagram Marketing, Content Strategy এবং Sales বাড়ানোর কার্যকর কৌশল শিখুন।',
+    descriptionEn: 'Master Meta Ads Manager, high-converting creative hooks, targeting algorithms, and profit ROAS scaling.',
+    date: '২৭ আগস্ট ২০২৫',
+    dateEn: '27 August 2025',
+    time: 'সকাল ১০:০০ - ১২:০০',
+    timeEn: '10:00 AM - 12:00 PM',
+    originalPrice: 6000,
+    discountedPrice: 3999,
+    image: '/images/course_digital_marketing_1791567751610.jpg',
+    seatsTotal: 45,
+    seatsBooked: 38,
+  },
+  {
+    id: 'course-web-crypto',
+    badge: 'আপকামিং',
+    badgeType: 'upcoming',
+    title: 'ক্রিপ্টো ট্রেডিং ও ওয়েব ডেভেলপমেন্ট কোর্স',
+    titleEn: 'Web Development & Technical Trading',
+    description: 'বেসিক থেকে প্রফেশনাল লেভেল পর্যন্ত আধুনিক ওয়েব ডেভেলপমেন্ট, টেকনিক্যাল চার্ট বিশ্লেষণ ও রিস্ক ম্যানেজমেন্ট।',
+    descriptionEn: 'Professional web architecture projects, trading charts, technical indicators, and disciplined risk-to-reward management.',
+    date: '৫ সেপ্টেম্বর ২০২৫',
+    dateEn: '5 September 2025',
+    time: 'রাত ৮:০০ - ১০:০০',
+    timeEn: '8:00 PM - 10:00 PM',
+    originalPrice: 7000,
+    discountedPrice: 4999,
+    image: '/images/course_web_crypto_1791567763194.jpg',
+    seatsTotal: 35,
+    seatsBooked: 29,
+  },
+];
+
+export const DEFAULT_COURSES_EN: CourseItem[] = [
+  {
+    id: 'course-dropshipping-basic',
+    badge: 'Popular',
+    badgeType: 'popular',
+    title: 'Dropshipping Business Fundamentals',
+    description: 'Master dropshipping from scratch: product validation, reliable supplier vetting, and frictionless order fulfillment.',
+    date: '15 August 2025',
+    time: '7:00 PM - 9:00 PM',
+    originalPrice: 5000,
+    discountedPrice: 2999,
+    image: '/images/course_dropshipping_basic_1791567728755.jpg',
+    seatsTotal: 50,
+    seatsBooked: 42,
+  },
+  {
+    id: 'course-shopify-ecommerce',
+    badge: 'New',
+    badgeType: 'new',
+    title: 'E-Commerce & Shopify Store Mastery',
+    description: 'Build high-converting Shopify storefronts, theme design, integrated payment gateways, and backend inventory automation.',
+    date: '20 August 2025',
+    time: '8:00 PM - 10:00 PM',
+    originalPrice: 8000,
+    discountedPrice: 5999,
+    image: '/images/course_shopify_ecommerce_1791567740931.jpg',
+    seatsTotal: 40,
+    seatsBooked: 35,
+  },
+  {
+    id: 'course-digital-marketing',
+    badge: 'Upcoming',
+    badgeType: 'upcoming',
+    title: 'Digital Marketing & Meta Ads Blueprint',
+    description: 'High-converting Facebook Ads, Instagram funnels, creative angles, and systematic ROAS scaling methodologies.',
+    date: '27 August 2025',
+    time: '10:00 AM - 12:00 PM',
+    originalPrice: 6000,
+    discountedPrice: 3999,
+    image: '/images/course_digital_marketing_1791567751610.jpg',
+    seatsTotal: 45,
+    seatsBooked: 38,
+  },
+  {
+    id: 'course-web-crypto',
+    badge: 'Upcoming',
+    badgeType: 'upcoming',
+    title: 'Web Development & Technical Trading',
+    description: 'Learn modern web technology stacks alongside chart analysis, technical setups, and risk mitigation strategies.',
+    date: '5 September 2025',
+    time: '8:00 PM - 10:00 PM',
+    originalPrice: 7000,
+    discountedPrice: 4999,
+    image: '/images/course_web_crypto_1791567763194.jpg',
+    seatsTotal: 35,
+    seatsBooked: 29,
+  },
+];
+
+// ============================================================================
+// HERO SLIDER ITEMS
+// ============================================================================
+
+export interface HeroSlideItem {
+  id: string;
+  badge: string;
+  titlePrefix: string;
+  titleHighlight: string;
+  subtitle: string;
+  tags: { label: string; sub: string }[];
+  ctaText: string;
+  image: string;
+  floatingScriptText: string;
+}
+
+export const HERO_SLIDES_BN: HeroSlideItem[] = [
+  {
+    id: 'slide-1',
+    badge: 'শিখুন • শুরু করুন • এগিয়ে যান',
+    titlePrefix: 'ড্রপশিপিং ও ই-কমার্স',
+    titleHighlight: 'ব্যবসা শিখুন',
+    subtitle: 'ঘরে বসে অনলাইন ব্যবসা শুরু করুন। আমাদের প্রফেশনাল কোর্সের মাধ্যমে শিখুন ড্রপশিপিং, ই-কমার্স, মার্কেটিং এবং ডিজিটাল বিজনেসের সকল কৌশল।',
+    tags: [
+      { label: 'প্রফেশনাল ট্রেইনার', sub: 'Experienced Instructor' },
+      { label: 'লাইভ ক্লাস', sub: 'Online/Live' },
+      { label: '২৪/৭ সাপোর্ট', sub: 'Dedicated Helpdesk' },
+    ],
+    ctaText: 'কোর্স দেখুন ও রেজিস্ট্রেশন করুন',
+    image: '/images/hero_laptop_business_1791567717121.jpg',
+    floatingScriptText: 'শিখুন\nকাজ করুন\nনিজেকে গড়ুন',
+  },
+  {
+    id: 'slide-2',
+    badge: 'Shopify গ্লোবাল ব্যাচ • নতুন এনরোলমেন্ট',
+    titlePrefix: 'আন্তর্জাতিক মানের Shopify স্টোর',
+    titleHighlight: 'তৈরি ও স্কেলিং',
+    subtitle: 'উইনিং প্রোডাক্ট রিসার্চ থেকে শুরু করে প্রিমিয়াম Shopify স্টোরফ্রন্ট তৈরি, পেমেন্ট গেটওয়ে এবং অটোমেটেড কাস্টমার অর্ডারিং শিখুন।',
+    tags: [
+      { label: 'হ্যান্ডস-অন প্রজেক্ট', sub: 'Real Store Setup' },
+      { label: 'উইনিং প্রোডাক্ট লিস্ট', sub: 'Validated Niches' },
+      { label: 'সাপ্লায়ার স্ক্রিপ্ট', sub: 'Direct Verified Suppliers' },
+    ],
+    ctaText: 'Shopify কোর্স এনরোল করুন',
+    image: '/images/course_shopify_ecommerce_1791567740931.jpg',
+    floatingScriptText: 'নিজের\nস্বপ্নের ব্যবসা\nগড়ুন',
+  },
+  {
+    id: 'slide-3',
+    badge: 'পেইড ট্রাফিকের গোপন কৌশল • মেটা ও টিকটক',
+    titlePrefix: 'প্রফিটেবল অ্যাডস চালিয়ে',
+    titleHighlight: 'বিক্রি বহুগুণ করুন',
+    subtitle: 'Facebook, Instagram এবং TikTok বিজ্ঞাপনের মাধ্যমে সঠিক টার্গেটেড ক্রেতাদের কাছে পৌঁছান এবং উচ্চ ROAS অর্জন করুন।',
+    tags: [
+      { label: 'মেটা অ্যাডস ম্যানেজার', sub: 'Advanced Pixel & CAPI' },
+      { label: 'ব্রেক-ইভেন অডিট', sub: 'Zero Ad Wastage' },
+      { label: 'স্কেলিং ফর্মুলা', sub: '3.5x+ ROAS Target' },
+    ],
+    ctaText: 'মার্কেটিং কোর্স এনরোল করুন',
+    image: '/images/course_digital_marketing_1791567751610.jpg',
+    floatingScriptText: 'আপনার\nভবিষ্যৎ আপনার\nহাতে',
+  },
+  {
+    id: 'slide-4',
+    badge: 'উইনিং প্রোডাক্ট ও ফুলফিলমেন্ট • লাইভ ব্যাচ ০১',
+    titlePrefix: 'ড্রপশিপিং ব্যবসার',
+    titleHighlight: 'বাস্তব ফান্ডামেন্টালস',
+    subtitle: 'সাপ্লায়ার যাচাই, ব্রেক-ইভেন ক্যালকুলেটর ও কাস্টম প্যাকেজিং নিয়ে সরাসরি এক্সপার্টদের সাথে হাতে-কলমে প্র্যাকটিস।',
+    tags: [
+      { label: 'প্রাইভেট এজেন্ট', sub: 'Direct Factory Agents' },
+      { label: '৩.৫x মার্কআপ', sub: 'High Margin Rules' },
+      { label: '১২-পয়েন্ট স্কোরকার্ড', sub: 'Product Validation' },
+    ],
+    ctaText: 'ফান্ডামেন্টালস কোর্স দেখুন',
+    image: '/images/course_dropshipping_basic_1791567728755.jpg',
+    floatingScriptText: 'আজই\nশুরু করুন\nসাফল্য অর্জন করুন',
+  },
+];
+
+export const HERO_SLIDES_EN: HeroSlideItem[] = [
+  {
+    id: 'slide-1',
+    badge: 'Learn • Launch • Scale Profitably',
+    titlePrefix: 'Master Dropshipping &',
+    titleHighlight: 'E-Commerce Today',
+    subtitle: 'Build and launch your automated e-commerce store from home. Learn verified product sourcing, conversion storefronts, and paid customer acquisition.',
+    tags: [
+      { label: 'Experienced Instructor', sub: 'Field-tested Operators' },
+      { label: 'Live Online Labs', sub: 'Hands-on Interactive' },
+      { label: '24/7 Priority Support', sub: 'Always Accessible' },
+    ],
+    ctaText: 'View Courses & Register',
+    image: '/images/hero_laptop_business_1791567717121.jpg',
+    floatingScriptText: 'Learn\nExecute\nScale Up',
+  },
+  {
+    id: 'slide-2',
+    badge: 'Shopify Global Storefront Blueprint',
+    titlePrefix: 'Build High-Converting',
+    titleHighlight: 'Shopify Brands',
+    subtitle: 'Turn ideas into high-margin stores. Master storefront themes, global currency checkouts, and customer retention systems.',
+    tags: [
+      { label: 'Live Store Labs', sub: 'Real Architecture' },
+      { label: 'Validated Niches', sub: '12-point Scorecard' },
+      { label: 'Verified Suppliers', sub: 'Direct Factory Sourcing' },
+    ],
+    ctaText: 'Enroll in Shopify Course',
+    image: '/images/course_shopify_ecommerce_1791567740931.jpg',
+    floatingScriptText: 'Build\nYour Dream\nStore',
+  },
+  {
+    id: 'slide-3',
+    badge: 'Paid Acquisition & Meta Ads Scaling',
+    titlePrefix: 'Scale Sales Profitably',
+    titleHighlight: 'With Paid Traffic',
+    subtitle: 'Acquire high-intent customers on Meta and TikTok. Stop wasting ad budget and scale with scientific break-even unit economics.',
+    tags: [
+      { label: 'Ad Account Structure', sub: 'Targeting & Creatives' },
+      { label: 'Unit Economics', sub: 'Net Margin Discipline' },
+      { label: 'Scale Playbook', sub: '3.5x+ Target ROAS' },
+    ],
+    ctaText: 'Enroll in Ad Scaling Course',
+    image: '/images/course_digital_marketing_1791567751610.jpg',
+    floatingScriptText: 'Your Future\nIs In Your\nHands',
+  },
+  {
+    id: 'slide-4',
+    badge: 'Winning Products & Fulfillment • Live Cohort 01',
+    titlePrefix: 'Dropshipping Business',
+    titleHighlight: 'Core Fundamentals',
+    subtitle: 'Master product sourcing, break-even unit calculators, and tracked fast fulfillment with dedicated operational mentors.',
+    tags: [
+      { label: 'Direct Factory Agents', sub: 'Vetted Global 3PL' },
+      { label: '3.5x Markup Rule', sub: 'Margin Protection' },
+      { label: '12-Point Scorecard', sub: 'Systematic Filtering' },
+    ],
+    ctaText: 'Explore Fundamentals Course',
+    image: '/images/course_dropshipping_basic_1791567728755.jpg',
+    floatingScriptText: 'Start Today\nScale Tomorrow\nWin Long-Term',
+  },
+];
+
+// ============================================================================
+// WHY CHOOSE US (5 Core Pillars matching the user screenshot)
+// ============================================================================
+
+export interface WhyChooseUsItem {
+  id: string;
+  title: string;
+  description: string;
+  iconType: 'trainer' | 'recorded' | 'support' | 'certificate' | 'career';
+}
+
+export const WHY_CHOOSE_US_ITEMS_BN: WhyChooseUsItem[] = [
+  {
+    id: 'why-trainer',
+    title: 'প্রফেশনাল ট্রেইনার',
+    description: 'বাস্তব অভিজ্ঞতা সম্পন্ন ট্রেইনারদের থেকে হাতে-কলমে শিখুন।',
+    iconType: 'trainer',
+  },
+  {
+    id: 'why-recorded',
+    title: 'রেকর্ডেড ক্লাস',
+    description: 'যেকোনো সময় ক্লাস দেখার আজীবন সুবিধা পাবেন।',
+    iconType: 'recorded',
+  },
+  {
+    id: 'why-support',
+    title: 'লাইভ সাপোর্ট',
+    description: 'কোনো সমস্যায় আমরা সবসময় পাশে আছি।',
+    iconType: 'support',
+  },
+  {
+    id: 'why-certificate',
+    title: 'সার্টিফিকেট',
+    description: 'কোর্স সম্পন্ন হলে পাবেন অফিশিয়াল সার্টিফিকেট।',
+    iconType: 'certificate',
+  },
+  {
+    id: 'why-career',
+    title: 'ক্যারিয়ার সাপোর্ট',
+    description: 'বিজনেস শুরু করতে পাশাপাশি দিকনির্দেশনা পাবেন।',
+    iconType: 'career',
+  },
+];
+
+export const WHY_CHOOSE_US_ITEMS_EN: WhyChooseUsItem[] = [
+  {
+    id: 'why-trainer',
+    title: 'Professional Trainers',
+    description: 'Learn directly from active e-commerce and media buying practitioners.',
+    iconType: 'trainer',
+  },
+  {
+    id: 'why-recorded',
+    title: 'Recorded Classes',
+    description: 'Lifetime on-demand access to revisit recorded live lectures anytime.',
+    iconType: 'recorded',
+  },
+  {
+    id: 'why-support',
+    title: 'Live Support',
+    description: 'Dedicated support whenever you encounter store or campaign blockers.',
+    iconType: 'support',
+  },
+  {
+    id: 'why-certificate',
+    title: 'Official Certificate',
+    description: 'Accredited certificate upon successful coursework and project validation.',
+    iconType: 'certificate',
+  },
+  {
+    id: 'why-career',
+    title: 'Career & Launch Support',
+    description: 'Strategic mentorship to turn your coursework into a self-sustaining business.',
+    iconType: 'career',
+  },
+];
+
+export function getCourses(lang: Language) {
+  return lang === 'bn' ? DEFAULT_COURSES_BN : DEFAULT_COURSES_EN;
+}
+
+export function getHeroSlides(lang: Language) {
+  return lang === 'bn' ? HERO_SLIDES_BN : HERO_SLIDES_EN;
+}
+
+export function getWhyChooseUsItems(lang: Language) {
+  return lang === 'bn' ? WHY_CHOOSE_US_ITEMS_BN : WHY_CHOOSE_US_ITEMS_EN;
+}
+
 export function getToolCategories(lang: Language) {
   return lang === 'bn' ? TOOL_CATEGORIES_BN : TOOL_CATEGORIES_EN;
 }
@@ -618,3 +1006,6 @@ export const FEATURED_RESULTS = FEATURED_RESULTS_BN;
 export const CURRICULUM_TABS = CURRICULUM_TABS_BN;
 export const TESTIMONIALS = TESTIMONIALS_BN;
 export const FAQ_ITEMS = FAQ_ITEMS_BN;
+export const COURSES = DEFAULT_COURSES_BN;
+export const HERO_SLIDES = HERO_SLIDES_BN;
+export const WHY_CHOOSE_US_ITEMS = WHY_CHOOSE_US_ITEMS_BN;

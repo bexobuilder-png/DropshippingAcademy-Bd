@@ -153,3 +153,22 @@ create policy "Authorized admins can manage site content"
     lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com')
   );
 
+-- ============================================================================
+-- 4. Enable Supabase Realtime Replication for instant client updates
+-- ============================================================================
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'site_content') then
+    alter publication supabase_realtime add table public.site_content;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'founders') then
+    alter publication supabase_realtime add table public.founders;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'waitlist') then
+    alter publication supabase_realtime add table public.waitlist;
+  end if;
+exception
+  when undefined_object then
+    null;
+end $$;
+

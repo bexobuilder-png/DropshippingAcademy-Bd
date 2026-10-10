@@ -28,11 +28,13 @@ export const Button: React.FC<ButtonProps> = ({
       : 'min-h-[44px] px-5 py-2.5 text-[13px]';
 
   const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
-    primary: 'bg-[#171412] text-[#fbf9ef] hover:bg-[#2c2623]',
-    orange: 'bg-[#ff7722] text-[#171412] hover:bg-[#ff883d] border border-[#171412]',
+    primary:
+      'bg-[#00d27a] text-[#070f1a] hover:bg-[#00ba6c] font-extrabold shadow-md shadow-[#00d27a]/25',
+    orange:
+      'bg-[#ff7722] text-[#070f1a] hover:bg-[#ff883d] font-extrabold shadow-md shadow-[#ff7722]/25',
     outline:
-      'bg-transparent text-[#171412] border border-[#171412] hover:bg-[#f2f0e7]',
-    ghost: 'bg-transparent text-[#171412] hover:bg-[#f2f0e7]',
+      'bg-transparent text-white border border-white/20 hover:bg-white/10 hover:border-white/40 font-bold',
+    ghost: 'bg-transparent text-slate-300 hover:text-white hover:bg-white/10 font-bold',
   };
 
   return (

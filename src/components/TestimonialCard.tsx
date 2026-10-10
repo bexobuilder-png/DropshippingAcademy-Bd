@@ -28,57 +28,34 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ item }) => {
       whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
-      className={`snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-full rounded-[12px] bg-[#fff] text-[#171412] p-6 border-2 border-[#171412] flex flex-col justify-between transition-transform duration-200 ease-out transform ${rotationClass} hover:rotate-0 focus-visible:rotate-0 hover:z-10`}
+      className={`snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-full rounded-[20px] bg-[#0d1e33] text-white p-6 border border-white/10 hover:border-[#00d27a]/40 shadow-lg hover:shadow-[#00d27a]/10 flex flex-col justify-between transition-all duration-200 ease-out transform ${rotationClass} hover:rotate-0 focus-visible:rotate-0 hover:z-10`}
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-4">
           <StarRatingSvg count={5} className="w-4 h-4" />
-          <span className="text-[12px] text-[#813502] font-bold">
+          <span className="text-[12px] text-[#00d27a] font-bold px-2.5 py-0.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30">
             {item.isPlaceholder
               ? t('প্রিভিউ মতামত', 'Preview Feedback')
               : item.tag}
           </span>
         </div>
 
-        <blockquote className="text-[16px] text-[#171412] font-medium leading-[1.35] mb-6">
-          {item.quote}
+        <blockquote className="text-[15px] sm:text-[16px] text-slate-300 font-medium leading-[1.5] mb-6">
+          "{item.quote}"
         </blockquote>
       </div>
 
-      <div className="pt-4 border-t border-[#171412]/12 flex items-center gap-3">
-        {/* SVG Initials Circle Avatar */}
-        <svg
-          viewBox="0 0 40 40"
-          fill="none"
-          className="w-10 h-10 shrink-0"
-          aria-hidden="true"
-        >
-          <circle
-            cx="20"
-            cy="20"
-            r="19"
-            fill={item.accentBg}
-            stroke="#171412"
-            strokeWidth="2"
-          />
-          <text
-            x="20"
-            y="24.5"
-            textAnchor="middle"
-            fill={item.accentBg === '#3d2fa9' ? '#fbf9ef' : '#171412'}
-            fontSize="13"
-            fontWeight="800"
-            fontFamily="Bricolage Grotesque, sans-serif"
-          >
-            {item.initials}
-          </text>
-        </svg>
+      <div className="pt-4 border-t border-white/10 flex items-center gap-3">
+        {/* Initials Circle Avatar */}
+        <div className="w-10 h-10 rounded-full bg-[#00d27a]/20 border border-[#00d27a]/40 text-[#00d27a] flex items-center justify-center font-display font-extrabold text-[14px] shrink-0">
+          {item.initials}
+        </div>
 
         <div className="min-w-0">
-          <div className="font-display text-[15px] font-extrabold text-[#171412] truncate">
+          <div className="font-display text-[15px] font-extrabold text-white truncate">
             {item.author}
           </div>
-          <div className="text-[12px] text-[#171412]/75 truncate">
+          <div className="text-[12px] text-slate-400 truncate">
             {item.role} <span aria-hidden="true">·</span> {item.tag}
           </div>
         </div>

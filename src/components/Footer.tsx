@@ -1,109 +1,86 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { BrandBadgeMark } from './svg/BrandLogo';
-import {
-  SocialIconInstagram,
-  SocialIconLinkedin,
-  SocialIconX,
-  SocialIconYoutube,
-} from './svg/NavIcons';
+import { DropshippingAcademyBdLogo } from './svg/BrandLogo';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
-  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#f2f0e7] text-[#171412] hairline-t pb-16 xl:pb-0">
-      <div className="specimen-container py-12 md:py-16">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 hairline-b">
+    <footer className="bg-[#08121e] text-white border-t border-white/10 pb-20 md:pb-8">
+      <div className="specimen-container py-10 md:py-14">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
           {/* Logo & Brand Wordmark */}
-          <Link to="/" className="inline-flex items-center gap-3.5 group">
-            <BrandBadgeMark className="w-11 h-11" decorative={true} />
-            <div>
-              <div className="font-display text-[20px] font-extrabold tracking-[-0.02em] text-[#171412]">
-                {t('ড্রপশিপিং একাডেমি', 'Dropshipping Academy')}
-              </div>
-              <p className="text-[13px] text-[#171412]/80 mt-0.5">
-                {t(
-                  'বাস্তবসম্মত ই-কমার্স ইউনিট ইকোনমিক্স, স্টোর ডিজাইন এবং পেইড সোশ্যাল অ্যাডস।',
-                  'Practical e-commerce unit economics, store architecture & paid social.'
-                )}
-              </p>
-            </div>
+          <Link to="/" className="inline-flex items-center gap-2 group">
+            <DropshippingAcademyBdLogo isDark={true} className="h-10" />
           </Link>
 
-          {/* Navigation & Legal Links */}
+          {/* Navigation Links */}
           <nav
-            aria-label="Footer legal and support links"
-            className="flex flex-wrap items-center gap-6 text-[14px] font-bold text-[#171412]"
+            aria-label="Footer links"
+            className="flex flex-wrap items-center justify-center gap-6 text-[14px] font-semibold text-white/80"
           >
-            <Link
-              to="/join"
-              className="min-h-[44px] inline-flex items-center hover:underline underline-offset-4"
-            >
-              {t('ওয়েটলিস্টে যুক্ত হোন', 'Join Waitlist')}
-            </Link>
-            <Link
-              to="/terms"
-              className="min-h-[44px] inline-flex items-center hover:underline underline-offset-4"
-            >
-              {t('শর্তাবলী', 'Terms')}
-            </Link>
-            <Link
-              to="/privacy"
-              className="min-h-[44px] inline-flex items-center hover:underline underline-offset-4"
-            >
-              {t('গোপনীয়তা নীতি', 'Privacy')}
-            </Link>
-            <a
-              href="mailto:support@dropshippingacademy.io"
-              className="min-h-[44px] inline-flex items-center hover:underline underline-offset-4"
-            >
+            <a href="#hero" className="hover:text-[#00d27a] transition-colors">
+              {t('হোম', 'Home')}
+            </a>
+            <a href="#results" className="hover:text-[#00d27a] transition-colors">
+              {t('নির্বাচিত ফলাফল', 'Results')}
+            </a>
+            <a href="#about" className="hover:text-[#00d27a] transition-colors">
+              {t('আমাদের সম্পর্কে', 'About Us')}
+            </a>
+            <a href="#contact" className="hover:text-[#00d27a] transition-colors">
               {t('যোগাযোগ', 'Contact')}
             </a>
+            <Link to="/check" className="hover:text-[#00d27a] transition-colors opacity-75">
+              {t('অ্যাডমিন পোর্টাল', 'Admin')}
+            </Link>
           </nav>
-        </div>
 
-        {/* Bottom Row: Copyright & Hand-built SVG Social Icons */}
-        <div className="pt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[13px] text-[#171412]/80">
-          <p>
-            {t(
-              `© ${currentYear} ড্রপশিপিং একাডেমি। সর্বস্বত্ব সংরক্ষিত।`,
-              `© ${currentYear} Dropshipping Academy. All rights reserved.`
-            )}
-          </p>
-
-          <div className="flex items-center gap-2">
+          {/* Social Icons (Facebook, YouTube, TikTok) matching screenshot */}
+          <div className="flex items-center gap-3">
             <a
-              href="#hero"
-              aria-label="Dropshipping Academy on X (Twitter)"
-              className="w-11 h-11 rounded-full border border-[#171412]/20 flex items-center justify-center text-[#171412] hover:bg-[#171412] hover:text-[#fbf9ef] transition-colors"
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#10b981] hover:text-[#08121e] text-white flex items-center justify-center transition-all"
             >
-              <SocialIconX className="w-4 h-4" />
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
             </a>
             <a
-              href="#hero"
-              aria-label="Dropshipping Academy on Instagram"
-              className="w-11 h-11 rounded-full border border-[#171412]/20 flex items-center justify-center text-[#171412] hover:bg-[#171412] hover:text-[#fbf9ef] transition-colors"
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#10b981] hover:text-[#08121e] text-white flex items-center justify-center transition-all"
             >
-              <SocialIconInstagram className="w-4 h-4" />
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
             </a>
             <a
-              href="#hero"
-              aria-label="Dropshipping Academy on YouTube"
-              className="w-11 h-11 rounded-full border border-[#171412]/20 flex items-center justify-center text-[#171412] hover:bg-[#171412] hover:text-[#fbf9ef] transition-colors"
+              href="https://tiktok.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TikTok"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#10b981] hover:text-[#08121e] text-white flex items-center justify-center transition-all"
             >
-              <SocialIconYoutube className="w-4 h-4" />
-            </a>
-            <a
-              href="#hero"
-              aria-label="Dropshipping Academy on LinkedIn"
-              className="w-11 h-11 rounded-full border border-[#171412]/20 flex items-center justify-center text-[#171412] hover:bg-[#171412] hover:text-[#fbf9ef] transition-colors"
-            >
-              <SocialIconLinkedin className="w-4 h-4" />
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+              </svg>
             </a>
           </div>
+        </div>
+
+        {/* Bottom Row: Copyright & Tagline */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] sm:text-[13px] text-white/60 text-center sm:text-left">
+          <p>© 2025 Dropshipping Academy BD. All Rights Reserved.</p>
+          <p className="font-bold text-[#10b981] tracking-wide">
+            {t('শিখুন | কাজ করুন | সফল হোন', 'Learn | Execute | Succeed')}
+          </p>
         </div>
       </div>
     </footer>

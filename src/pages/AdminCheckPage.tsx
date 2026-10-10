@@ -37,6 +37,12 @@ import {
   TESTIMONIALS_EN,
   TOOL_CATEGORIES_BN,
   TOOL_CATEGORIES_EN,
+  HERO_SLIDES_BN,
+  HERO_SLIDES_EN,
+  HeroSlideItem,
+  WHY_CHOOSE_US_ITEMS_BN,
+  WHY_CHOOSE_US_ITEMS_EN,
+  WhyChooseUsItem,
   ToolCategoryItem,
   BentoResultItem,
   CurriculumTabItem,
@@ -113,8 +119,12 @@ export const AdminCheckPage: React.FC = () => {
   // Control Center active tab
   const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content'>('waitlist');
   const [contentLang, setContentLang] = useState<'bn' | 'en'>('bn');
-  const [contentSubTab, setContentSubTab] = useState<'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'>('bento');
+  const [contentSubTab, setContentSubTab] = useState<
+    'slider' | 'why-choose' | 'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'
+  >('slider');
 
+  const [adminHeroSlides, setAdminHeroSlides] = useState<HeroSlideItem[]>(HERO_SLIDES_BN);
+  const [adminWhyChoose, setAdminWhyChoose] = useState<WhyChooseUsItem[]>(WHY_CHOOSE_US_ITEMS_BN);
   const [adminTools, setAdminTools] = useState<ToolCategoryItem[]>(TOOL_CATEGORIES_BN);
   const [adminBento, setAdminBento] = useState<BentoResultItem[]>(FEATURED_RESULTS_BN);
   const [adminCurriculum, setAdminCurriculum] = useState<CurriculumTabItem[]>(CURRICULUM_TABS_BN);
@@ -127,12 +137,16 @@ export const AdminCheckPage: React.FC = () => {
     if (!adminEmail) return;
     const langKey = contentLang;
     Promise.all([
+      fetchSiteSectionContent(`hero_slides_${langKey}`, langKey === 'bn' ? HERO_SLIDES_BN : HERO_SLIDES_EN),
+      fetchSiteSectionContent(`why_choose_us_${langKey}`, langKey === 'bn' ? WHY_CHOOSE_US_ITEMS_BN : WHY_CHOOSE_US_ITEMS_EN),
       fetchSiteSectionContent(`tool_categories_${langKey}`, langKey === 'bn' ? TOOL_CATEGORIES_BN : TOOL_CATEGORIES_EN),
       fetchSiteSectionContent(`featured_results_${langKey}`, langKey === 'bn' ? FEATURED_RESULTS_BN : FEATURED_RESULTS_EN),
       fetchSiteSectionContent(`curriculum_tabs_${langKey}`, langKey === 'bn' ? CURRICULUM_TABS_BN : CURRICULUM_TABS_EN),
       fetchSiteSectionContent(`testimonials_${langKey}`, langKey === 'bn' ? TESTIMONIALS_BN : TESTIMONIALS_EN),
       fetchSiteSectionContent(`faq_items_${langKey}`, langKey === 'bn' ? FAQ_ITEMS_BN : FAQ_ITEMS_EN),
-    ]).then(([toolsData, bentoData, currData, testData, faqData]) => {
+    ]).then(([slidesData, whyData, toolsData, bentoData, currData, testData, faqData]) => {
+      setAdminHeroSlides(slidesData);
+      setAdminWhyChoose(whyData);
       setAdminTools(toolsData);
       setAdminBento(bentoData);
       setAdminCurriculum(currData);
@@ -144,7 +158,9 @@ export const AdminCheckPage: React.FC = () => {
   const handleSaveSectionData = async (sectionBaseKey: string, data: any) => {
     setIsSavingSection(true);
     setSiteContentNotice('');
-    const fullKey = `${sectionBaseKey}_${contentLang}`;
+    const fullKey = sectionBaseKey.endsWith(`_${contentLang}`)
+      ? sectionBaseKey
+      : `${sectionBaseKey}_${contentLang}`;
     const res = await saveSiteSectionContent(fullKey, data);
     setIsSavingSection(false);
     if (!res.success) {
@@ -152,8 +168,8 @@ export const AdminCheckPage: React.FC = () => {
     } else {
       setSiteContentNotice(
         t(
-          `"${sectionBaseKey}" (${contentLang.toUpperCase()}) সফলভাবে সংরক্ষণ করা হয়েছে এবং সমস্ত ডিভাইসে সিঙ্ক হয়েছে!`,
-          `Successfully saved "${sectionBaseKey}" (${contentLang.toUpperCase()}) & synced across all devices!`
+          `"${fullKey}" (${contentLang.toUpperCase()}) সফলভাবে সংরক্ষণ করা হয়েছে এবং সমস্ত ডিভাইসে সিঙ্ক হয়েছে!`,
+          `Successfully saved "${fullKey}" (${contentLang.toUpperCase()}) & synced across all devices!`
         )
       );
       window.dispatchEvent(new Event('site-content-updated'));
@@ -1868,7 +1884,9 @@ export const AdminCheckPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2 border-b border-[#171412]/15 pb-4">
               {(
                 [
-                  { id: 'bento', labelBn: 'বেন্টো ফিচার কার্ড', labelEn: 'Bento Features' },
+                  { id: 'slider', labelBn: 'হিরো স্লাইডার', labelEn: 'Hero Slider' },
+                  { id: 'why-choose', labelBn: 'কেন বেছে নেবেন', labelEn: 'Why Choose Us' },
+                  { id: 'bento', labelBn: 'নির্বাচিত ফলাফল (বেন্টো)', labelEn: 'Featured Results' },
                   { id: 'curriculum', labelBn: 'কারিকুলাম মডিউল', labelEn: 'Curriculum' },
                   { id: 'testimonials', labelBn: 'ছাত্র মতামত', labelEn: 'Testimonials' },
                   { id: 'faq', labelBn: 'সাধারণ জিজ্ঞাসা', labelEn: 'FAQs' },
@@ -1888,6 +1906,202 @@ export const AdminCheckPage: React.FC = () => {
                 </button>
               ))}
             </div>
+
+            {/* 0. Hero Slider Editor */}
+            {contentSubTab === 'slider' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                      হিরো স্লাইডার ব্যবস্থাপনা ({contentLang.toUpperCase()})
+                    </h3>
+                    <p className="text-[13px] text-[#813502] font-semibold mt-0.5">
+                      ওয়েবসাইটে ঢোকার সাথে সাথে দৃশ্যমান স্লাইডার কন্টেন্ট ও ছবি এডিট করুন
+                    </p>
+                  </div>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`hero_slides_${contentLang}`, adminHeroSlides)}
+                  >
+                    Save & Sync Hero Slides
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {adminHeroSlides.map((slide, index) => (
+                    <div
+                      key={slide.id || `slide-${index}`}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
+                        <span>Slide #{index + 1} ({slide.id})</span>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={slide.image}
+                            alt=""
+                            className="w-10 h-8 object-cover rounded border border-[#171412]/30"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = '/images/hero_laptop_business_1791567717121.jpg';
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Input
+                          id={`slide-badge-${index}`}
+                          label="Badge / Kicker"
+                          value={slide.badge}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, badge: val } : s))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`slide-prefix-${index}`}
+                          label="Title Prefix"
+                          value={slide.titlePrefix}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, titlePrefix: val } : s))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`slide-highlight-${index}`}
+                          label="Title Highlight (Orange)"
+                          value={slide.titleHighlight}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, titleHighlight: val } : s))
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[14px] font-bold text-[#171412]">Subtitle / Description</label>
+                        <textarea
+                          rows={2}
+                          value={slide.subtitle}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, subtitle: val } : s))
+                            );
+                          }}
+                          className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/25 text-[14px]"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Input
+                          id={`slide-image-${index}`}
+                          label="Image URL or Asset Path"
+                          value={slide.image}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, image: val } : s))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`slide-cta-${index}`}
+                          label="CTA Button Label"
+                          value={slide.ctaText}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, ctaText: val } : s))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`slide-script-${index}`}
+                          label="Script Overlay Text"
+                          value={slide.floatingScriptText || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminHeroSlides((prev) =>
+                              prev.map((s, i) => (i === index ? { ...s, floatingScriptText: val } : s))
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 0.5. Why Choose Us Editor */}
+            {contentSubTab === 'why-choose' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-[22px] font-extrabold text-[#171412]">
+                      কেন বেছে নেবেন (৫টি মূল স্তম্ভ) ({contentLang.toUpperCase()})
+                    </h3>
+                    <p className="text-[13px] text-[#813502] font-semibold mt-0.5">
+                      হিরো স্লাইডারের নিচে প্রদর্শিত ৫টি ফিচার কার্ড পরিচালনা করুন
+                    </p>
+                  </div>
+                  <Button
+                    variant="orange"
+                    isLoading={isSavingSection}
+                    loadingText="Saving..."
+                    onClick={() => handleSaveSectionData(`why_choose_us_${contentLang}`, adminWhyChoose)}
+                  >
+                    Save & Sync Why Choose Us
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {adminWhyChoose.map((item, index) => (
+                    <div
+                      key={item.id || `why-${index}`}
+                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
+                        <span>Pillar #{index + 1} ({item.id})</span>
+                        <span>Icon: {item.iconType}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          id={`why-title-${index}`}
+                          label="Pillar Title"
+                          value={item.title}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminWhyChoose((prev) =>
+                              prev.map((w, i) => (i === index ? { ...w, title: val } : w))
+                            );
+                          }}
+                        />
+                        <Input
+                          id={`why-desc-${index}`}
+                          label="Description"
+                          value={item.description}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminWhyChoose((prev) =>
+                              prev.map((w, i) => (i === index ? { ...w, description: val } : w))
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 1. Bento Features Editor */}
             {contentSubTab === 'bento' && (

@@ -1,23 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fbf9ef;
-  --bg-d: #f2f0e7;
-  --bg-darker: #ebe9df;
-  --base: #171412;
-  --grey: #8e827c;
-  --muted: #c6b2a6;
-  --orange: #ff7722;
-  --orange-soft: #fbc59d;
-  --brown: #813502;
-  --yellow: #ffc765;
-  --purple: #3d2fa9;
-  --red: #ff3c34;
-  --white: #fff;
-  --gradient-base: #eee1d7;
-
-  --ease-primary: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-secondary: cubic-bezier(0.36, 0.33, 0, 1);
+  --bg: #070f1a;
+  --bg-card: #0d1e33;
+  --bg-surface: #0a1626;
+  --bg-hover: #122844;
+  --base: #ffffff;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --primary: #00d27a;
+  --primary-hover: #00ba6c;
+  --primary-glow: rgba(0, 210, 122, 0.25);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-glow: rgba(0, 210, 122, 0.3);
 
   --font-display: "Bricolage Grotesque", "Noto Sans Bengali", "Hind Siliguri", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "Instrument Sans", "Hind Siliguri", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -35,6 +30,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
+    color-scheme: dark;
   }
 
   body {
@@ -44,9 +40,9 @@
     overflow-x: clip;
   }
 
-  /* Focus ring contract: 2px solid --orange, 2px offset */
+  /* Focus ring contract: 2px solid --primary */
   *:focus-visible {
-    outline: 2px solid var(--orange) !important;
+    outline: 2px solid var(--primary) !important;
     outline-offset: 2px !important;
   }
 }
@@ -109,17 +105,17 @@
   }
 }
 
-/* Hairline Swiss border */
+/* Subtle modern dark borders */
 .hairline-t {
-  border-top: 1px solid rgba(23, 20, 18, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hairline-b {
-  border-bottom: 1px solid rgba(23, 20, 18, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hairline-border {
-  border: 1px solid rgba(23, 20, 18, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Hide scrollbar for mobile snap carousels while keeping accessibility */
