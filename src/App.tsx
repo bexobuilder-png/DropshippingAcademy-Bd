@@ -60,12 +60,12 @@ export default function App() {
           {/* Accessible Skip-to-Content Link */}
           <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:rounded-[50px] focus:bg-[#00d27a] focus:text-[#070f1a] focus:text-[13px] focus:font-bold"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:rounded-[50px] focus:bg-[#ff7722] focus:text-[#171412] focus:text-[13px] focus:font-bold"
           >
             Skip to main content
           </a>
 
-          <div className="min-h-screen flex flex-col bg-[#070f1a] text-white pb-16 sm:pb-0 selection:bg-[#00d27a] selection:text-[#070f1a]">
+          <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412] pb-16 sm:pb-0 selection:bg-[#ff7722] selection:text-[#171412]">
             <Navigation />
             <div className="flex-1">
               <Suspense
@@ -73,9 +73,9 @@ export default function App() {
                   <div
                     role="status"
                     aria-live="polite"
-                    className="py-24 text-center font-display text-[18px] font-bold text-white flex items-center justify-center gap-3"
+                    className="py-24 text-center font-display text-[18px] font-bold text-[#171412] flex items-center justify-center gap-3"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#00d27a] animate-ping"></span>
+                    <span className="w-3 h-3 rounded-full bg-[#ff7722] animate-ping"></span>
                     <span>লোড হচ্ছে...</span>
                   </div>
                 }

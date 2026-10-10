@@ -94,11 +94,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full rounded-[20px] sm:rounded-[28px] bg-gradient-to-br from-[#0a1829] via-[#08121e] to-[#040911] border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-hidden focus:outline-none"
+      className="relative w-full rounded-[20px] sm:rounded-[28px] bg-[#f2f0e7] border-2 border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden focus:outline-none"
     >
-      {/* Background Emerald Ambient Glow */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#00d27a]/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#00d27a]/5 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Background Warm Ambient Glow */}
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#ff7722]/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#ffc765]/25 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Main Slide Card Container */}
       <div className="p-6 sm:p-10 lg:p-14 relative z-10">
@@ -109,35 +109,35 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
             {/* Kicker Pill */}
             {currentSlide.badge && (
               <div className="flex items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold tracking-wide">
-                  <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#fbf9ef] border border-[#171412]/25 text-[#813502] text-[12px] sm:text-[13px] font-extrabold tracking-wide">
+                  <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
                   <span>{currentSlide.badge}</span>
                 </span>
               </div>
             )}
 
-            {/* Giant Title matching screenshot */}
-            <h1 className="font-display text-[32px] sm:text-[46px] lg:text-[56px] font-extrabold text-white leading-[1.08] tracking-[-0.03em] mb-5">
+            {/* Giant Title */}
+            <h1 className="font-display text-[32px] sm:text-[46px] lg:text-[56px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em] mb-5">
               {currentSlide.titlePrefix}{' '}
-              <span className="text-[#00d27a] block sm:inline">
+              <span className="text-[#ff7722] block sm:inline">
                 {currentSlide.titleHighlight}
               </span>
             </h1>
 
             {/* Subtitle / Description */}
-            <p className="text-[15px] sm:text-[17px] font-medium text-slate-300 leading-[1.6] max-w-[52ch] mb-7">
+            <p className="text-[15px] sm:text-[17px] font-medium text-[#171412]/80 leading-[1.6] max-w-[52ch] mb-7">
               {currentSlide.subtitle}
             </p>
 
-            {/* 3 Core Pill Tags matching screenshot */}
+            {/* 3 Core Pill Tags */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
               {currentSlide.tags && currentSlide.tags.length > 0 ? (
                 currentSlide.tags.map((tag, idx) => (
                   <div
                     key={`tag-${idx}`}
-                    className="p-3 rounded-[12px] bg-[#0d1e33]/80 border border-white/10 hover:border-[#00d27a]/40 transition-all flex items-center gap-3"
+                    className="p-3 rounded-[12px] bg-[#fbf9ef] border border-[#171412]/20 hover:border-[#ff7722] transition-all flex items-center gap-3"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#00d27a]/20 text-[#00d27a] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#ff7722]/15 text-[#813502] flex items-center justify-center shrink-0">
                       {idx === 0 ? (
                         <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -153,10 +153,10 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-[13px] font-bold text-white leading-tight truncate">
+                      <span className="text-[13px] font-bold text-[#171412] leading-tight truncate">
                         {tag.label}
                       </span>
-                      <span className="text-[11px] text-[#00d27a] font-semibold mt-0.5 truncate">
+                      <span className="text-[11px] text-[#813502] font-semibold mt-0.5 truncate">
                         {tag.sub}
                       </span>
                     </div>
@@ -170,15 +170,15 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
               <button
                 type="button"
                 onClick={onCtaClick}
-                className="px-8 py-4 rounded-[50px] bg-[#00d27a] hover:bg-[#00ba6c] text-[#08121e] font-display text-[15px] sm:text-[16px] font-extrabold shadow-lg shadow-[#00d27a]/25 hover:shadow-[#00d27a]/40 transition-all cursor-pointer inline-flex items-center gap-2.5 active:scale-95"
+                className="px-8 py-4 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-display text-[15px] sm:text-[16px] font-extrabold shadow-[4px_4px_0px_#171412] transition-all cursor-pointer inline-flex items-center gap-2.5 active:scale-95"
               >
                 <span>{currentSlide.ctaText || t('কোর্স দেখুন ও রেজিস্ট্রেশন করুন', 'Explore Course & Register')}</span>
-                <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#08121e]" />
+                <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#171412]" />
               </button>
 
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[50px] bg-white/10 border border-white/15 text-[12px] font-extrabold text-white tabular-nums">
-                <span className="text-[#00d27a]">0{currentIndex + 1}</span>
-                <span className="text-white/40">/</span>
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[50px] bg-[#fbf9ef] border border-[#171412]/25 text-[12px] font-extrabold text-[#171412] tabular-nums">
+                <span className="text-[#813502]">0{currentIndex + 1}</span>
+                <span className="text-[#171412]/40">/</span>
                 <span>0{total}</span>
               </div>
             </div>
@@ -186,7 +186,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
 
           {/* Right Column: Visual Media Showcase with Floating Cursive Script */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-[20px] overflow-hidden border border-white/15 shadow-2xl bg-[#06101c] group">
+            <div className="relative rounded-[20px] overflow-hidden border-2 border-[#171412] shadow-lg bg-[#171412] group">
               <div className="relative aspect-[4/3] sm:aspect-[16/11] w-full overflow-hidden">
                 <img
                   src={currentSlide.image}
@@ -198,17 +198,17 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
                   }}
                 />
 
-                {/* Subtle dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#08121e]/90 via-transparent to-transparent pointer-events-none"></div>
+                {/* Subtle warm dark gradient overlay for media contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#171412]/80 via-transparent to-transparent pointer-events-none"></div>
 
                 {/* Live Cohort Badge */}
-                <div className="absolute top-3.5 left-3.5 px-3 py-1 rounded-[50px] bg-[#08121e]/85 text-white text-[11px] font-extrabold tracking-wide border border-[#00d27a]/40 backdrop-blur-md flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+                <div className="absolute top-3.5 left-3.5 px-3 py-1 rounded-[50px] bg-[#fbf9ef]/95 text-[#171412] text-[11px] font-extrabold tracking-wide border border-[#171412] backdrop-blur-md flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
                   <span>{t('লাইভ ব্যাচ ০১', 'Live Cohort 01')}</span>
                 </div>
 
-                {/* Floating Handwritten Script matching screenshot */}
-                <div className="absolute top-3.5 right-3.5 text-right font-display font-extrabold text-[14px] sm:text-[16px] text-[#00d27a] leading-tight drop-shadow-md bg-[#08121e]/75 px-3.5 py-2 rounded-[12px] border border-[#00d27a]/30 backdrop-blur-md whitespace-pre-line select-none">
+                {/* Floating Script Tag */}
+                <div className="absolute top-3.5 right-3.5 text-right font-display font-extrabold text-[14px] sm:text-[16px] text-[#171412] leading-tight shadow-md bg-[#ffc765]/95 px-3.5 py-2 rounded-[12px] border border-[#171412] backdrop-blur-md whitespace-pre-line select-none">
                   {currentSlide.floatingScriptText || 'শিখুন\nকাজ করুন\nনিজেকে গড়ুন'}
                 </div>
               </div>
@@ -218,7 +218,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
       </div>
 
       {/* Bottom Control Bar: Prev / Next buttons & Pagination Dots */}
-      <div className="px-6 sm:px-10 py-3.5 bg-[#050c14]/90 border-t border-white/10 flex items-center justify-between gap-4">
+      <div className="px-6 sm:px-10 py-3.5 bg-[#ebe8dc] border-t border-[#171412]/15 flex items-center justify-between gap-4">
         {/* Pagination Dots */}
         <div
           role="tablist"
@@ -237,8 +237,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
                 onClick={() => goToSlide(idx)}
                 className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                   isActive
-                    ? 'w-8 bg-[#00d27a] shadow-[0_0_10px_#00d27a]'
-                    : 'w-2.5 bg-white/30 hover:bg-white/60'
+                    ? 'w-8 bg-[#ff7722] border border-[#171412]'
+                    : 'w-2.5 bg-[#171412]/25 hover:bg-[#171412]/50'
                 }`}
               />
             );
@@ -251,7 +251,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
             type="button"
             onClick={prevSlide}
             aria-label={t('পূর্ববর্তী স্লাইড', 'Previous slide')}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#00d27a] hover:text-[#08121e] text-white border border-white/15 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="w-9 h-9 rounded-full bg-[#fbf9ef] hover:bg-[#ff7722] text-[#171412] border border-[#171412]/25 flex items-center justify-center transition-all cursor-pointer active:scale-95"
           >
             <svg
               className="w-4 h-4"
@@ -268,7 +268,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
             type="button"
             onClick={nextSlide}
             aria-label={t('পরবর্তী স্লাইড', 'Next slide')}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#00d27a] hover:text-[#08121e] text-white border border-white/15 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="w-9 h-9 rounded-full bg-[#fbf9ef] hover:bg-[#ff7722] text-[#171412] border border-[#171412]/25 flex items-center justify-center transition-all cursor-pointer active:scale-95"
           >
             <svg
               className="w-4 h-4"

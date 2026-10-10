@@ -1,18 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #070f1a;
-  --bg-card: #0d1e33;
-  --bg-surface: #0a1626;
-  --bg-hover: #122844;
-  --base: #ffffff;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
-  --primary: #00d27a;
-  --primary-hover: #00ba6c;
-  --primary-glow: rgba(0, 210, 122, 0.25);
-  --border: rgba(255, 255, 255, 0.1);
-  --border-glow: rgba(0, 210, 122, 0.3);
+  --bg: #fbf9ef;
+  --bg-card: #f2f0e7;
+  --bg-surface: #ffffff;
+  --bg-hover: #ebe8dc;
+  --base: #171412;
+  --text-muted: rgba(23, 20, 18, 0.75);
+  --text-dim: rgba(23, 20, 18, 0.55);
+  --primary: #ff7722;
+  --primary-hover: #e56310;
+  --primary-glow: rgba(255, 119, 34, 0.25);
+  --accent-brown: #813502;
+  --accent-yellow: #ffc765;
+  --accent-peach: #fbc59d;
+  --accent-purple: #3d2fa9;
+  --border: rgba(23, 20, 18, 0.14);
+  --border-glow: rgba(255, 119, 34, 0.35);
 
   --font-display: "Bricolage Grotesque", "Noto Sans Bengali", "Hind Siliguri", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "Instrument Sans", "Hind Siliguri", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -30,7 +34,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
@@ -105,17 +109,17 @@
   }
 }
 
-/* Subtle modern dark borders */
+/* Subtle editorial borders */
 .hairline-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(23, 20, 18, 0.12);
 }
 
 .hairline-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(23, 20, 18, 0.12);
 }
 
 .hairline-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(23, 20, 18, 0.12);
 }
 
 /* Hide scrollbar for mobile snap carousels while keeping accessibility */

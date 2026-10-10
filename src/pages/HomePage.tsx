@@ -175,7 +175,7 @@ export const HomePage: React.FC = () => {
   const founderStory = getLocalizedFounderStory(lang);
 
   return (
-    <main id="main-content" className="overflow-x-hidden bg-[#070f1a] text-white">
+    <main id="main-content" className="overflow-x-hidden bg-[#fbf9ef] text-[#171412]">
       {/* =====================================================================
           1. HERO SECTION (Full-Width Interactive Slider Immediately Upon Entry)
       ===================================================================== */}
@@ -201,7 +201,7 @@ export const HomePage: React.FC = () => {
       <section
         id="why-choose"
         aria-label="Why Choose Dropshipping Academy BD"
-        className="py-14 md:py-20 bg-[#070f1a] border-t border-b border-white/10"
+        className="py-14 md:py-20 bg-[#f2f0e7] border-t border-b border-[#171412]/15"
       >
         <div className="specimen-container">
           <WhyChooseUsBar items={whyChooseUs} />
@@ -215,15 +215,15 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col gap-4 mb-10 md:mb-14">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-                <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+                <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
                 {t('রিয়েল আউটপুট ও বেঞ্চমার্ক', 'Real Outputs & Benchmarks')}
               </span>
-              <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+              <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
                 {t('নির্বাচিত', 'Featured')}{' '}
-                <span className="text-[#00d27a]">{t('ফলাফল', 'Results')}</span>
+                <span className="text-[#ff7722]">{t('ফলাফল', 'Results')}</span>
               </h2>
-              <p className="mt-4 text-[15px] sm:text-[17px] text-slate-300 font-medium leading-[1.6]">
+              <p className="mt-4 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium leading-[1.6]">
                 {t(
                   'প্রতিটি শিক্ষার্থী যে অপারেটিং লক্ষ্যমাত্রা ও প্রফিট মার্জিন অর্জনের জন্য কাজ করে।',
                   'The operating benchmarks and unit economics every student builds toward.'
@@ -233,7 +233,7 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* 24-Column Modern Dark Bento Grid */}
+        {/* 24-Column Bento Grid */}
         <div className="grid-24 gap-4 md:gap-6">
           {featuredResults.map((item) => (
             <BentoCard key={item.id} item={item} />
@@ -244,13 +244,13 @@ export const HomePage: React.FC = () => {
       {/* =====================================================================
           4.5. MODERN E-COMMERCE TOOLS STACK
       ===================================================================== */}
-      <section className="py-12 md:py-16 bg-[#0a1626] border-t border-b border-white/10">
+      <section className="py-12 md:py-16 bg-[#f2f0e7] border-t border-b border-[#171412]/15">
         <div className="specimen-container">
           <div className="text-center max-w-xl mx-auto mb-8">
-            <span className="text-[13px] font-bold text-[#00d27a] uppercase tracking-wider">
+            <span className="text-[13px] font-bold text-[#813502] uppercase tracking-wider">
               {t('গ্লোবাল ই-কমার্স ইকোসিস্টেম', 'Global E-Commerce Ecosystem')}
             </span>
-            <h3 className="font-display text-[22px] sm:text-[26px] font-extrabold text-white mt-1">
+            <h3 className="font-display text-[22px] sm:text-[26px] font-extrabold text-[#171412] mt-1">
               {t(
                 'আধুনিক ই-কমার্স ও পেইড মার্কেটিং টুলসের সমন্বয়ে তৈরি',
                 'Built around the modern global e-commerce stack'
@@ -264,12 +264,12 @@ export const HomePage: React.FC = () => {
             {toolCategories.map((tool) => (
               <li
                 key={tool.id}
-                className="py-4 px-4 rounded-[16px] bg-[#0d1e33] border border-white/10 hover:border-[#00d27a]/50 shadow-md flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 group"
+                className="py-4 px-4 rounded-[16px] bg-[#fbf9ef] border border-[#171412]/20 hover:border-[#ff7722] shadow-sm flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 group"
               >
-                <span className="font-display text-[17px] md:text-[19px] font-extrabold text-white group-hover:text-[#00d27a] tracking-tight transition-colors">
+                <span className="font-display text-[17px] md:text-[19px] font-extrabold text-[#171412] group-hover:text-[#813502] tracking-tight transition-colors">
                   {tool.name}
                 </span>
-                <span className="text-[12px] text-slate-400 font-medium mt-1">
+                <span className="text-[12px] text-[#171412]/70 font-medium mt-1">
                   {tool.category}
                 </span>
               </li>
@@ -283,13 +283,13 @@ export const HomePage: React.FC = () => {
       ===================================================================== */}
       <Section id="learn" ariaLabel="What you will learn curriculum">
         <div className="mb-10 md:mb-14 max-w-2xl">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-            <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+            <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
             {t('স্টেপ-বাই-স্টেপ রোডম্যাপ', 'Step-by-Step Roadmap')}
           </span>
-          <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+          <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
             <span className="block">{t('আপনি যা যা শিখবেন।', "What you'll learn.")}</span>
-            <span className="block text-[#00d27a] mt-1">
+            <span className="block text-[#813502] mt-1">
               {t('দ্রুত এগিয়ে যাওয়ার বাস্তব কৌশল।', 'Practical ways to move fast.')}
             </span>
           </h2>
@@ -304,15 +304,15 @@ export const HomePage: React.FC = () => {
       <Section id="reviews" ariaLabel="Trusted by future store owners">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
               {t('শিক্ষার্থীদের অভিজ্ঞতা', 'Student Testimonials')}
             </span>
-            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
               {t('ভবিষ্যৎ স্টোর উদ্যোক্তাদের', 'Trusted by Future')}{' '}
-              <span className="text-[#00d27a]">{t('আস্থা', 'Store Owners')}</span>
+              <span className="text-[#ff7722]">{t('আস্থা', 'Store Owners')}</span>
             </h2>
-            <p className="mt-4 text-[15px] sm:text-[17px] text-slate-300 font-medium max-w-[54ch]">
+            <p className="mt-4 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium max-w-[54ch]">
               {t(
                 'যারা আমাদের প্রোডাক্ট ভ্যালিডেশন স্কোরকার্ড এবং স্টোরফ্রন্ট ওয়্যারফ্রেম ব্যবহার করে এগিয়ে গেছেন।',
                 'Beta students who tested our product validation scorecards and live storefront systems.'
@@ -338,15 +338,15 @@ export const HomePage: React.FC = () => {
         <div className="relative">
           {/* Section Header */}
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
               {t('অভিজ্ঞ অপারেটরদের সরাসরি গাইডলাইন', 'Operators Teaching Operators')}
             </span>
-            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-white leading-[1.1] tracking-[-0.03em]">
+            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
               {t('আমাদের', 'About')}{' '}
-              <span className="text-[#00d27a]">{t('সম্পর্কে ও টিম', 'Our Team')}</span>
+              <span className="text-[#ff7722]">{t('সম্পর্কে ও টিম', 'Our Team')}</span>
             </h2>
-            <p className="mt-3 text-[15px] sm:text-[17px] text-slate-300 font-medium">
+            <p className="mt-3 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium">
               {founderStory.headline}
             </p>
           </div>
@@ -359,10 +359,10 @@ export const HomePage: React.FC = () => {
                 return (
                   <div
                     key={founder.id}
-                    className="rounded-[22px] bg-[#0d1e33] border border-white/10 hover:border-[#00d27a]/50 p-6 flex flex-col items-center text-center shadow-xl hover:shadow-[0_12px_35px_rgba(0,210,122,0.12)] transition-all duration-300 group"
+                    className="rounded-[22px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col items-center text-center shadow-md transition-all duration-300 group"
                   >
                     {/* Founder Photo */}
-                    <div className="relative w-36 h-48 sm:w-44 sm:h-56 rounded-[16px] overflow-hidden bg-[#06101c] border-2 border-[#00d27a]/40 shadow-md mb-5 group-hover:scale-102 transition-transform">
+                    <div className="relative w-36 h-48 sm:w-44 sm:h-56 rounded-[16px] overflow-hidden bg-[#ffc765] border-2 border-[#171412] shadow-sm mb-5 group-hover:scale-102 transition-transform">
                       {!imageFailed ? (
                         <img
                           src={founder.photo}
@@ -379,8 +379,8 @@ export const HomePage: React.FC = () => {
                           className="w-full h-full object-cover object-center"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#0d1e33] text-white">
-                          <span className="font-display text-[28px] font-extrabold text-[#00d27a]">
+                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f2f0e7] text-[#171412]">
+                          <span className="font-display text-[28px] font-extrabold text-[#ff7722]">
                             0{idx + 1}
                           </span>
                           <span className="mt-2 font-display text-[15px] font-bold">
@@ -391,14 +391,14 @@ export const HomePage: React.FC = () => {
                     </div>
 
                     {/* Name & Role */}
-                    <h3 className="font-display text-[20px] font-extrabold text-white leading-tight">
+                    <h3 className="font-display text-[20px] font-extrabold text-[#171412] leading-tight">
                       {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
                     </h3>
-                    <div className="text-[13px] text-[#00d27a] font-bold mt-1">
+                    <div className="text-[13px] text-[#813502] font-bold mt-1">
                       {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
                     </div>
 
-                    <p className="mt-3 text-[14px] text-slate-300 leading-[1.5] max-w-[34ch]">
+                    <p className="mt-3 text-[14px] text-[#171412]/80 leading-[1.5] max-w-[34ch]">
                       {lang === 'en' && founder.shortBioEn
                         ? founder.shortBioEn
                         : founder.shortBio}
@@ -411,7 +411,7 @@ export const HomePage: React.FC = () => {
 
           {/* Story Paragraph & CTA */}
           <div className="mt-12 md:mt-14 max-w-2xl mx-auto text-center">
-            <p className="text-[16px] text-slate-300 leading-[1.6]">
+            <p className="text-[16px] text-[#171412]/85 leading-[1.6]">
               {founderStory.body}
             </p>
 
@@ -427,7 +427,7 @@ export const HomePage: React.FC = () => {
                     : founderStory.ctaLabel}
                 </Button>
               )}
-              <Button variant="primary" onClick={() => navigate('/join')}>
+              <Button variant="orange" onClick={() => navigate('/join')}>
                 {t('রেজিস্ট্রেশন করুন', 'Register Now')}
               </Button>
             </div>
@@ -438,20 +438,20 @@ export const HomePage: React.FC = () => {
                 {foundersList.map((founder) => (
                   <div
                     key={`bio-${founder.id}`}
-                    className="rounded-[16px] bg-[#0d1e33] border border-white/10 p-6 shadow-lg"
+                    className="rounded-[16px] bg-[#f2f0e7] border-2 border-[#171412] p-6 shadow-sm"
                   >
-                    <div className="text-[12px] font-bold text-[#00d27a]">
+                    <div className="text-[12px] font-bold text-[#813502]">
                       {lang === 'en' && founder.specialtyEn
                         ? founder.specialtyEn
                         : founder.specialty}
                     </div>
-                    <h4 className="font-display text-[20px] font-extrabold text-white mt-1">
+                    <h4 className="font-display text-[20px] font-extrabold text-[#171412] mt-1">
                       {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
                     </h4>
-                    <p className="text-[13px] text-slate-400 mt-0.5 mb-3">
+                    <p className="text-[13px] text-[#171412]/70 mt-0.5 mb-3">
                       {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
                     </p>
-                    <p className="text-[14px] text-slate-300 leading-[1.55]">
+                    <p className="text-[14px] text-[#171412]/85 leading-[1.55]">
                       {lang === 'en' && founder.shortBioEn
                         ? founder.shortBioEn
                         : founder.shortBio}
@@ -470,17 +470,17 @@ export const HomePage: React.FC = () => {
       <Section id="faq" ariaLabel="Frequently asked questions">
         <div className="grid-24 gap-y-10">
           <div className="col-span-24 lg:col-span-9">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
               {t('সাধারণ জিজ্ঞাসা', 'Common Questions')}
             </span>
-            <h2 className="font-display text-[32px] sm:text-[44px] font-extrabold text-white leading-[1.08] tracking-[-0.03em] text-balance">
+            <h2 className="font-display text-[32px] sm:text-[44px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em] text-balance">
               {t(
                 'যুক্ত হওয়ার আগে যা জানা প্রয়োজন।',
                 'Everything you need to know before joining.'
               )}
             </h2>
-            <p className="mt-4 text-[15px] sm:text-[16px] text-slate-300 leading-[1.6] max-w-[38ch]">
+            <p className="mt-4 text-[15px] sm:text-[16px] text-[#171412]/80 leading-[1.6] max-w-[38ch]">
               {t(
                 'প্রাথমিক মূলধন, সময় বা আন্তর্জাতিক সাপ্লায়ার নিয়ে আপনার মনে কোনো প্রশ্ন থাকলে সরাসরি নিচের উত্তরগুলো দেখে নিতে পারেন।',
                 'Have a specific question about capital, time commitment, or international suppliers? Read our clear answers.'
@@ -500,16 +500,16 @@ export const HomePage: React.FC = () => {
       <section
         id="final-cta"
         aria-label="Join Dropshipping Academy"
-        className="py-16 md:py-24 bg-[#070f1a]"
+        className="py-16 md:py-24 bg-[#fbf9ef]"
       >
         <div className="specimen-container">
-          <div className="rounded-[24px] bg-gradient-to-br from-[#0c233c] via-[#091a2e] to-[#05111d] text-white p-8 sm:p-12 lg:p-16 border border-[#00d27a]/30 shadow-2xl relative overflow-hidden">
-            {/* Ambient emerald blur */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#00d27a]/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="rounded-[24px] bg-[#ff7722] text-[#171412] p-8 sm:p-12 lg:p-16 border-2 border-[#171412] shadow-[6px_6px_0px_#171412] relative overflow-hidden">
+            {/* Ambient warm yellow blur */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#ffc765]/40 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#00d27a]/15 border border-[#00d27a]/30 text-[#00d27a] text-[12px] font-extrabold uppercase tracking-wide mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#00d27a] animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#fbf9ef] border border-[#171412] text-[#171412] text-[12px] font-extrabold uppercase tracking-wide mb-4">
+                <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
                 <span>
                   {t(
                     'পরবর্তী ব্যাচে ভর্তি · সীমিত আসন',
@@ -518,14 +518,14 @@ export const HomePage: React.FC = () => {
                 </span>
               </div>
 
-              <h2 className="font-display text-[32px] sm:text-[46px] lg:text-[54px] font-extrabold text-white leading-[1.08] tracking-[-0.03em]">
+              <h2 className="font-display text-[32px] sm:text-[46px] lg:text-[54px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em]">
                 {t(
                   'প্রতিটি দিনকে লাভজনক করে তুলুন!',
                   'Make every day pay for itself!'
                 )}
               </h2>
 
-              <p className="mt-4 text-[16px] sm:text-[18px] text-slate-300 leading-[1.6] max-w-[50ch]">
+              <p className="mt-4 text-[16px] sm:text-[18px] text-[#171412]/85 leading-[1.6] max-w-[50ch]">
                 {t(
                   'মাত্র ২ মিনিটে আপনার স্থান নিশ্চিত করুন। ইমেইল ভেরিফাই করুন এবং নতুন ব্যাচ শুরু হওয়ার সাথে সাথে সকল আপডেট পান।',
                   'Reserve your spot in under two minutes. Verify your email and get notified the moment live doors open.'
@@ -544,7 +544,7 @@ export const HomePage: React.FC = () => {
                       'Email address to join the waitlist'
                     )}
                   </label>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#081424] border border-white/20 shadow-lg focus-within:border-[#00d27a]">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#fbf9ef] border-2 border-[#171412] shadow-md">
                     <input
                       id="cta-waitlist-email"
                       type="email"
@@ -559,7 +559,7 @@ export const HomePage: React.FC = () => {
                         'আপনার ইমেইল ঠিকানা লিখুন...',
                         'Enter your email address...'
                       )}
-                      className="flex-1 h-[52px] min-h-[52px] px-5 py-2 rounded-[50px] bg-transparent text-white text-[15px] font-medium placeholder:text-slate-400 focus:outline-none"
+                      className="flex-1 h-[52px] min-h-[52px] px-5 py-2 rounded-[50px] bg-transparent text-[#171412] text-[15px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
                     />
                     <Button
                       type="submit"
@@ -567,14 +567,14 @@ export const HomePage: React.FC = () => {
                       className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
                     >
                       <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
-                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#070f1a]" />
+                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#fbf9ef]" />
                     </Button>
                   </div>
                   {heroEmailError && (
                     <p
                       role="alert"
                       aria-live="polite"
-                      className="text-[13px] font-bold text-red-400 mt-2 pl-3"
+                      className="text-[13px] font-bold text-[#171412] bg-[#fbf9ef] inline-block px-3 py-1 rounded-full mt-2"
                     >
                       {heroEmailError}
                     </p>
