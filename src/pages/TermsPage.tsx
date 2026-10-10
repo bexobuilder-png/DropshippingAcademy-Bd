@@ -1,6 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ReadingProgressBar,
+  ReadingSectionItem,
+} from '../components/ReadingProgressBar';
 import { useLanguage } from '../context/LanguageContext';
+
+const TERMS_SECTIONS: ReadingSectionItem[] = [
+  { id: 'terms-purpose', labelBn: '১. উদ্দেশ্য', labelEn: '1. Purpose' },
+  { id: 'terms-age', labelBn: '২. বয়সসীমা', labelEn: '2. Age (18+)' },
+  { id: 'terms-waitlist', labelBn: '৩. নিবন্ধন', labelEn: '3. Waitlist' },
+  { id: 'terms-ip', labelBn: '৪. মেধাস্বত্ব', labelEn: '4. IP Rights' },
+  { id: 'terms-conduct', labelBn: '৫. আচরণবিধি', labelEn: '5. Conduct' },
+];
 
 export const TermsPage: React.FC = () => {
   const { t } = useLanguage();
@@ -11,12 +23,22 @@ export const TermsPage: React.FC = () => {
         <div className="text-[13px] font-bold text-[#813502] mb-3">
           {t('আইনি শর্তাবলী · কার্যকর: অক্টোবর ২০২৬', 'Legal · Effective October 2026')}
         </div>
-        <h1 className="font-display text-[42px] sm:text-[64px] font-extrabold text-[#171412] leading-[0.95] tracking-[-0.03em] mb-8">
+        <h1 className="font-display text-[42px] sm:text-[64px] font-extrabold text-[#171412] leading-[0.95] tracking-[-0.03em] mb-6">
           {t('ব্যবহারের শর্তাবলী', 'Terms of Service')}
         </h1>
 
-        <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-6 sm:p-10 flex flex-col gap-6 text-[16px] text-[#171412] leading-[1.5]">
-          <section>
+        <ReadingProgressBar
+          variant="content"
+          targetId="terms-article"
+          estimatedMinutes={4}
+          sections={TERMS_SECTIONS}
+        />
+
+        <article
+          id="terms-article"
+          className="rounded-[12px] bg-[#f2f0e7] border border-[#171412]/20 p-6 sm:p-10 flex flex-col gap-8 text-[16px] text-[#171412] leading-[1.6]"
+        >
+          <section id="terms-purpose" className="scroll-mt-36">
             <h2 className="specimen-h3 mb-2">
               {t(
                 '১. শিক্ষামূলক উদ্দেশ্য ও আয়ের কোনো নিশ্চিত গ্যারান্টি না থাকা',
@@ -29,9 +51,15 @@ export const TermsPage: React.FC = () => {
                 'Dropshipping Academy provides educational training, frameworks, spreadsheets, and mentorship regarding e-commerce store operations, product research, supplier sourcing, and paid digital advertising. E-commerce involves financial risk and requires consistent execution. We do not guarantee any specific revenue, profit margin, or return on ad spend.'
               )}
             </p>
+            <p className="mt-3 text-[#171412]/80">
+              {t(
+                'আমাদের সমস্ত কেস স্টাডি, ইউনিট ইকোনমিক্স ক্যালকুলেশন এবং লাইভ স্টোর উদাহরণ শুধুমাত্র বাস্তব অপারেশনাল পদ্ধতি বোঝানোর জন্য প্রদর্শিত হয়। প্রতিটি শিক্ষার্থীর ফলাফল তার বাজার বিশ্লেষণ, বিজ্ঞাপন বাজেট ব্যবস্থাপনা এবং অর্ডার ফুলফিলমেন্ট দক্ষতার ওপর নির্ভরশীল।',
+                'All case studies, unit economics breakdowns, and live store examples are shared strictly to illustrate operational methodology. Individual outcomes depend on market testing discipline, ad budget stewardship, and supplier fulfillment execution.'
+              )}
+            </p>
           </section>
 
-          <section>
+          <section id="terms-age" className="scroll-mt-36">
             <h2 className="specimen-h3 mb-2">
               {t('২. বয়সসীমা (১৮+ বছর)', '2. Age Requirement (18+)')}
             </h2>
@@ -43,7 +71,7 @@ export const TermsPage: React.FC = () => {
             </p>
           </section>
 
-          <section>
+          <section id="terms-waitlist" className="scroll-mt-36">
             <h2 className="specimen-h3 mb-2">
               {t(
                 '৩. ওয়েটলিস্ট নিবন্ধন ও যোগাযোগ',
@@ -58,7 +86,7 @@ export const TermsPage: React.FC = () => {
             </p>
           </section>
 
-          <section>
+          <section id="terms-ip" className="scroll-mt-36">
             <h2 className="specimen-h3 mb-2">
               {t('৪. মেধাস্বত্ব (Intellectual Property)', '4. Intellectual Property')}
             </h2>
@@ -66,6 +94,21 @@ export const TermsPage: React.FC = () => {
               {t(
                 'ড্রপশিপিং একাডেমির সকল কারিকুলাম ম্যাটেরিয়াল, মার্জিন ক্যালকুলেটর, স্টোরফ্রন্ট ওয়্যারফ্রেম এবং সাপ্লায়ার আউটরিচ স্ক্রিপ্ট একাডেমির নিজস্ব মেধাস্বত্ব। এগুলো কোনোভাবেই পুনঃবিতরণ বা বিক্রি করা যাবে না।',
                 'All curriculum materials, margin calculators, storefront wireframes, and supplier outreach scripts shared by Dropshipping Academy remain the intellectual property of Dropshipping Academy and may not be redistributed or resold.'
+              )}
+            </p>
+          </section>
+
+          <section id="terms-conduct" className="scroll-mt-36">
+            <h2 className="specimen-h3 mb-2">
+              {t(
+                '৫. কমিউনিটি আচরণবিধি ও নৈতিক ই-কমার্স চর্চা',
+                '5. Community Conduct & Ethical Store Operations'
+              )}
+            </h2>
+            <p>
+              {t(
+                'ড্রপশিপিং একাডেমির প্রতিটি শিক্ষার্থীকে গ্রাহক সেবা, পণ্যের মান এবং ডেলিভারি সময়ের ব্যাপারে স্বচ্ছতা বজায় রাখতে হবে। ভুয়া রিভিউ, বিভ্রান্তিকর বিজ্ঞাপন বা অনুমোদনহীন পেমেন্ট গেটওয়ে ব্যবহারের বিরুদ্ধে আমাদের অবস্থান কঠোর।',
+                'Members of Dropshipping Academy are expected to uphold transparent shipping timelines, accurate product descriptions, and responsive customer support. Counterfeit goods, deceptive ad claims, or unauthorized payment practices will result in immediate removal from cohort resources.'
               )}
             </p>
           </section>
@@ -78,8 +121,9 @@ export const TermsPage: React.FC = () => {
               {t('হোমপেজে ফিরে যান', 'Return to Home')}
             </Link>
           </div>
-        </div>
+        </article>
       </div>
     </main>
   );
 };
+

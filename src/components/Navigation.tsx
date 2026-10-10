@@ -1,14 +1,32 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import type { AnimKind } from './EduAnimation';
+import { ReadingProgressBar, useReadingProgress } from './ReadingProgressBar';
 import { DropshippingAcademyBdLogo } from './svg/BrandLogo';
 
-export const Navigation: React.FC = () => {
+const HOME_SECTION_IDS = ['hero', 'results', 'learn', 'about', 'faq', 'contact'];
+
+export interface NavigationProps {
+  setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
+}
+
+export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { lang, toggleLang, t } = useLanguage();
   const isHomePage = location.pathname === '/';
+  const isRegisterPage = location.pathname === '/join';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleRegister = () => {
+    setMobileMenuOpen(false);
+    if (isRegisterPage) return;
+    setAnim('intro');
+  };
+
+  const { progress, isScrollable, hasScrolled, activeSectionId } =
+    useReadingProgress('main-content', isHomePage ? HOME_SECTION_IDS : []);
 
   const handleAnchorScroll = (targetId: string) => {
     setMobileMenuOpen(false);
@@ -22,6 +40,14 @@ export const Navigation: React.FC = () => {
     } else if (targetId === 'hero') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const getNavButtonClass = (sectionIds: string[]) => {
+    const isActive =
+      isHomePage && sectionIds.includes(activeSectionId || 'hero');
+    return isActive
+      ? 'text-[#813502] font-bold hover:text-[#171412] transition-colors cursor-pointer whitespace-nowrap'
+      : 'hover:text-[#ff7722] transition-colors cursor-pointer whitespace-nowrap';
   };
 
   return (
@@ -49,35 +75,46 @@ export const Navigation: React.FC = () => {
             <button
               type="button"
               onClick={() => handleAnchorScroll('hero')}
-              className="text-[#813502] font-bold hover:text-[#171412] transition-colors cursor-pointer whitespace-nowrap"
+              className={getNavButtonClass(['hero'])}
             >
               {t('হোম', 'Home')}
             </button>
             <button
               type="button"
               onClick={() => handleAnchorScroll('results')}
-              className="hover:text-[#ff7722] transition-colors cursor-pointer whitespace-nowrap"
+              className={getNavButtonClass(['results', 'learn'])}
             >
               {t('নির্বাচিত ফলাফল', 'Featured Results')}
             </button>
             <button
               type="button"
               onClick={() => handleAnchorScroll('about')}
-              className="hover:text-[#ff7722] transition-colors cursor-pointer whitespace-nowrap"
+              className={getNavButtonClass(['about'])}
             >
               {t('আমাদের সম্পর্কে', 'About Us')}
             </button>
             <button
               type="button"
               onClick={() => handleAnchorScroll('contact')}
-              className="hover:text-[#ff7722] transition-colors cursor-pointer whitespace-nowrap"
+              className={getNavButtonClass(['faq', 'contact'])}
             >
               {t('যোগাযোগ', 'Contact')}
             </button>
           </nav>
 
-          {/* Zone 3: Language Switcher + Orange Action Button */}
+          {/* Zone 3: Reading Indicator + Language Switcher + Orange Action Button */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Subtle Reading Progress Pill on Long-Form Scroll */}
+            {isScrollable && hasScrolled && (
+              <div
+                aria-hidden="true"
+                className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[50px] bg-[#f2f0e7]/90 border border-[#171412]/12 text-[11px] font-bold text-[#813502] tabular-nums transition-opacity duration-200"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ff7722]" />
+                <span>{progress}%</span>
+              </div>
+            )}
+
             {/* Language Toggle */}
             <button
               type="button"
@@ -91,7 +128,7 @@ export const Navigation: React.FC = () => {
             {/* Registration CTA Button */}
             <button
               type="button"
-              onClick={() => navigate('/join')}
+              onClick={handleRegister}
               className="h-9 sm:h-10 px-3.5 sm:px-5 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[12px] sm:text-[14px] inline-flex items-center gap-1.5 transition-all shadow-sm hover:shadow-md cursor-pointer whitespace-nowrap"
             >
               <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
@@ -158,10 +195,7 @@ export const Navigation: React.FC = () => {
             <div className="pt-2 border-t border-[#171412]/15 flex items-center justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/join');
-                }}
+                onClick={handleRegister}
                 className="px-4 py-2 bg-[#ff7722] text-[#171412] border border-[#171412] rounded-full font-bold text-xs"
               >
                 {t('রেজিস্ট্রেশন করুন →', 'Register →')}
@@ -169,13 +203,15 @@ export const Navigation: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Subtle Top Navigation Reading Progress Bar */}
+        <ReadingProgressBar variant="navigation" />
       </header>
 
       {/* Mobile Fixed Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom App Bar"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
       >
         <button
           type="button"
@@ -201,7 +237,7 @@ export const Navigation: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => navigate('/join')}
+          onClick={handleRegister}
           className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

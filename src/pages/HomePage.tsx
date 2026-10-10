@@ -41,9 +41,14 @@ import { ContactSection } from '../components/ContactSection';
 import { Section } from '../components/Section';
 import { Tabs } from '../components/Tabs';
 import { TestimonialCard } from '../components/TestimonialCard';
+import type { AnimKind } from '../components/EduAnimation';
 import { ArrowRightSvgIcon, CheckSvgIcon } from '../components/svg/NavIcons';
 
-export const HomePage: React.FC = () => {
+export interface HomePageProps {
+  setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
+}
+
+export const HomePage: React.FC<HomePageProps> = ({ setAnim }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { lang, t } = useLanguage();
@@ -169,7 +174,9 @@ export const HomePage: React.FC = () => {
     if (trimmed) {
       saveHeroEmailPrefill(trimmed);
     }
-    navigate('/join');
+    if (location.pathname !== '/join') {
+      setAnim('intro');
+    }
   };
 
   const founderStory = getLocalizedFounderStory(lang);
@@ -189,7 +196,11 @@ export const HomePage: React.FC = () => {
           <div className="mb-6 lg:mb-8">
             <HeroSlider
               slides={heroSlides}
-              onCtaClick={() => navigate('/join')}
+              onCtaClick={() => {
+                if (location.pathname !== '/join') {
+                  setAnim('intro');
+                }
+              }}
             />
           </div>
         </div>
@@ -427,7 +438,14 @@ export const HomePage: React.FC = () => {
                     : founderStory.ctaLabel}
                 </Button>
               )}
-              <Button variant="orange" onClick={() => navigate('/join')}>
+              <Button
+                variant="orange"
+                onClick={() => {
+                  if (location.pathname !== '/join') {
+                    setAnim('intro');
+                  }
+                }}
+              >
                 {t('রেজিস্ট্রেশন করুন', 'Register Now')}
               </Button>
             </div>

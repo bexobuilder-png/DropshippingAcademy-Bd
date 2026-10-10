@@ -17,6 +17,7 @@ import {
 } from '../services/waitlist';
 import { Button } from '../components/Button';
 import { DatePicker } from '../components/DatePicker';
+import type { AnimKind } from '../components/EduAnimation';
 import { Input } from '../components/Input';
 import { OtpInput } from '../components/OtpInput';
 import { PhoneInput } from '../components/PhoneInput';
@@ -38,7 +39,15 @@ const INITIAL_VALUES: WaitlistFormValues = {
   honeypot: '',
 };
 
-export const JoinWaitlistPage: React.FC = () => {
+export interface JoinWaitlistPageProps {
+  setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
+  onVerifiedSuccess: (alreadyOnWaitlist: boolean) => void;
+}
+
+export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
+  setAnim,
+  onVerifiedSuccess,
+}) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -133,22 +142,59 @@ export const JoinWaitlistPage: React.FC = () => {
 
     setFieldErrors({});
     setIsSendingOtp(true);
+    setAnim('submit');
 
-    const result = await sendEmailVerificationOtp(
+    let timerId = 0;
+    let resolveTimer: () => void = () => {};
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const timerPromise = new Promise<void>((resolve) => {
+      resolveTimer = resolve;
+      timerId = window.setTimeout(resolve, reduce ? 700 : 3600);
+    });
+
+    const apiPromise = sendEmailVerificationOtp(
       parsed.data.email,
       parsed.data.honeypot
-    );
-
-    setIsSendingOtp(false);
-
-    if (!result.success) {
-      setStep1GlobalError(
-        result.error ||
-          t(
+    ).then(
+      (res) => {
+        if (!res.success) {
+          window.clearTimeout(timerId);
+          setAnim(null);
+          resolveTimer();
+        }
+        return res;
+      },
+      () => {
+        window.clearTimeout(timerId);
+        setAnim(null);
+        resolveTimer();
+        return {
+          success: false as const,
+          error: t(
             'ভেরিফিকেশন কোড পাঠানো সম্ভব হয়নি। আবার চেষ্টা করুন।',
             'Could not send verification code. Please try again.'
-          )
-      );
+          ),
+        };
+      }
+    );
+
+    const [, result] = await Promise.all([timerPromise, apiPromise]);
+
+    setIsSendingOtp(false);
+    setAnim(null);
+
+    if (!result.success) {
+      const errMessage =
+        result.error ||
+        t(
+          'ভেরিফিকেশন কোড পাঠানো সম্ভব হয়নি। আবার চেষ্টা করুন।',
+          'Could not send verification code. Please try again.'
+        );
+      setFieldErrors((prev) => ({ ...prev, email: errMessage }));
+      setStep1GlobalError(errMessage);
       return;
     }
 
@@ -198,12 +244,7 @@ export const JoinWaitlistPage: React.FC = () => {
       return;
     }
 
-    navigate('/waitlist-confirmed', {
-      replace: true,
-      state: {
-        alreadyOnWaitlist: Boolean(result.alreadyOnWaitlist),
-      },
-    });
+    onVerifiedSuccess(Boolean(result.alreadyOnWaitlist));
   };
 
   const handleResendCode = async () => {

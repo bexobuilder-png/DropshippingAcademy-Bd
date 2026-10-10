@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fbf9ef;
+  --bg: #FBF7F0;
+  --ink: #1D1611;
+  --muted: rgba(29, 22, 17, 0.72);
+  --stroke: #1D1611;
+  --orange: #EE7D3B;
+  --yellow: #F5C451;
+  --brown: #8F3F10;
+  --cream: #FFF6E6;
   --bg-card: #f2f0e7;
   --bg-surface: #ffffff;
   --bg-hover: #ebe8dc;
@@ -20,6 +27,15 @@
 
   --font-display: "Bricolage Grotesque", "Noto Sans Bengali", "Hind Siliguri", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "Instrument Sans", "Hind Siliguri", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dark,
+[data-theme="dark"] {
+  --bg: #16110d;
+  --ink: #F6EDE1;
+  --muted: rgba(246, 237, 225, 0.72);
+  --stroke: #F6EDE1;
+  --cream: #2b2118;
 }
 
 @layer base {

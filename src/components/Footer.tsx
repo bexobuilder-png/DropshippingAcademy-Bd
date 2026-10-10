@@ -32,6 +32,12 @@ export const Footer: React.FC = () => {
             <a href="#contact" className="hover:text-[#ff7722] transition-colors">
               {t('যোগাযোগ', 'Contact')}
             </a>
+            <Link to="/terms" className="hover:text-[#ff7722] transition-colors">
+              {t('শর্তাবলী', 'Terms')}
+            </Link>
+            <Link to="/privacy" className="hover:text-[#ff7722] transition-colors">
+              {t('গোপনীয়তা নীতি', 'Privacy')}
+            </Link>
           </nav>
 
           {/* Social Icons (Facebook, YouTube, TikTok) */}
