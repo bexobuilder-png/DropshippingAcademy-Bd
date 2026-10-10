@@ -43,26 +43,31 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
     };
   }, [total, isPaused, nextSlide]);
 
-  // Touch swipe support for mobile
+  // Touch swipe support for mobile (ignore touches on interactive buttons/links)
   const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('button, a')) return;
     setTouchStart(e.targetTouches[0].clientX);
     setIsPaused(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
   const handleTouchEnd = () => {
+    if (touchStart === null) return;
     setIsPaused(false);
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-    if (isLeftSwipe) {
-      nextSlide();
-    } else if (isRightSwipe) {
-      prevSlide();
+    if (touchEnd !== null) {
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > 50;
+      const isRightSwipe = distance < -50;
+      if (isLeftSwipe) {
+        nextSlide();
+      } else if (isRightSwipe) {
+        prevSlide();
+      }
     }
     setTouchStart(null);
     setTouchEnd(null);
@@ -169,8 +174,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
             <div className="flex flex-wrap items-center gap-4">
               <button
                 type="button"
-                onClick={onCtaClick}
-                className="px-8 py-4 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-display text-[15px] sm:text-[16px] font-extrabold shadow-[4px_4px_0px_#171412] transition-all cursor-pointer inline-flex items-center gap-2.5 active:scale-95"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCtaClick?.();
+                }}
+                className="px-8 py-4 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-display text-[15px] sm:text-[16px] font-extrabold shadow-[4px_4px_0px_#171412] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#171412] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer inline-flex items-center gap-2.5 select-none"
               >
                 <span>{currentSlide.ctaText || t('কোর্স দেখুন ও রেজিস্ট্রেশন করুন', 'Explore Course & Register')}</span>
                 <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#171412]" />

@@ -130,13 +130,22 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
     const parsed = waitlistStep1Schema.safeParse(effectiveData);
     if (!parsed.success) {
       const nextErrors: Partial<Record<keyof WaitlistFormValues, string>> = {};
+      let firstInvalidKey: keyof WaitlistFormValues | undefined;
       for (const issue of parsed.error.issues) {
         const key = issue.path[0] as keyof WaitlistFormValues | undefined;
         if (key && !nextErrors[key]) {
           nextErrors[key] = issue.message;
+          if (!firstInvalidKey) firstInvalidKey = key;
         }
       }
       setFieldErrors(nextErrors);
+      if (firstInvalidKey) {
+        const el = document.getElementById(firstInvalidKey);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus({ preventScroll: true });
+        }
+      }
       return;
     }
 
@@ -146,13 +155,10 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
 
     let timerId = 0;
     let resolveTimer: () => void = () => {};
-    const reduce =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const timerPromise = new Promise<void>((resolve) => {
       resolveTimer = resolve;
-      timerId = window.setTimeout(resolve, reduce ? 700 : 3600);
+      timerId = window.setTimeout(resolve, 3600);
     });
 
     const apiPromise = sendEmailVerificationOtp(
@@ -523,12 +529,12 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
                     size="lg"
                     isLoading={isSendingOtp}
                     loadingText={t('কোড পাঠানো হচ্ছে...', 'Sending verification code...')}
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     <span>
                       {t('ভেরিফিকেশন কোড পাঠান', 'Send verification code')}
                     </span>
-                    <ArrowRightSvgIcon className="w-4 h-4" />
+                    <ArrowRightSvgIcon className="w-4 h-4 shrink-0" />
                   </Button>
                 </div>
               </form>

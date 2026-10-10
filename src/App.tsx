@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import EduAnimation, { AnimKind } from './components/EduAnimation';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -11,15 +11,9 @@ import { Footer } from './components/Footer';
 import { Navigation } from './components/Navigation';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { HomePage } from './pages/HomePage';
+import { JoinWaitlistPage } from './pages/JoinWaitlistPage';
+import { WaitlistConfirmedPage } from './pages/WaitlistConfirmedPage';
 
-const JoinWaitlistPage = React.lazy(() =>
-  import('./pages/JoinWaitlistPage').then((m) => ({ default: m.JoinWaitlistPage }))
-);
-const WaitlistConfirmedPage = React.lazy(() =>
-  import('./pages/WaitlistConfirmedPage').then((m) => ({
-    default: m.WaitlistConfirmedPage,
-  }))
-);
 const TermsPage = React.lazy(() =>
   import('./pages/TermsPage').then((m) => ({ default: m.TermsPage }))
 );
@@ -70,10 +64,17 @@ function ScrollToTopOnRouteChange() {
 
 function AppShell() {
   const [anim, setAnim] = useState<null | 'intro' | 'submit' | 'success'>(null);
+  const [animRunKey, setAnimRunKey] = useState(0);
+  const [joinResetKey, setJoinResetKey] = useState(0);
   const [alreadyOnWaitlist, setAlreadyOnWaitlist] = useState(false);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const activeKind: AnimKind = anim ?? 'intro';
+
+  const triggerRegisterIntro = useCallback(() => {
+    setAnimRunKey((k) => k + 1);
+    setAnim('intro');
+  }, []);
 
   return (
     <>
@@ -87,7 +88,7 @@ function AppShell() {
       </a>
 
       <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412] pb-16 sm:pb-0 selection:bg-[#ff7722] selection:text-[#171412]">
-        <Navigation setAnim={setAnim} />
+        <Navigation setAnim={setAnim} onRegisterClick={triggerRegisterIntro} />
         <div className="flex-1">
           <Suspense
             fallback={
@@ -102,14 +103,24 @@ function AppShell() {
             }
           >
             <Routes>
-              <Route path="/" element={<HomePage setAnim={setAnim} />} />
+              <Route
+                path="/"
+                element={
+                  <HomePage
+                    setAnim={setAnim}
+                    onRegisterClick={triggerRegisterIntro}
+                  />
+                }
+              />
               <Route
                 path="/join"
                 element={
                   <JoinWaitlistPage
+                    key={joinResetKey}
                     setAnim={setAnim}
                     onVerifiedSuccess={(alreadyExists) => {
                       setAlreadyOnWaitlist(alreadyExists);
+                      setAnimRunKey((k) => k + 1);
                       setAnim('success');
                     }}
                   />
@@ -119,7 +130,10 @@ function AppShell() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/check" element={<AdminCheckPage />} />
-              <Route path="*" element={<NotFoundPage />} />
+              <Route
+                path="*"
+                element={<NotFoundPage onRegisterClick={triggerRegisterIntro} />}
+              />
             </Routes>
           </Suspense>
         </div>
@@ -130,18 +144,22 @@ function AppShell() {
         kind={anim ?? 'intro'}
         open={anim !== null}
         autoClose={anim !== 'submit'}
+        runKey={animRunKey}
         words={ANIM_WORDS[lang][activeKind]}
         skipLabel={lang === 'bn' ? 'এড়িয়ে যান' : 'Skip'}
         onDone={() => {
           const finished = anim;
           setAnim(null);
           if (finished === 'intro') {
+            setJoinResetKey((k) => k + 1);
             navigate('/join');
+            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
           } else if (finished === 'success') {
             navigate('/waitlist-confirmed', {
               replace: true,
               state: { alreadyOnWaitlist },
             });
+            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
           }
         }}
       />

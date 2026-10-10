@@ -46,12 +46,24 @@ import { ArrowRightSvgIcon, CheckSvgIcon } from '../components/svg/NavIcons';
 
 export interface HomePageProps {
   setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
+  onRegisterClick?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ setAnim }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  setAnim,
+  onRegisterClick,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { lang, t } = useLanguage();
+
+  const triggerRegister = () => {
+    if (onRegisterClick) {
+      onRegisterClick();
+    } else {
+      setAnim('intro');
+    }
+  };
 
   const [heroEmail, setHeroEmail] = useState('');
   const [heroEmailError, setHeroEmailError] = useState('');
@@ -161,22 +173,11 @@ export const HomePage: React.FC<HomePageProps> = ({ setAnim }) => {
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = heroEmail.trim();
-    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setHeroEmailError(
-        t(
-          'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা লিখুন।',
-          'Please enter a valid email address to continue.'
-        )
-      );
-      return;
-    }
-    setHeroEmailError('');
-    if (trimmed) {
+    if (trimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       saveHeroEmailPrefill(trimmed);
     }
-    if (location.pathname !== '/join') {
-      setAnim('intro');
-    }
+    setHeroEmailError('');
+    triggerRegister();
   };
 
   const founderStory = getLocalizedFounderStory(lang);
@@ -196,11 +197,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setAnim }) => {
           <div className="mb-6 lg:mb-8">
             <HeroSlider
               slides={heroSlides}
-              onCtaClick={() => {
-                if (location.pathname !== '/join') {
-                  setAnim('intro');
-                }
-              }}
+              onCtaClick={triggerRegister}
             />
           </div>
         </div>
@@ -440,11 +437,7 @@ export const HomePage: React.FC<HomePageProps> = ({ setAnim }) => {
               )}
               <Button
                 variant="orange"
-                onClick={() => {
-                  if (location.pathname !== '/join') {
-                    setAnim('intro');
-                  }
-                }}
+                onClick={triggerRegister}
               >
                 {t('রেজিস্ট্রেশন করুন', 'Register Now')}
               </Button>

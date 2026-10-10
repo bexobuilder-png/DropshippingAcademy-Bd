@@ -55,17 +55,17 @@ export const DropshippingAcademyBdLogo: React.FC<{
   className?: string;
   isDark?: boolean;
 }> = ({ className = 'h-10', isDark = false }) => (
-  <div className={`inline-flex items-center gap-2.5 ${className}`}>
+  <div className={`inline-flex items-center gap-2 sm:gap-2.5 min-w-0 max-w-full ${className}`}>
     <GraduationCapIcon className="w-9 h-9 sm:w-10 sm:h-10 shrink-0" />
-    <div className="flex flex-col leading-tight select-none">
+    <div className="flex flex-col leading-tight select-none min-w-0">
       <span
-        className={`font-display text-[15px] sm:text-[17px] font-black tracking-tight ${
+        className={`font-display text-[15px] sm:text-[17px] font-black tracking-tight truncate ${
           isDark ? 'text-[#fbf9ef]' : 'text-[#171412]'
         }`}
       >
         Dropshipping
       </span>
-      <span className="font-display text-[14px] sm:text-[16px] font-black text-[#ff7722] tracking-tight">
+      <span className="font-display text-[14px] sm:text-[16px] font-black text-[#ff7722] tracking-tight truncate">
         Academy BD
       </span>
     </div>

@@ -4,7 +4,13 @@ import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/Button';
 import { BrandBadgeMark } from '../components/svg/BrandLogo';
 
-export const NotFoundPage: React.FC = () => {
+export interface NotFoundPageProps {
+  onRegisterClick?: () => void;
+}
+
+export const NotFoundPage: React.FC<NotFoundPageProps> = ({
+  onRegisterClick,
+}) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -31,7 +37,16 @@ export const NotFoundPage: React.FC = () => {
             <Button variant="primary" onClick={() => navigate('/')}>
               {t('হোমপেজে ফিরে যান', 'Back to Home')}
             </Button>
-            <Button variant="orange" onClick={() => navigate('/join')}>
+            <Button
+              variant="orange"
+              onClick={() => {
+                if (onRegisterClick) {
+                  onRegisterClick();
+                } else {
+                  navigate('/join');
+                }
+              }}
+            >
               {t('ওয়েটলিস্টে যুক্ত হোন', 'Join the waitlist')}
             </Button>
           </div>

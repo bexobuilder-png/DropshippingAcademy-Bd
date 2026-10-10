@@ -68,7 +68,15 @@ export const Button: React.FC<ButtonProps> = ({
           />
         </svg>
       )}
-      <span>{isLoading && loadingText ? loadingText : children}</span>
+      {isLoading ? (
+        loadingText ? (
+          <span>{loadingText}</span>
+        ) : (
+          children
+        )
+      ) : (
+        children
+      )}
     </button>
   );
 };

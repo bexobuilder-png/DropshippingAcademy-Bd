@@ -9,20 +9,26 @@ const HOME_SECTION_IDS = ['hero', 'results', 'learn', 'about', 'faq', 'contact']
 
 export interface NavigationProps {
   setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
+  onRegisterClick?: () => void;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
+export const Navigation: React.FC<NavigationProps> = ({
+  setAnim,
+  onRegisterClick,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { lang, toggleLang, t } = useLanguage();
   const isHomePage = location.pathname === '/';
-  const isRegisterPage = location.pathname === '/join';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleRegister = () => {
     setMobileMenuOpen(false);
-    if (isRegisterPage) return;
-    setAnim('intro');
+    if (onRegisterClick) {
+      onRegisterClick();
+    } else {
+      setAnim('intro');
+    }
   };
 
   const { progress, isScrollable, hasScrolled, activeSectionId } =
@@ -53,8 +59,8 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
   return (
     <>
       {/* Top Sticky Bar — Original Warm Cream & Espresso Palette */}
-      <header className="sticky top-0 z-40 bg-[#fbf9ef]/95 backdrop-blur-md border-b border-[#171412]/12 text-[#171412]">
-        <div className="specimen-container h-16 md:h-20 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 w-full box-border overflow-hidden bg-[#fbf9ef]/95 backdrop-blur-md border-b border-[#171412]/12 text-[#171412]">
+        <div className="w-full max-w-[1440px] mx-auto box-border px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2 flex-nowrap">
           
           {/* Zone 1: Graduation Cap Logo + Brand Wordmark */}
           <Link
@@ -62,7 +68,7 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
             onClick={() => {
               if (isHomePage) window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="inline-flex items-center gap-2 group shrink-0"
+            className="min-w-0 flex-[1_1_auto] inline-flex items-center gap-2 group"
           >
             <DropshippingAcademyBdLogo isDark={false} className="h-10" />
           </Link>
@@ -70,7 +76,7 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
           {/* Zone 2: Navigation Links */}
           <nav
             aria-label="Primary navigation"
-            className="hidden md:flex items-center gap-6 lg:gap-8 text-[14px] lg:text-[15px] font-semibold text-[#171412]/85"
+            className="hidden min-[900px]:flex items-center gap-6 lg:gap-8 text-[14px] lg:text-[15px] font-semibold text-[#171412]/85 flex-none"
           >
             <button
               type="button"
@@ -103,12 +109,12 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
           </nav>
 
           {/* Zone 3: Reading Indicator + Language Switcher + Orange Action Button */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2 flex-none">
             {/* Subtle Reading Progress Pill on Long-Form Scroll */}
             {isScrollable && hasScrolled && (
               <div
                 aria-hidden="true"
-                className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[50px] bg-[#f2f0e7]/90 border border-[#171412]/12 text-[11px] font-bold text-[#813502] tabular-nums transition-opacity duration-200"
+                className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[50px] bg-[#f2f0e7]/90 border border-[#171412]/12 text-[11px] font-bold text-[#813502] tabular-nums transition-opacity duration-200 flex-none"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ff7722]" />
                 <span>{progress}%</span>
@@ -120,7 +126,7 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
               type="button"
               onClick={toggleLang}
               aria-label={lang === 'bn' ? 'Switch language to English' : 'ওয়েবসাইটের ভাষা বাংলায় পরিবর্তন করুন'}
-              className="h-9 sm:h-10 px-2.5 sm:px-3 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] border border-[#171412]/20 text-[11px] sm:text-[12px] font-bold text-[#171412] transition-colors cursor-pointer whitespace-nowrap"
+              className="flex-none min-w-[44px] min-h-[44px] h-11 px-3 max-[420px]:w-11 max-[420px]:px-0 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] border border-[#171412]/20 text-[12px] font-bold text-[#171412] inline-flex items-center justify-center transition-colors cursor-pointer whitespace-nowrap"
             >
               {lang === 'bn' ? 'EN' : 'বাং'}
             </button>
@@ -129,18 +135,18 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
             <button
               type="button"
               onClick={handleRegister}
-              className="h-9 sm:h-10 px-3.5 sm:px-5 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[12px] sm:text-[14px] inline-flex items-center gap-1.5 transition-all shadow-sm hover:shadow-md cursor-pointer whitespace-nowrap"
+              className="flex-none min-w-[44px] min-h-[44px] h-11 px-4 sm:px-5 max-[420px]:px-3 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[14px] max-[420px]:text-[14px] inline-flex items-center justify-center gap-1.5 transition-all shadow-sm hover:shadow-md cursor-pointer whitespace-nowrap"
             >
               <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
-              <span aria-hidden="true" className="font-bold">→</span>
+              <span aria-hidden="true" className="font-bold max-[420px]:hidden">→</span>
             </button>
 
-            {/* Mobile Menu Hamburger Toggle */}
+            {/* Hamburger Toggle — Hidden under 900px (since bottom nav has মেনু), shown only on desktop >=900px */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-9 h-9 rounded-lg bg-[#f2f0e7] border border-[#171412]/20 flex items-center justify-center text-[#171412]"
-              aria-label="Toggle mobile menu"
+              className="hidden min-[900px]:inline-flex flex-none min-w-[44px] min-h-[44px] w-11 h-11 rounded-lg bg-[#f2f0e7] border border-[#171412]/20 items-center justify-center text-[#171412] cursor-pointer"
+              aria-label="Toggle menu"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (
@@ -154,9 +160,9 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
 
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#f2f0e7] border-b border-[#171412]/15 px-4 py-4 flex flex-col gap-3">
+          <div className="bg-[#f2f0e7] border-b border-[#171412]/15 px-4 py-4 flex flex-col gap-3">
             <button
               type="button"
               onClick={() => handleAnchorScroll('hero')}
@@ -208,10 +214,10 @@ export const Navigation: React.FC<NavigationProps> = ({ setAnim }) => {
         <ReadingProgressBar variant="navigation" />
       </header>
 
-      {/* Mobile Fixed Bottom Navigation Bar */}
+      {/* Mobile Fixed Bottom Navigation Bar (shown on screens under 900px) */}
       <nav
         aria-label="Mobile Bottom App Bar"
-        className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
+        className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-50 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
       >
         <button
           type="button"
