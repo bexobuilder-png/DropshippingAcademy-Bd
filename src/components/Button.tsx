@@ -1,6 +1,7 @@
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  ref?: React.Ref<HTMLButtonElement>;
   variant?: 'primary' | 'orange' | 'outline' | 'ghost';
   size?: 'default' | 'lg';
   isLoading?: boolean;
@@ -20,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 rounded-[50px] font-body text-[13px] font-bold tracking-tight whitespace-nowrap shrink-0 transition-transform duration-150 active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none cursor-pointer select-none';
+    'inline-flex items-center justify-center gap-2 rounded-[50px] font-body text-[13px] font-bold tracking-tight whitespace-nowrap shrink-0 transition-transform duration-150 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171412] focus-visible:ring-2 focus-visible:ring-[#ff7722] disabled:opacity-60 disabled:pointer-events-none cursor-pointer select-none';
 
   const sizeStyles =
     size === 'lg'

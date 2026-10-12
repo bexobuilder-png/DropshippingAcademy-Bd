@@ -1,48 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  CURRICULUM_TABS_BN,
-  CURRICULUM_TABS_EN,
-  FAQ_ITEMS_BN,
-  FAQ_ITEMS_EN,
-  FEATURED_RESULTS_BN,
-  FEATURED_RESULTS_EN,
-  HERO_SLIDES_BN,
-  HERO_SLIDES_EN,
-  TESTIMONIALS_BN,
-  TESTIMONIALS_EN,
-  TOOL_CATEGORIES_BN,
-  TOOL_CATEGORIES_EN,
-  WHY_CHOOSE_US_ITEMS_BN,
-  WHY_CHOOSE_US_ITEMS_EN,
-  getCurriculumTabs,
-  getFaqItems,
-  getFeaturedResults,
-  getHeroSlides,
-  getTestimonials,
-  getToolCategories,
-  getWhyChooseUsItems,
-} from '../config/content';
-import { FounderProfile, getLocalizedFounderStory } from '../config/founders';
+import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  fetchFoundersList,
-  fetchSiteSectionContent,
-  loadLocalFounders,
-  subscribeToRealtimeSiteContent,
-} from '../services/admin';
-import { saveHeroEmailPrefill } from '../services/waitlist';
-import { Accordion } from '../components/Accordion';
-import { BentoCard } from '../components/BentoCard';
-import { Button } from '../components/Button';
-import { HeroSlider } from '../components/HeroSlider';
-import { WhyChooseUsBar } from '../components/WhyChooseUsBar';
-import { ContactSection } from '../components/ContactSection';
-import { Section } from '../components/Section';
-import { Tabs } from '../components/Tabs';
-import { TestimonialCard } from '../components/TestimonialCard';
+import { StudentIllustration } from '../components/StudentIllustration';
 import type { AnimKind } from '../components/EduAnimation';
-import { ArrowRightSvgIcon, CheckSvgIcon } from '../components/svg/NavIcons';
 
 export interface HomePageProps {
   setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
@@ -53,9 +12,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   setAnim,
   onRegisterClick,
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { lang, t } = useLanguage();
+  const { t } = useLanguage();
 
   const triggerRegister = () => {
     if (onRegisterClick) {
@@ -65,542 +22,271 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   };
 
-  const [heroEmail, setHeroEmail] = useState('');
-  const [heroEmailError, setHeroEmailError] = useState('');
-  const [showTeamBios, setShowTeamBios] = useState(false);
-  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
-  const [foundersList, setFoundersList] = useState<FounderProfile[]>(() =>
-    loadLocalFounders()
-  );
-
-  const [heroSlides, setHeroSlides] = useState(() => getHeroSlides(lang));
-  const [whyChooseUs, setWhyChooseUs] = useState(() => getWhyChooseUsItems(lang));
-  const [toolCategories, setToolCategories] = useState(() => getToolCategories(lang));
-  const [featuredResults, setFeaturedResults] = useState(() => getFeaturedResults(lang));
-  const [curriculumTabs, setCurriculumTabs] = useState(() => getCurriculumTabs(lang));
-  const [testimonials, setTestimonials] = useState(() => getTestimonials(lang));
-  const [faqItems, setFaqItems] = useState(() => getFaqItems(lang));
-
-  useEffect(() => {
-    let mounted = true;
-    fetchFoundersList().then((list) => {
-      if (mounted) setFoundersList(list);
-    });
-
-    const handleFoundersUpdated = () => {
-      setFoundersList(loadLocalFounders());
-    };
-    window.addEventListener('founders-updated', handleFoundersUpdated);
-    return () => {
-      mounted = false;
-      window.removeEventListener('founders-updated', handleFoundersUpdated);
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadAllContent = () => {
-      Promise.all([
-        fetchSiteSectionContent('hero_slides_bn', HERO_SLIDES_BN),
-        fetchSiteSectionContent('hero_slides_en', HERO_SLIDES_EN),
-        fetchSiteSectionContent('why_choose_us_bn', WHY_CHOOSE_US_ITEMS_BN),
-        fetchSiteSectionContent('why_choose_us_en', WHY_CHOOSE_US_ITEMS_EN),
-        fetchSiteSectionContent('tool_categories_bn', TOOL_CATEGORIES_BN),
-        fetchSiteSectionContent('tool_categories_en', TOOL_CATEGORIES_EN),
-        fetchSiteSectionContent('featured_results_bn', FEATURED_RESULTS_BN),
-        fetchSiteSectionContent('featured_results_en', FEATURED_RESULTS_EN),
-        fetchSiteSectionContent('curriculum_tabs_bn', CURRICULUM_TABS_BN),
-        fetchSiteSectionContent('curriculum_tabs_en', CURRICULUM_TABS_EN),
-        fetchSiteSectionContent('testimonials_bn', TESTIMONIALS_BN),
-        fetchSiteSectionContent('testimonials_en', TESTIMONIALS_EN),
-        fetchSiteSectionContent('faq_items_bn', FAQ_ITEMS_BN),
-        fetchSiteSectionContent('faq_items_en', FAQ_ITEMS_EN),
-      ]).then(
-        ([
-          hsBn,
-          hsEn,
-          wcBn,
-          wcEn,
-          tcBn,
-          tcEn,
-          frBn,
-          frEn,
-          ctBn,
-          ctEn,
-          tsBn,
-          tsEn,
-          fqBn,
-          fqEn,
-        ]) => {
-          if (!mounted) return;
-          setHeroSlides(lang === 'bn' ? hsBn : hsEn);
-          setWhyChooseUs(lang === 'bn' ? wcBn : wcEn);
-          setToolCategories(lang === 'bn' ? tcBn : tcEn);
-          setFeaturedResults(lang === 'bn' ? frBn : frEn);
-          setCurriculumTabs(lang === 'bn' ? ctBn : ctEn);
-          setTestimonials(lang === 'bn' ? tsBn : tsEn);
-          setFaqItems(lang === 'bn' ? fqBn : fqEn);
-        }
-      );
-    };
-
-    loadAllContent();
-
-    // Subscribe to real-time changes from the server/Supabase
-    const unsubscribe = subscribeToRealtimeSiteContent(() => {
-      if (mounted) {
-        loadAllContent();
-      }
-    });
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, [lang]);
-
-  useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace('#', '');
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
+  const scrollToPath = () => {
+    const el = document.getElementById('path');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [location.hash]);
-
-  const handleHeroSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = heroEmail.trim();
-    if (trimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      saveHeroEmailPrefill(trimmed);
-    }
-    setHeroEmailError('');
-    triggerRegister();
   };
 
-  const founderStory = getLocalizedFounderStory(lang);
-
   return (
-    <main id="main-content" className="overflow-x-hidden bg-[#fbf9ef] text-[#171412]">
-      {/* =====================================================================
-          1. HERO SECTION (Full-Width Interactive Slider Immediately Upon Entry)
-      ===================================================================== */}
-      <section
-        id="hero"
-        aria-label="Hero slider introduction"
-        className="relative pt-6 pb-12 md:pt-10 md:pb-16 lg:pt-12 lg:pb-20 scroll-mt-20"
-      >
-        <div className="specimen-container relative">
-          {/* Main Hero Slider */}
-          <div className="mb-6 lg:mb-8">
-            <HeroSlider
-              slides={heroSlides}
-              onCtaClick={triggerRegister}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          2. WHY CHOOSE US (5 Core Pillars)
-      ===================================================================== */}
-      <section
-        id="why-choose"
-        aria-label="Why Choose Dropshipping Academy BD"
-        className="py-14 md:py-20 bg-[#f2f0e7] border-t border-b border-[#171412]/15"
-      >
-        <div className="specimen-container">
-          <WhyChooseUsBar items={whyChooseUs} />
-        </div>
-      </section>
-
-      {/* =====================================================================
-          3. FEATURED RESULTS (Selected Benchmarks Bento Grid)
-      ===================================================================== */}
-      <Section id="results" ariaLabel="Featured results and curriculum benchmarks">
-        <div className="flex flex-col gap-4 mb-10 md:mb-14">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-                <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-                {t('রিয়েল আউটপুট ও বেঞ্চমার্ক', 'Real Outputs & Benchmarks')}
+    <main id="main-content" className="overflow-x-hidden">
+      {/* 1. HERO SECTION */}
+      <section className="hero3">
+        <div className="wrap">
+          <div className="h3-card">
+            <div className="h3-text">
+              <span className="chip">
+                <i></i>
+                <span>{t('লাইভ ব্যাচ ০১', 'Live batch 01')}</span>
               </span>
-              <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
-                {t('নির্বাচিত', 'Featured')}{' '}
-                <span className="text-[#ff7722]">{t('ফলাফল', 'Results')}</span>
-              </h2>
-              <p className="mt-4 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium leading-[1.6]">
+              <h1>
+                <span>{t('ড্রপশিপিং ও ই-কমার্স', 'Dropshipping & E-commerce')}</span>
+                <span>{t('ব্যবসা শিখুন', 'Learn the business')}</span>
+              </h1>
+              <p className="lead">
                 {t(
-                  'প্রতিটি শিক্ষার্থী যে অপারেটিং লক্ষ্যমাত্রা ও প্রফিট মার্জিন অর্জনের জন্য কাজ করে।',
-                  'The operating benchmarks and unit economics every student builds toward.'
+                  'ঘরে বসে অনলাইন ব্যবসা শুরু করুন। আমাদের প্রফেশনাল কোর্সের মাধ্যমে শিখুন ড্রপশিপিং, ই-কমার্স, মার্কেটিং এবং ডিজিটাল বিজনেসের সকল কৌশল।',
+                  'Start an online business from home. Our professional course teaches dropshipping, e-commerce, marketing and every skill of digital business.'
                 )}
               </p>
+              <div className="h3-btns">
+                <button className="btn" type="button" onClick={triggerRegister}>
+                  <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+                <button className="circ" type="button" onClick={scrollToPath}>
+                  <i>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5v14M6 13l6 6 6-6" />
+                    </svg>
+                  </i>
+                  <span>{t('কোর্স কীভাবে চলে দেখুন', 'See how the course works')}</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* 24-Column Bento Grid */}
-        <div className="grid-24 gap-4 md:gap-6">
-          {featuredResults.map((item) => (
-            <BentoCard key={item.id} item={item} />
-          ))}
-        </div>
-      </Section>
-
-      {/* =====================================================================
-          4.5. MODERN E-COMMERCE TOOLS STACK
-      ===================================================================== */}
-      <section className="py-12 md:py-16 bg-[#f2f0e7] border-t border-b border-[#171412]/15">
-        <div className="specimen-container">
-          <div className="text-center max-w-xl mx-auto mb-8">
-            <span className="text-[13px] font-bold text-[#813502] uppercase tracking-wider">
-              {t('গ্লোবাল ই-কমার্স ইকোসিস্টেম', 'Global E-Commerce Ecosystem')}
-            </span>
-            <h3 className="font-display text-[22px] sm:text-[26px] font-extrabold text-[#171412] mt-1">
-              {t(
-                'আধুনিক ই-কমার্স ও পেইড মার্কেটিং টুলসের সমন্বয়ে তৈরি',
-                'Built around the modern global e-commerce stack'
-              )}
-            </h3>
-          </div>
-          <ul
-            aria-label="Supported e-commerce platforms and ad networks"
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4"
-          >
-            {toolCategories.map((tool) => (
-              <li
-                key={tool.id}
-                className="py-4 px-4 rounded-[16px] bg-[#fbf9ef] border border-[#171412]/20 hover:border-[#ff7722] shadow-sm flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 group"
-              >
-                <span className="font-display text-[17px] md:text-[19px] font-extrabold text-[#171412] group-hover:text-[#813502] tracking-tight transition-colors">
-                  {tool.name}
+            <StudentIllustration />
+            <ul className="h3-trust">
+              <li>
+                <span className="ti">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M5 20c0-4 3-6 7-6s7 2 7 6z" />
+                  </svg>
                 </span>
-                <span className="text-[12px] text-[#171412]/70 font-medium mt-1">
-                  {tool.category}
-                </span>
+                <span>{t('প্রফেশনাল ট্রেইনার', 'Experienced Instructor')}</span>
               </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          5. WHAT YOU'LL LEARN (Curriculum Tabs)
-      ===================================================================== */}
-      <Section id="learn" ariaLabel="What you will learn curriculum">
-        <div className="mb-10 md:mb-14 max-w-2xl">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-            <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-            {t('স্টেপ-বাই-স্টেপ রোডম্যাপ', 'Step-by-Step Roadmap')}
-          </span>
-          <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
-            <span className="block">{t('আপনি যা যা শিখবেন।', "What you'll learn.")}</span>
-            <span className="block text-[#813502] mt-1">
-              {t('দ্রুত এগিয়ে যাওয়ার বাস্তব কৌশল।', 'Practical ways to move fast.')}
-            </span>
-          </h2>
-        </div>
-
-        <Tabs items={curriculumTabs} />
-      </Section>
-
-      {/* =====================================================================
-          6. TRUSTED BY FUTURE STORE OWNERS (Testimonials)
-      ===================================================================== */}
-      <Section id="reviews" ariaLabel="Trusted by future store owners">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-              {t('শিক্ষার্থীদের অভিজ্ঞতা', 'Student Testimonials')}
-            </span>
-            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
-              {t('ভবিষ্যৎ স্টোর উদ্যোক্তাদের', 'Trusted by Future')}{' '}
-              <span className="text-[#ff7722]">{t('আস্থা', 'Store Owners')}</span>
-            </h2>
-            <p className="mt-4 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium max-w-[54ch]">
-              {t(
-                'যারা আমাদের প্রোডাক্ট ভ্যালিডেশন স্কোরকার্ড এবং স্টোরফ্রন্ট ওয়্যারফ্রেম ব্যবহার করে এগিয়ে গেছেন।',
-                'Beta students who tested our product validation scorecards and live storefront systems.'
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div
-          aria-label="Beta reader feedback cards"
-          className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar py-4 md:py-6 px-1"
-        >
-          {testimonials.map((item) => (
-            <TestimonialCard key={item.id} item={item} />
-          ))}
-        </div>
-      </Section>
-
-      {/* =====================================================================
-          7. ABOUT US & FOUNDERS
-      ===================================================================== */}
-      <Section id="about" ariaLabel="Small team, big results — The Founders">
-        <div className="relative">
-          {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-              {t('অভিজ্ঞ অপারেটরদের সরাসরি গাইডলাইন', 'Operators Teaching Operators')}
-            </span>
-            <h2 className="font-display text-[32px] sm:text-[46px] font-extrabold text-[#171412] leading-[1.1] tracking-[-0.03em]">
-              {t('আমাদের', 'About')}{' '}
-              <span className="text-[#ff7722]">{t('সম্পর্কে ও টিম', 'Our Team')}</span>
-            </h2>
-            <p className="mt-3 text-[15px] sm:text-[17px] text-[#171412]/80 font-medium">
-              {founderStory.headline}
-            </p>
-          </div>
-
-          {/* Founders Grid */}
-          {foundersList.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {foundersList.map((founder, idx) => {
-                const imageFailed = Boolean(failedImages[founder.id]);
-                return (
-                  <div
-                    key={founder.id}
-                    className="rounded-[22px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col items-center text-center shadow-md transition-all duration-300 group"
-                  >
-                    {/* Founder Photo */}
-                    <div className="relative w-36 h-48 sm:w-44 sm:h-56 rounded-[16px] overflow-hidden bg-[#ffc765] border-2 border-[#171412] shadow-sm mb-5 group-hover:scale-102 transition-transform">
-                      {!imageFailed ? (
-                        <img
-                          src={founder.photo}
-                          alt={founder.alt}
-                          width={360}
-                          height={480}
-                          loading="lazy"
-                          onError={() =>
-                            setFailedImages((prev) => ({
-                              ...prev,
-                              [founder.id]: true,
-                            }))
-                          }
-                          className="w-full h-full object-cover object-center"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f2f0e7] text-[#171412]">
-                          <span className="font-display text-[28px] font-extrabold text-[#ff7722]">
-                            0{idx + 1}
-                          </span>
-                          <span className="mt-2 font-display text-[15px] font-bold">
-                            {founder.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Name & Role */}
-                    <h3 className="font-display text-[20px] font-extrabold text-[#171412] leading-tight">
-                      {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
-                    </h3>
-                    <div className="text-[13px] text-[#813502] font-bold mt-1">
-                      {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
-                    </div>
-
-                    <p className="mt-3 text-[14px] text-[#171412]/80 leading-[1.5] max-w-[34ch]">
-                      {lang === 'en' && founder.shortBioEn
-                        ? founder.shortBioEn
-                        : founder.shortBio}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Story Paragraph & CTA */}
-          <div className="mt-12 md:mt-14 max-w-2xl mx-auto text-center">
-            <p className="text-[16px] text-[#171412]/85 leading-[1.6]">
-              {founderStory.body}
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              {foundersList.length > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowTeamBios((prev) => !prev)}
-                  aria-expanded={showTeamBios}
-                >
-                  {showTeamBios
-                    ? t('পরিচিতি সংক্ষিপ্ত করুন', 'Hide founder bios')
-                    : founderStory.ctaLabel}
-                </Button>
-              )}
-              <Button
-                variant="orange"
-                onClick={triggerRegister}
-              >
-                {t('রেজিস্ট্রেশন করুন', 'Register Now')}
-              </Button>
-            </div>
-
-            {/* Expandable Bio Drawer */}
-            {showTeamBios && foundersList.length > 0 && (
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                {foundersList.map((founder) => (
-                  <div
-                    key={`bio-${founder.id}`}
-                    className="rounded-[16px] bg-[#f2f0e7] border-2 border-[#171412] p-6 shadow-sm"
-                  >
-                    <div className="text-[12px] font-bold text-[#813502]">
-                      {lang === 'en' && founder.specialtyEn
-                        ? founder.specialtyEn
-                        : founder.specialty}
-                    </div>
-                    <h4 className="font-display text-[20px] font-extrabold text-[#171412] mt-1">
-                      {lang === 'en' && founder.nameEn ? founder.nameEn : founder.name}
-                    </h4>
-                    <p className="text-[13px] text-[#171412]/70 mt-0.5 mb-3">
-                      {lang === 'en' && founder.roleEn ? founder.roleEn : founder.role}
-                    </p>
-                    <p className="text-[14px] text-[#171412]/85 leading-[1.55]">
-                      {lang === 'en' && founder.shortBioEn
-                        ? founder.shortBioEn
-                        : founder.shortBio}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </Section>
-
-      {/* =====================================================================
-          8. FAQ ACCORDION (সাধারণ জিজ্ঞাসা)
-      ===================================================================== */}
-      <Section id="faq" ariaLabel="Frequently asked questions">
-        <div className="grid-24 gap-y-10">
-          <div className="col-span-24 lg:col-span-9">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[12px] sm:text-[13px] font-extrabold uppercase tracking-wider mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-              {t('সাধারণ জিজ্ঞাসা', 'Common Questions')}
-            </span>
-            <h2 className="font-display text-[32px] sm:text-[44px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em] text-balance">
-              {t(
-                'যুক্ত হওয়ার আগে যা জানা প্রয়োজন।',
-                'Everything you need to know before joining.'
-              )}
-            </h2>
-            <p className="mt-4 text-[15px] sm:text-[16px] text-[#171412]/80 leading-[1.6] max-w-[38ch]">
-              {t(
-                'প্রাথমিক মূলধন, সময় বা আন্তর্জাতিক সাপ্লায়ার নিয়ে আপনার মনে কোনো প্রশ্ন থাকলে সরাসরি নিচের উত্তরগুলো দেখে নিতে পারেন।',
-                'Have a specific question about capital, time commitment, or international suppliers? Read our clear answers.'
-              )}
-            </p>
-          </div>
-
-          <div className="col-span-24 lg:col-start-11 lg:col-span-14">
-            <Accordion items={faqItems} />
-          </div>
-        </div>
-      </Section>
-
-      {/* =====================================================================
-          9. FINAL REGISTRATION CTA BANNER
-      ===================================================================== */}
-      <section
-        id="final-cta"
-        aria-label="Join Dropshipping Academy"
-        className="py-16 md:py-24 bg-[#fbf9ef]"
-      >
-        <div className="specimen-container">
-          <div className="rounded-[24px] bg-[#ff7722] text-[#171412] p-8 sm:p-12 lg:p-16 border-2 border-[#171412] shadow-[6px_6px_0px_#171412] relative overflow-hidden">
-            {/* Ambient warm yellow blur */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#ffc765]/40 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="relative z-10 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[50px] bg-[#fbf9ef] border border-[#171412] text-[#171412] text-[12px] font-extrabold uppercase tracking-wide mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#ff7722]"></span>
-                <span>
-                  {t(
-                    'পরবর্তী ব্যাচে ভর্তি · সীমিত আসন',
-                    'Next Cohort Enrollment · Limited Seats'
-                  )}
+              <li>
+                <span className="ti">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="12" rx="2" />
+                    <path d="M8 20h8M12 16v4" />
+                  </svg>
                 </span>
-              </div>
-
-              <h2 className="font-display text-[32px] sm:text-[46px] lg:text-[54px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em]">
-                {t(
-                  'প্রতিটি দিনকে লাভজনক করে তুলুন!',
-                  'Make every day pay for itself!'
-                )}
-              </h2>
-
-              <p className="mt-4 text-[16px] sm:text-[18px] text-[#171412]/85 leading-[1.6] max-w-[50ch]">
-                {t(
-                  'মাত্র ২ মিনিটে আপনার স্থান নিশ্চিত করুন। ইমেইল ভেরিফাই করুন এবং নতুন ব্যাচ শুরু হওয়ার সাথে সাথে সকল আপডেট পান।',
-                  'Reserve your spot in under two minutes. Verify your email and get notified the moment live doors open.'
-                )}
-              </p>
-
-              <div className="mt-8">
-                <form
-                  onSubmit={handleHeroSubmit}
-                  noValidate
-                  className="w-full max-w-[520px]"
-                >
-                  <label htmlFor="cta-waitlist-email" className="sr-only">
-                    {t(
-                      'ওয়েটলিস্টে যুক্ত হতে আপনার ইমেইল দিন',
-                      'Email address to join the waitlist'
-                    )}
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 rounded-[28px] sm:rounded-[50px] bg-[#fbf9ef] border-2 border-[#171412] shadow-md">
-                    <input
-                      id="cta-waitlist-email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      value={heroEmail}
-                      onChange={(e) => {
-                        setHeroEmail(e.target.value);
-                        if (heroEmailError) setHeroEmailError('');
-                      }}
-                      placeholder={t(
-                        'আপনার ইমেইল ঠিকানা লিখুন...',
-                        'Enter your email address...'
-                      )}
-                      className="flex-1 h-[52px] min-h-[52px] px-5 py-2 rounded-[50px] bg-transparent text-[#171412] text-[15px] font-medium placeholder:text-[#171412]/50 focus:outline-none"
-                    />
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="w-full sm:w-auto px-6 h-[52px] min-h-[52px] inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
-                    >
-                      <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
-                      <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#fbf9ef]" />
-                    </Button>
-                  </div>
-                  {heroEmailError && (
-                    <p
-                      role="alert"
-                      aria-live="polite"
-                      className="text-[13px] font-bold text-[#171412] bg-[#fbf9ef] inline-block px-3 py-1 rounded-full mt-2"
-                    >
-                      {heroEmailError}
-                    </p>
-                  )}
-                </form>
-              </div>
-            </div>
+                <span>{t('লাইভ ক্লাস', 'Live classes')}</span>
+              </li>
+              <li>
+                <span className="ti">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 13v-1a8 8 0 0 1 16 0v1" />
+                    <rect x="3" y="13" width="4" height="6" rx="1.5" />
+                    <rect x="17" y="13" width="4" height="6" rx="1.5" />
+                  </svg>
+                </span>
+                <span>{t('২৪/৭ সাপোর্ট', '24/7 Support')}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* =====================================================================
-          10. CONTACT CHANNELS (যোগাযোগের মাধ্যম - WhatsApp, Hotline, Email, Message)
-      ===================================================================== */}
-      <ContactSection />
+      <div className="wrap">
+        {/* 3 STEPS SECTION */}
+        <section className="block" id="path">
+          <h2>{t('৩ ধাপে আপনার অনলাইন ব্যবসা', 'Your online business in 3 steps')}</h2>
+          <ol className="steps3">
+            <li className="st">
+              <div className="st-art">
+                <svg viewBox="0 0 140 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="s1a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFFFFF"/><stop offset="1" stopColor="#F1DDC6"/></linearGradient>
+                    <linearGradient id="s1b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F6A365"/><stop offset="1" stopColor="#E26B26"/></linearGradient>
+                    <linearGradient id="s1c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFDF92"/><stop offset="1" stopColor="#EDB24A"/></linearGradient>
+                  </defs>
+                  <ellipse cx="70" cy="108" rx="52" ry="7" fill="#8F3F10" opacity=".18"/>
+                  <path d="M70 100C54 90 28 90 12 98V36C28 28 54 28 70 38z" fill="url(#s1a)"/><path d="M70 100C86 90 112 90 128 98V36C112 28 86 28 70 38z" fill="#F4E4D0"/>
+                  <path d="M70 38V100" stroke="#D9BE9E" strokeWidth="2"/><path d="M22 52c12-4 28-3 40 3M22 64c12-4 28-3 40 3M22 76c12-4 28-3 40 3M80 55c12-6 28-7 40-3M80 67c12-6 28-7 40-3" stroke="#D9BE9E" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
+                  <g transform="translate(108 18) rotate(32)"><rect x="-6" y="0" width="12" height="44" rx="3" fill="url(#s1b)"/><path d="M-6 44h12l-6 12z" fill="#FFF1D8"/><path d="M-2.5 51h5l-2.5 5z" fill="#2A1A11"/><rect x="-6" y="-10" width="12" height="10" rx="4" fill="#8F3F10"/></g>
+                  <circle cx="30" cy="22" r="9" fill="url(#s1c)"/><path d="M30 17v10M25 22h10" stroke="#fff" strokeOpacity=".7" strokeWidth="2.4" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3>
+                <em>১</em>
+                <span>{t('শিখুন', 'Learn')}</span>
+              </h3>
+              <p>{t('পণ্য রিসার্চ, সাপ্লায়ার খোঁজা ও যাচাই এবং লাভের হিসাব শিখুন।', 'Learn product research, finding and verifying suppliers, and working out your profit.')}</p>
+            </li>
+
+            <li className="st">
+              <div className="st-art">
+                <svg viewBox="0 0 140 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="s2a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFFFFF"/><stop offset="1" stopColor="#F1DDC6"/></linearGradient>
+                    <linearGradient id="s2b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F6A365"/><stop offset="1" stopColor="#E26B26"/></linearGradient>
+                    <linearGradient id="s2c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFDF92"/><stop offset="1" stopColor="#EDB24A"/></linearGradient>
+                  </defs>
+                  <ellipse cx="70" cy="108" rx="52" ry="7" fill="#8F3F10" opacity=".18"/>
+                  <rect x="24" y="52" width="92" height="54" rx="6" fill="url(#s2a)"/><path d="M16 52l10-34h88l10 34z" fill="url(#s2b)"/>
+                  <path d="M44 18l-4 34M70 18v34M96 18l4 34" stroke="#fff" strokeOpacity=".35" strokeWidth="3"/>
+                  <rect x="58" y="68" width="24" height="38" rx="4" fill="#8F3F10"/><circle cx="77" cy="88" r="2" fill="#FFDF92"/>
+                  <rect x="30" y="64" width="22" height="22" rx="4" fill="url(#s2c)"/><rect x="88" y="64" width="22" height="22" rx="4" fill="url(#s2c)"/>
+                  <path d="M104 14l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#F6C974"/>
+                </svg>
+              </div>
+              <h3>
+                <em>২</em>
+                <span>{t('তৈরি করুন', 'Build')}</span>
+              </h3>
+              <p>{t('ফেসবুক পেজ ও ই-স্টোর সাজান, প্রোডাক্ট যোগ করুন এবং মার্কেটিং শিখুন।', 'Set up your Facebook page and e-store, add products and learn marketing.')}</p>
+            </li>
+
+            <li className="st">
+              <div className="st-art">
+                <svg viewBox="0 0 140 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="s3a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFDF92"/><stop offset="1" stopColor="#EDB24A"/></linearGradient>
+                    <linearGradient id="s3b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F6A365"/><stop offset="1" stopColor="#E26B26"/></linearGradient>
+                    <radialGradient id="s3c" cx=".35" cy=".3" r=".9"><stop offset="0" stopColor="#FFE9AE"/><stop offset="1" stopColor="#F0B445"/></radialGradient>
+                  </defs>
+                  <ellipse cx="70" cy="108" rx="54" ry="7" fill="#8F3F10" opacity=".18"/>
+                  <path d="M14 58l34-14 34 14v38l-34 14-34-14z" fill="url(#s3a)"/><path d="M14 58l34 14 34-14" fill="none" stroke="#C98A1E" strokeOpacity=".55" strokeWidth="2.4" strokeLinejoin="round"/><path d="M48 72v38" stroke="#C98A1E" strokeOpacity=".55" strokeWidth="2.4"/>
+                  <path d="M30 51l34 14v14l-8-3.5V68L24 55z" fill="url(#s3b)"/>
+                  <circle cx="98" cy="46" r="26" fill="url(#s3c)"/><circle cx="98" cy="46" r="26" fill="none" stroke="#fff" strokeOpacity=".7" strokeWidth="2"/><circle cx="98" cy="46" r="19" fill="none" stroke="#C98A1E" strokeOpacity=".6" strokeWidth="2" strokeDasharray="3 4"/>
+                  <text x="98" y="56" textAnchor="middle" fontSize="28" fontWeight="800" fill="#8F3F10" fontFamily="'Anek Bangla','Hind Siliguri',system-ui,sans-serif">৳</text>
+                  <path d="M120 94l-4 8 8-3z" fill="none"/>
+                </svg>
+              </div>
+              <h3>
+                <em>৩</em>
+                <span>{t('বিক্রি করুন', 'Sell')}</span>
+              </h3>
+              <p>{t('অর্ডার নিন, সাপ্লায়ারের মাধ্যমে ডেলিভারি দিন এবং লাভ-ক্ষতির হিসাব রাখুন।', 'Take orders, deliver through your supplier and keep your profit and loss accounts.')}</p>
+            </li>
+          </ol>
+        </section>
+
+        {/* CLASS & SUPPORT */}
+        <section className="block" id="fmt">
+          <h2>{t('ক্লাস ও সহায়তা', 'Classes and support')}</h2>
+          <div className="fmt">
+            <div className="fmt-card">
+              <span className="fi">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="12" rx="2" />
+                  <path d="M10 8l5 3-5 3zM8 20h8M12 16v4" />
+                </svg>
+              </span>
+              <h3>{t('লাইভ ক্লাস', 'Live classes')}</h3>
+              <p>{t('প্রফেশনাল ট্রেইনার অনলাইনে সরাসরি শেখাবেন।', 'A professional trainer teaches you live, online.')}</p>
+            </div>
+            <div className="fmt-card">
+              <span className="fi">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 13v-1a8 8 0 0 1 16 0v1" />
+                  <rect x="3" y="13" width="4" height="6" rx="1.5" />
+                  <rect x="17" y="13" width="4" height="6" rx="1.5" />
+                </svg>
+              </span>
+              <h3>{t('২৪/৭ হেল্পডেস্ক', '24/7 helpdesk')}</h3>
+              <p>{t('আটকে গেলে যেকোনো সময় সাহায্য চাইতে পারবেন।', 'Ask for help any time you get stuck.')}</p>
+            </div>
+            <div className="fmt-card">
+              <span className="fi">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="12" rx="2" />
+                  <circle cx="12" cy="10" r="2.5" />
+                  <path d="M9 20l3-3 3 3" />
+                </svg>
+              </span>
+              <h3>{t('কোর্স শেষে সার্টিফিকেট', 'Certificate at the end')}</h3>
+              <p>{t('কোর্স সম্পন্ন করলে সার্টিফিকেট পাবেন।', 'Complete the course and receive a certificate.')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* TOOLS */}
+        <section className="block" id="tools">
+          <h2>{t('যে টুলগুলো ব্যবহার শিখবেন', 'Tools you will learn to use')}</h2>
+          <div className="tools">
+            <div>
+              <small>{t('স্টোর বানাতে', 'To build a store')}</small>
+              <p><span className="tool">Shopify</span><span className="tool">WooCommerce</span></p>
+            </div>
+            <div>
+              <small>{t('পণ্য আনতে', 'To source products')}</small>
+              <p><span className="tool">AliExpress</span><span className="tool">CJ Dropshipping</span></p>
+            </div>
+            <div>
+              <small>{t('বিজ্ঞাপন দিতে', 'To run ads')}</small>
+              <p><span className="tool">Meta Ads</span><span className="tool">TikTok Ads</span></p>
+            </div>
+          </div>
+        </section>
+
+        {/* WHO IS THIS COURSE FOR */}
+        <section className="block" id="fit">
+          <h2>{t('কাদের জন্য এই কোর্স?', 'Who is this course for?')}</h2>
+          <div className="fit">
+            <ul className="fit-list">
+              <li>{t('১৮ বছর বা তার বেশি বয়স', 'You are 18 or older')}</li>
+              <li>{t('ড্রপশিপিং বা ই-কমার্সে একদম নতুন', 'You are new to dropshipping or e-commerce')}</li>
+              <li>{t('পড়াশোনা বা চাকরির পাশাপাশি শিখতে চান', 'You want to learn alongside study or a job')}</li>
+              <li>{t('ঘরে বসে অনলাইনে ব্যবসা শুরু করতে চান', 'You want to start an online business from home')}</li>
+            </ul>
+            <div className="note">
+              <h3>{t('একটি সৎ কথা', 'One honest note')}</h3>
+              <p>{t('ব্যবসা থেকে আয়ের কোনো নিশ্চয়তা দেওয়া হয় না। ফল নির্ভর করে আপনার শেখা, অনুশীলন ও সময়ের ওপর।', 'No income is guaranteed. Results depend on how much you learn, practise and the time you put in.')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="block" id="faq">
+          <h2>{t('সাধারণ প্রশ্ন', 'Common questions')}</h2>
+          <div className="faq">
+            <details>
+              <summary>{t('কোর্সে ভর্তির বয়স কত?', 'What is the minimum age?')}</summary>
+              <p>{t('বয়স ন্যূনতম ১৮ বছর হতে হবে।', 'You must be at least 18 years old.')}</p>
+            </details>
+            <details>
+              <summary>{t('ক্লাস কীভাবে হবে?', 'How are the classes held?')}</summary>
+              <p>{t('লাইভ অনলাইন ক্লাসে প্রফেশনাল ট্রেইনার সরাসরি শেখাবেন।', 'Live online classes taught directly by a professional trainer.')}</p>
+            </details>
+            <details>
+              <summary>{t('সমস্যায় পড়লে কোথায় সাহায্য পাব?', 'Where do I get help?')}</summary>
+              <p>{t('২৪/৭ হেল্পডেস্ক আপনার পাশে থাকবে।', 'The 24/7 helpdesk is there for you.')}</p>
+            </details>
+            <details>
+              <summary>{t('ওয়েটলিস্টে যুক্ত হলে কী হবে?', 'What happens after I join the waitlist?')}</summary>
+              <p>{t('ইমেইলে আসা কোড দিয়ে আসন নিশ্চিত করবেন। ব্যাচ শুরুর খবর আমরা আপনাকে জানাবো।', 'You confirm your seat with the code we email you. We tell you when the batch starts.')}</p>
+            </details>
+          </div>
+        </section>
+
+        {/* FINAL CTA BAND */}
+        <div className="cta-band">
+          <h2>{t('আপনার আসন নিশ্চিত করুন', 'Secure your seat')}</h2>
+          <button className="btn" type="button" onClick={triggerRegister}>
+            <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+        <p className="foot">Dropshipping Academy BD</p>
+      </div>
     </main>
   );
 };

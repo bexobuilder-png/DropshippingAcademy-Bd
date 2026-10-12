@@ -1,10 +1,80 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import type { WaitlistFormValues } from '../schemas/waitlist';
+import {
+  waitlistStep1Schema,
+  validateWhatsAppNumberFormat,
+  type WaitlistFormValues,
+} from '../schemas/waitlist';
 
 const DRAFT_STORAGE_KEY = 'da_waitlist_draft_v1';
 const CONFIRMED_STORAGE_KEY = 'da_waitlist_confirmed_v1';
 const HERO_EMAIL_PREFILL_KEY = 'da_hero_email_prefill_v1';
 export const LOCAL_WAITLIST_ENTRIES_KEY = 'da_local_waitlist_entries_v1';
+
+export interface ServerValidationResult {
+  success: boolean;
+  normalized?: WaitlistFormValues;
+  fieldErrors?: Partial<Record<keyof WaitlistFormValues, string>>;
+  error?: string;
+}
+
+/**
+ * Validates the registration form payload on the server (`/api/validate-registration`)
+ * using libphonenumber-js and Zod when the form is submitted.
+ */
+export async function validateRegistrationOnServer(
+  formData: WaitlistFormValues
+): Promise<ServerValidationResult> {
+  try {
+    const response = await fetch('/api/validate-registration', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    const data = (await response.json()) as ServerValidationResult;
+    if (!response.ok || !data.success) {
+      return {
+        success: false,
+        fieldErrors: data.fieldErrors,
+        error: data.error,
+      };
+    }
+
+    return {
+      success: true,
+      normalized: data.normalized || formData,
+    };
+  } catch {
+    // Fallback if server route is unreachable in static-only preview
+    const phoneCheck = validateWhatsAppNumberFormat(formData.phone, 'BD');
+    const effectiveWa = formData.sameAsPhone ? formData.phone : formData.whatsapp;
+    const waCheck = validateWhatsAppNumberFormat(effectiveWa, 'BD');
+    const candidate: WaitlistFormValues = {
+      ...formData,
+      phone: phoneCheck.isValid ? phoneCheck.e164 : formData.phone,
+      whatsapp: waCheck.isValid ? waCheck.e164 : effectiveWa,
+    };
+    const parsed = waitlistStep1Schema.safeParse(candidate);
+    if (!parsed.success) {
+      const fieldErrors: Partial<Record<keyof WaitlistFormValues, string>> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof WaitlistFormValues | undefined;
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      return {
+        success: false,
+        fieldErrors,
+        error: 'Please check the highlighted registration fields and try again.',
+      };
+    }
+    return {
+      success: true,
+      normalized: parsed.data,
+    };
+  }
+}
 
 export interface WaitlistDbRow {
   id: string;
@@ -53,6 +123,7 @@ export interface ConfirmedWaitlistRecord {
   email: string;
   phone: string;
   whatsapp: string;
+  whatsappConfirmedByUser?: boolean;
   dateOfBirth: string;
   alreadyOnWaitlist: boolean;
   confirmedAt: string;
@@ -241,6 +312,7 @@ export async function verifyEmailOtpAndInsertWaitlist(
       email: normalizedEmail,
       phone: formData.phone,
       whatsapp: formData.whatsapp,
+      whatsappConfirmedByUser: Boolean(formData.whatsappConfirmedByUser),
       dateOfBirth: formData.dateOfBirth,
       alreadyOnWaitlist: false,
       confirmedAt: new Date().toISOString(),
@@ -316,6 +388,7 @@ export async function verifyEmailOtpAndInsertWaitlist(
       email: normalizedEmail,
       phone: formData.phone,
       whatsapp: formData.whatsapp,
+      whatsappConfirmedByUser: Boolean(formData.whatsappConfirmedByUser),
       dateOfBirth: formData.dateOfBirth,
       alreadyOnWaitlist,
       confirmedAt: new Date().toISOString(),

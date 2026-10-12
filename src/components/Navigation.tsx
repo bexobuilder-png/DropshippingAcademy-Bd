@@ -232,13 +232,13 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         <button
           type="button"
-          onClick={() => handleAnchorScroll('results')}
+          onClick={() => handleAnchorScroll('path')}
           className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M6 13l6 6 6-6" />
           </svg>
-          <span className="text-[10px] font-bold tracking-tight">{t('ফলাফল', 'Results')}</span>
+          <span className="text-[10px] font-bold tracking-tight">{t('কোর্স', 'Course')}</span>
         </button>
 
         <button

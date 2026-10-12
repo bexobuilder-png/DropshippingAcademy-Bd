@@ -3,11 +3,45 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, Plugin } from 'vite';
 import { handleSendEmailCore } from './api/send-email';
+import { handleValidateRegistrationCore } from './api/validate-registration';
 
 function devEmailApiPlugin(): Plugin {
   return {
     name: 'dev-email-api-plugin',
     configureServer(server) {
+      server.middlewares.use('/api/validate-registration', (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+          return;
+        }
+
+        let bodyRaw = '';
+        req.on('data', (chunk: Buffer | string) => {
+          bodyRaw += chunk.toString();
+        });
+
+        req.on('end', async () => {
+          try {
+            const body = bodyRaw ? JSON.parse(bodyRaw) : {};
+            const result = await handleValidateRegistrationCore(body);
+            res.statusCode = result.statusCode;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result.data));
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                success: false,
+                error: err?.message || 'Server Validation Error',
+              })
+            );
+          }
+        });
+      });
+
       server.middlewares.use('/api/send-email', (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

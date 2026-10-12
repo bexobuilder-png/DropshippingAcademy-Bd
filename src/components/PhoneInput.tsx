@@ -13,6 +13,7 @@ export interface PhoneInputProps {
   label: string;
   value: string; // E.164 string e.g. "+8801712345678"
   onChange: (e164Value: string) => void;
+  onBlur?: () => void;
   defaultCountry?: CountryCode;
   disabled?: boolean;
   required?: boolean;
@@ -40,6 +41,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   label,
   value,
   onChange,
+  onBlur,
   defaultCountry = 'BD',
   disabled = false,
   required = false,
@@ -174,6 +176,22 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       return;
     }
 
+    const callingCode = getCountryCallingCode(selectedCountry);
+
+    // If user pastes full digits starting with country calling code (e.g. 8801712345678)
+    if (digitsOnly.startsWith(callingCode) && digitsOnly.length >= callingCode.length + 8) {
+      const parsedWithPlus = parsePhoneNumberFromString(`+${digitsOnly}`, selectedCountry);
+      if (parsedWithPlus && parsedWithPlus.isValid()) {
+        setNationalInput(
+          new AsYouType(parsedWithPlus.country || selectedCountry).input(
+            parsedWithPlus.nationalNumber
+          )
+        );
+        onChange(parsedWithPlus.number);
+        return;
+      }
+    }
+
     const formatter = new AsYouType(selectedCountry);
     const formatted = formatter.input(digitsOnly);
     setNationalInput(formatted);
@@ -182,7 +200,6 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     if (parsed) {
       onChange(parsed.number); // E.164 format (+...)
     } else {
-      const callingCode = getCountryCallingCode(selectedCountry);
       onChange(`+${callingCode}${digitsOnly}`);
     }
   };
@@ -210,7 +227,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       )}
 
       <div
-        className={`flex items-stretch rounded-[12px] bg-[#fff] border transition-colors ${
+        className={`flex items-stretch rounded-[12px] bg-[#fff] border transition-colors focus-within:ring-2 focus-within:ring-[#ff7722] focus-within:border-[#171412] ${
           error
             ? 'border-[#ff3c34] bg-[#fff8f8]'
             : 'border-[#171412]/25 hover:border-[#171412]'
@@ -224,7 +241,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           aria-label={`Selected country ${getCountryName(selectedCountry)} (${callingCodePrefix}). Click to change country`}
           aria-expanded={dropdownOpen}
           aria-haspopup="listbox"
-          className="inline-flex items-center gap-2 px-3.5 min-h-[46px] border-r border-[#171412]/15 rounded-l-[12px] bg-[#f2f0e7]/70 hover:bg-[#ebe9df] text-[#171412] text-[14px] font-bold shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-2 px-3.5 min-h-[46px] border-r border-[#171412]/15 rounded-l-[12px] bg-[#f2f0e7]/70 hover:bg-[#ebe9df] text-[#171412] text-[14px] font-bold shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171412]"
         >
           <CountryFlagSvg countryCode={selectedCountry} className="w-6 h-4 shrink-0" />
           <span className="tabular-nums">{callingCodePrefix}</span>
@@ -241,6 +258,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           required={required}
           value={nationalInput}
           onChange={handleInputChange}
+          onBlur={onBlur}
           placeholder="1712 345678"
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={describedBy}

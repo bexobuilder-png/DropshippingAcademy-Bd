@@ -1,7 +1,123 @@
 import { z } from 'zod';
-import { isValidPhoneNumber } from 'libphonenumber-js';
+import {
+  isValidPhoneNumber,
+  parsePhoneNumberFromString,
+  CountryCode,
+} from 'libphonenumber-js';
 
 const NAME_REGEX = /^[\p{L}\s'-]+$/u;
+
+export const DEFAULT_WHATSAPP_CONFIRM_MESSAGE =
+  "I’m confirming that this is my WhatsApp number for my registration.";
+
+export interface WhatsAppFormatValidationResult {
+  isValid: boolean;
+  e164: string;
+  waDigits: string;
+  country?: CountryCode;
+  errorReason?: 'empty' | 'invalid_format';
+}
+
+/**
+ * Strips the plus sign, spaces, brackets, and hyphens (and any other non-digits)
+ * so e.g. "+880 1712-345678" becomes "8801712345678".
+ */
+export function toWhatsAppDigits(
+  phoneInput: string,
+  defaultCountry: CountryCode = 'BD'
+): string {
+  const trimmed = (phoneInput || '').trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = parsePhoneNumberFromString(trimmed, defaultCountry);
+    if (parsed && parsed.isValid()) {
+      return parsed.number.replace(/[\+\s\(\)\-\[\]]/g, '').replace(/\D/g, '');
+    }
+  } catch {
+    // Fallback below
+  }
+
+  return trimmed.replace(/[\+\s\(\)\-\[\]]/g, '').replace(/\D/g, '');
+}
+
+/**
+ * Validates the entered phone/WhatsApp number format using libphonenumber-js
+ * (defaulting to Bangladesh +880 when country code is omitted).
+ * Note: Format validation only checks numbering-plan structure and does NOT
+ * prove that the number is registered on WhatsApp.
+ */
+export function validateWhatsAppNumberFormat(
+  rawPhone: string,
+  defaultCountry: CountryCode = 'BD'
+): WhatsAppFormatValidationResult {
+  const trimmed = (rawPhone || '').trim();
+  if (!trimmed) {
+    return {
+      isValid: false,
+      e164: '',
+      waDigits: '',
+      errorReason: 'empty',
+    };
+  }
+
+  try {
+    let parsed = parsePhoneNumberFromString(trimmed, defaultCountry);
+
+    // If user typed international digits starting with 880 without a leading '+'
+    if ((!parsed || !parsed.isValid()) && !trimmed.startsWith('+')) {
+      const digitsOnly = trimmed.replace(/\D/g, '');
+      if (digitsOnly.startsWith('880') && digitsOnly.length >= 12) {
+        const parsedWithPlus = parsePhoneNumberFromString(`+${digitsOnly}`, defaultCountry);
+        if (parsedWithPlus && parsedWithPlus.isValid()) {
+          parsed = parsedWithPlus;
+        }
+      }
+    }
+
+    if (!parsed || !parsed.isValid() || !isValidPhoneNumber(parsed.number)) {
+      return {
+        isValid: false,
+        e164: trimmed,
+        waDigits: '',
+        country: parsed?.country,
+        errorReason: 'invalid_format',
+      };
+    }
+
+    const e164 = parsed.number;
+    const waDigits = e164.replace(/[\+\s\(\)\-\[\]]/g, '').replace(/\D/g, '');
+
+    return {
+      isValid: Boolean(waDigits.length >= 8),
+      e164,
+      waDigits,
+      country: parsed.country,
+    };
+  } catch {
+    return {
+      isValid: false,
+      e164: trimmed,
+      waDigits: '',
+      errorReason: 'invalid_format',
+    };
+  }
+}
+
+/**
+ * Builds a WhatsApp click-to-chat URL in the required format:
+ * https://wa.me/<international-number-in-digits>?text=<url-encoded-message>
+ */
+export function buildWhatsAppConfirmUrl(
+  phoneInput: string,
+  prefilledMessage: string = DEFAULT_WHATSAPP_CONFIRM_MESSAGE,
+  defaultCountry: CountryCode = 'BD'
+): string {
+  const check = validateWhatsAppNumberFormat(phoneInput, defaultCountry);
+  const digits = check.isValid ? check.waDigits : toWhatsAppDigits(phoneInput, defaultCountry);
+  if (!digits) return '';
+  return `https://wa.me/${digits}?text=${encodeURIComponent(prefilledMessage)}`;
+}
 
 /**
  * Checks if a YYYY-MM-DD date string represents a valid date in the past
@@ -88,29 +204,19 @@ export const waitlistStep1Schema = z.object({
     .string()
     .min(1, 'Phone number is required.')
     .refine(
-      (val) => {
-        try {
-          return isValidPhoneNumber(val);
-        } catch {
-          return false;
-        }
-      },
+      (val) => validateWhatsAppNumberFormat(val, 'BD').isValid,
       { message: 'Please enter a valid international phone number (E.164 format).' }
     ),
   whatsapp: z
     .string()
     .min(1, 'WhatsApp number is required.')
     .refine(
-      (val) => {
-        try {
-          return isValidPhoneNumber(val);
-        } catch {
-          return false;
-        }
-      },
+      (val) => validateWhatsAppNumberFormat(val, 'BD').isValid,
       { message: 'Please enter a valid WhatsApp phone number (E.164 format).' }
     ),
   sameAsPhone: z.boolean().default(false),
+  whatsappConfirmedByUser: z.boolean().optional().default(false),
+  confirmedWhatsappNumber: z.string().optional().default(''),
   email: z
     .string()
     .trim()
