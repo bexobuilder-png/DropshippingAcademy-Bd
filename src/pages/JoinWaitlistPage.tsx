@@ -20,7 +20,7 @@ import {
   verifyEmailOtpAndInsertWaitlist,
 } from '../services/waitlist';
 import { Button } from '../components/Button';
-import { DatePicker } from '../components/DatePicker';
+import { DobField, validateDob } from '../components/DobField';
 import type { AnimKind } from '../components/EduAnimation';
 import { Input } from '../components/Input';
 import { OtpInput } from '../components/OtpInput';
@@ -54,7 +54,7 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
   setAnim,
   onVerifiedSuccess,
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<WaitlistFormValues>(() => {
@@ -401,7 +401,9 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
       setFieldErrors(nextErrors);
       if (firstInvalidKey) {
         const targetId =
-          firstInvalidKey === 'whatsapp' && formData.sameAsPhone
+          firstInvalidKey === 'dateOfBirth'
+            ? 'dob-d'
+            : firstInvalidKey === 'whatsapp' && formData.sameAsPhone
             ? 'phone'
             : firstInvalidKey;
         const el = document.getElementById(targetId);
@@ -427,7 +429,9 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
         )[0] as keyof WaitlistFormValues | undefined;
         if (firstKey) {
           const targetId =
-            firstKey === 'whatsapp' && formData.sameAsPhone ? 'phone' : firstKey;
+            firstKey === 'dateOfBirth'
+              ? 'dob-d'
+              : firstKey === 'whatsapp' && formData.sameAsPhone ? 'phone' : firstKey;
           const el = document.getElementById(targetId);
           if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -813,18 +817,25 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
                   </div>
 
                   {/* Date of Birth */}
-                  <DatePicker
-                    id="dateOfBirth"
-                    label={t('জন্ম তারিখ (Date of Birth)', 'Date of birth')}
-                    required
-                    hint={t(
-                      'DD/MM/YYYY ফরম্যাটে লিখুন অথবা ক্যালেন্ডার থেকে বাছাই করুন। বয়স ন্যূনতম ১৮ বছর হতে হবে।',
-                      'Type DD/MM/YYYY or use the calendar picker. You must be at least 18 years old.'
-                    )}
-                    value={formData.dateOfBirth}
-                    onChange={(iso) => updateField('dateOfBirth', iso)}
-                    error={fieldErrors.dateOfBirth}
-                  />
+                  <div>
+                    <label id="dob-label" className="block text-[14px] font-bold text-[#171412] mb-1.5">
+                      {t('জন্ম তারিখ (Date of Birth)', 'Date of birth')}
+                      <span className="text-[#ff7722] ml-1" aria-hidden="true">*</span>
+                    </label>
+                    <p id="dob-hint" className="text-[13px] text-[#171412]/75 mb-2.5">
+                      {t(
+                        'দিন, মাস ও বছর লিখুন — পরের ঘরে নিজে নিজেই চলে যাবে। বয়স ন্যূনতম ১৮ বছর হতে হবে।',
+                        'Type day, month and year. It jumps to the next box by itself. You must be at least 18.'
+                      )}
+                    </p>
+                    <DobField
+                      id="dob"
+                      value={formData.dateOfBirth}
+                      onChange={(v) => setFormData({ ...formData, dateOfBirth: v })}
+                      lang={lang}
+                      error={fieldErrors.dateOfBirth}
+                    />
+                  </div>
 
                   {/* Phone Number */}
                   <PhoneInput

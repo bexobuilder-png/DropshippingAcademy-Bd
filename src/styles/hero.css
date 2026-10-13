@@ -1,0 +1,50 @@
+.hero3,.hero3 *,.hero3 *::before,.hero3 *::after{box-sizing:border-box}
+.hero3{position:relative;overflow:hidden;background:var(--orange);border-bottom:2px solid var(--on-orange);padding-block:18px 30px}
+.hero3::before,.hero3::after{content:"";position:absolute;border-radius:50%;background:color-mix(in srgb,#fff 24%,var(--orange));pointer-events:none}
+.hero3::before{width:300px;height:300px;top:-130px;left:-100px}
+.hero3::after{width:380px;height:380px;bottom:-190px;right:-120px}
+.hero3 .hx-wrap{position:relative;width:100%;max-width:1040px;margin-inline:auto;padding-inline:16px}
+
+.h3-card{position:relative;z-index:1;display:grid;padding:24px 18px 22px;border:2px solid var(--on-orange);border-radius:30px;box-shadow:6px 6px 0 var(--on-orange);
+  background:repeating-linear-gradient(135deg,transparent 0 16px,rgba(143,63,16,.045) 16px 17px),linear-gradient(150deg,var(--surface-2) 30%,var(--peach));
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:"chip chip" "h1 art" "lead art" "btns btns" "trust trust";gap:10px 12px}
+@media(max-width:859px){.h3-art{margin-right:-14px}}
+.h3-text{display:contents}
+.h3-text>.hx-chip{grid-area:chip;justify-self:start}
+.h3-text>h1{grid-area:h1;align-self:end;margin:0;font-family:var(--display,inherit);font-weight:800;font-size:clamp(1.35rem,5.8vw,3.5rem);line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+.h3-text>h1 span{display:block}
+.h3-text>h1 span+span{color:var(--orange)}
+.h3-text>.hx-lead{grid-area:lead;align-self:start;margin:0;font-size:.88rem;line-height:1.6;color:var(--muted)}
+.h3-btns{grid-area:btns;margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px}
+.h3-art{grid-area:art;align-self:center;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;overflow:visible}
+.h3-trust{grid-area:trust;display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.h3-trust li{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border:2px solid var(--line);border-radius:99px;background:var(--surface-2);font-weight:600;font-size:.95rem;color:var(--ink)}
+.h3-trust .ti{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--peach)}
+.h3-trust svg{width:18px;height:18px}
+.h3-trust svg *{stroke:var(--orange-text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.hx-chip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);border-radius:99px;padding:2px 14px;background:var(--surface-2);font-weight:700;font-size:.95rem;color:var(--ink)}
+.hx-chip i{width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.hx-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 26px;border-radius:99px;border:2px solid var(--on-orange);background:var(--orange);color:var(--on-orange);font-family:var(--display,inherit);font-weight:800;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 0 var(--on-orange);transition:transform .12s,box-shadow .12s}
+.hx-btn:hover{transform:translateY(2px);box-shadow:0 2px 0 var(--on-orange)}
+.hx-btn svg{width:20px;height:20px;flex:none}
+.hx-btn svg *{stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.hx-circ{appearance:none;display:inline-flex;align-items:center;gap:12px;min-height:48px;border:0;background:none;cursor:pointer;font-family:var(--display,inherit);font-weight:800;font-size:1.02rem;color:var(--ink);padding:0}
+.hx-circ i{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);transition:transform .12s,box-shadow .12s}
+.hx-circ:hover i{transform:translateY(1px);box-shadow:0 2px 0 var(--line)}
+.hx-circ svg{width:20px;height:20px}
+.hx-circ svg *{stroke:var(--orange-text);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+
+@media(min-width:700px){.hero3 .hx-wrap{padding-inline:24px}}
+@media(min-width:860px){
+  .hero3{padding-block:44px 48px}
+  .h3-card{grid-template-columns:1.05fr .95fr;grid-template-areas:"text art" "trust art";gap:14px 24px;align-items:center;padding:44px 44px 36px;box-shadow:8px 8px 0 var(--on-orange)}
+  .h3-text{display:grid;gap:16px;align-content:start;min-width:0;grid-area:text}
+  .h3-text>*{grid-area:auto!important}
+  .h3-text>h1{font-size:clamp(2.2rem,4.2vw,3.5rem);align-self:auto}
+  .h3-text>.hx-lead{font-size:1rem;max-width:52ch}
+  .h3-btns{margin-top:0}
+  .h3-trust{align-self:end}
+}
+

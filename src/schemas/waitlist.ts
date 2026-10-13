@@ -123,15 +123,20 @@ export function buildWhatsAppConfirmUrl(
  * Checks if a YYYY-MM-DD date string represents a valid date in the past
  * and the person is at least 18 years old today.
  */
-export function validateAdultBirthDate(isoDateStr: string): {
+export function validateAdultBirthDate(dateStr: string): {
   valid: boolean;
   reason?: string;
 } {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDateStr)) {
-    return { valid: false, reason: 'Please select or enter a valid date (DD/MM/YYYY).' };
+  let iso = dateStr;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    const [d, m, y] = dateStr.split('/');
+    iso = `${y}-${m}-${d}`;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return { valid: false, reason: 'Please enter a valid date (DD/MM/YYYY).' };
   }
 
-  const [yearStr, monthStr, dayStr] = isoDateStr.split('-');
+  const [yearStr, monthStr, dayStr] = iso.split('-');
   const year = Number(yearStr);
   const month = Number(monthStr);
   const day = Number(dayStr);

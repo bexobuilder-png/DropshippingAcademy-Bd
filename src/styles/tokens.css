@@ -1,0 +1,15 @@
+:root{
+  --bg:#fbf7f0; --surface:#f4efe7; --surface-2:#fffdf9; --ink:#1d1611; --muted:#5b5046;
+  --line:#1d1611; --stroke:#1d1611; --orange:#ee7d3b; --orange-text:#8f3f10; --yellow:#f5c451; --brown:#8f3f10;
+  --cream:#fff6e6; --on-orange:#1d1611; --peach:#f6dcc4; --err:#b3261e;
+  --display:"Anek Bangla","Hind Siliguri",system-ui,sans-serif; --body:"Hind Siliguri","Anek Bangla",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16110d; --surface:#211a14; --surface-2:#1b1510; --ink:#f6ede1; --muted:#bfb0a0;
+  --line:#4c3d30; --stroke:#f6ede1; --orange-text:#f4a46d; --brown:#a8501a; --cream:#2b2118; --peach:#3a2616; --err:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16110d; --surface:#211a14; --surface-2:#1b1510; --ink:#f6ede1; --muted:#bfb0a0;
+  --line:#4c3d30; --stroke:#f6ede1; --orange-text:#f4a46d; --brown:#a8501a; --cream:#2b2118; --peach:#3a2616; --err:#ff8a80; color-scheme:dark}
+:root{--ok:#2f7d4f}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ok:#7ed9a0}}
+:root[data-theme="dark"]{--ok:#7ed9a0}

@@ -275,7 +275,6 @@ export const WaitlistConfirmedPage: React.FC = () => {
             <div className="text-right">
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setShowNavOptions(false)}
               >
                 {t('বন্ধ করুন', 'Close')}

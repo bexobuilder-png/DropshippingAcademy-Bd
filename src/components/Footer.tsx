@@ -23,9 +23,6 @@ export const Footer: React.FC = () => {
             <a href="#hero" className="hover:text-[#ff7722] transition-colors">
               {t('হোম', 'Home')}
             </a>
-            <a href="#results" className="hover:text-[#ff7722] transition-colors">
-              {t('নির্বাচিত ফলাফল', 'Results')}
-            </a>
             <a href="#about" className="hover:text-[#ff7722] transition-colors">
               {t('আমাদের সম্পর্কে', 'About Us')}
             </a>
