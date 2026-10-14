@@ -51,22 +51,30 @@ export default function Hero({ lang = "bn", onRegister, onScrollToSteps, onOpenC
             </div>
           </div>
           <div className="h3-art">
-            <img
-              src="/student-3d-animated.svg"
-              alt="Student studying on a laptop"
-              width="720"
-              height="733"
-              style={{ width: "100%", height: "auto", display: "block" }}
-              onError={(e) => {
-                const img = e.currentTarget;
-                if (!img.dataset.triedFallback) {
-                  img.dataset.triedFallback = "true";
-                  img.src = "/academy-student-3d.webp";
-                } else {
-                  img.style.display = "none";
-                }
-              }}
-            />
+            <div className="h3-stage-wrap">
+              <img
+                src="/student-3d-animated.svg"
+                alt=""
+                aria-hidden="true"
+                width="720"
+                height="733"
+                className="h3-stage-svg"
+              />
+              <img
+                src="/academy-student-3d.webp"
+                alt="Student studying on a laptop"
+                width="720"
+                height="733"
+                className="h3-student-img"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.triedFallback) {
+                    img.dataset.triedFallback = "true";
+                    img.src = "/student-hero.png";
+                  }
+                }}
+              />
+            </div>
           </div>
           <ul className="h3-trust">
             <li><span className="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6 7-6s7 2 7 6z" /></svg></span><span>{T.f1}</span></li>
