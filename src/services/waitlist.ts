@@ -88,6 +88,13 @@ export interface WaitlistDbRow {
   consent_accepted: boolean;
   status: 'pending' | 'approved' | 'rejected' | 'contacted';
   created_at: string;
+  course_id?: string;
+  course_title?: string;
+  course_fee?: number;
+  promo_code?: string;
+  discount_amount?: number;
+  final_fee?: number;
+  enrolled_at?: string;
 }
 
 export function appendLocalWaitlistEntry(formData: WaitlistFormValues): void {
@@ -127,6 +134,14 @@ export interface ConfirmedWaitlistRecord {
   dateOfBirth: string;
   alreadyOnWaitlist: boolean;
   confirmedAt: string;
+  selectedCourseId?: string;
+  selectedCourseTitle?: string;
+  selectedCourseCategory?: string;
+  courseFee?: number;
+  promoCode?: string;
+  discountAmount?: number;
+  finalFee?: number;
+  enrolledAt?: string;
 }
 
 export function saveHeroEmailPrefill(email: string): void {

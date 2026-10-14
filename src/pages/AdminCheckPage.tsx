@@ -27,6 +27,20 @@ import {
   verifyAdminLoginOtp,
 } from '../services/admin';
 import {
+  fetchCoursesList,
+  saveCoursesList,
+  restoreDefaultCourses,
+  fetchPromoCodesList,
+  savePromoCodesList,
+  restoreDefaultPromoCodes,
+} from '../services/courses';
+import {
+  CourseItem,
+  PromoCodeItem,
+  DEFAULT_COURSES,
+  DEFAULT_PROMO_CODES,
+} from '../config/courses';
+import {
   CURRICULUM_TABS_BN,
   CURRICULUM_TABS_EN,
   FAQ_ITEMS_BN,
@@ -117,11 +131,64 @@ export const AdminCheckPage: React.FC = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Control Center active tab
-  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content'>('waitlist');
+  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content' | 'courses'>('waitlist');
   const [contentLang, setContentLang] = useState<'bn' | 'en'>('bn');
   const [contentSubTab, setContentSubTab] = useState<
     'slider' | 'why-choose' | 'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'
   >('slider');
+
+  // Courses & Promo Codes Management State
+  const [adminCourses, setAdminCourses] = useState<CourseItem[]>(DEFAULT_COURSES);
+  const [adminPromoCodes, setAdminPromoCodes] = useState<PromoCodeItem[]>(DEFAULT_PROMO_CODES);
+  const [coursesSubTab, setCoursesSubTab] = useState<'courses' | 'promos'>('courses');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [courseFeedback, setCourseFeedback] = useState<string>('');
+  const [isSavingCourses, setIsSavingCourses] = useState<boolean>(false);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [courseForm, setCourseForm] = useState<{
+    title: string;
+    category: string;
+    subtitle: string;
+    description: string;
+    price: number;
+    discountPrice: number;
+    duration: string;
+    highlights: string;
+    badge: string;
+    isActive: boolean;
+  }>({
+    title: '',
+    category: 'ড্রপশিপিং রিসেলিং',
+    subtitle: '',
+    description: '',
+    price: 1000,
+    discountPrice: 1000,
+    duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
+    highlights: '',
+    badge: '',
+    isActive: true,
+  });
+
+  const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [promoForm, setPromoForm] = useState<{
+    code: string;
+    discountType: 'fixed' | 'percentage';
+    discountValue: number;
+    description: string;
+    isActive: boolean;
+  }>({
+    code: '',
+    discountType: 'fixed',
+    discountValue: 300,
+    description: '',
+    isActive: true,
+  });
+
+  // Assign user course modal state
+  const [assignUserModal, setAssignUserModal] = useState<WaitlistDbRow | null>(null);
+  const [assignCourseId, setAssignCourseId] = useState<string>('');
 
   const [adminHeroSlides, setAdminHeroSlides] = useState<HeroSlideItem[]>(HERO_SLIDES_BN);
   const [adminWhyChoose, setAdminWhyChoose] = useState<WhyChooseUsItem[]>(WHY_CHOOSE_US_ITEMS_BN);
@@ -259,15 +326,19 @@ export const AdminCheckPage: React.FC = () => {
   const loadDashboardData = async () => {
     setLoadingWaitlist(true);
     setWaitlistError('');
-    const [waitlistRes, foundersRes] = await Promise.all([
+    const [waitlistRes, foundersRes, coursesRes, promoRes] = await Promise.all([
       fetchAllWaitlistUsers(),
       fetchFoundersList(),
+      fetchCoursesList(),
+      fetchPromoCodesList(),
     ]);
     setWaitlistRows(waitlistRes.rows);
     if (waitlistRes.error) {
       setWaitlistError(waitlistRes.error);
     }
     setFounders(foundersRes);
+    setAdminCourses(coursesRes);
+    setAdminPromoCodes(promoRes);
     setLoadingWaitlist(false);
   };
 
@@ -345,16 +416,22 @@ export const AdminCheckPage: React.FC = () => {
     const q = searchQuery.trim().toLowerCase();
     return waitlistRows.filter((row) => {
       if (statusFilter !== 'all' && row.status !== statusFilter) return false;
+      if (courseFilter !== 'all') {
+        if (courseFilter === 'none' && (row.course_title || row.course_id)) return false;
+        if (courseFilter !== 'none' && row.course_id !== courseFilter && row.course_title !== courseFilter) return false;
+      }
       if (!q) return true;
       const fullName = `${row.first_name} ${row.last_name}`.toLowerCase();
       return (
         fullName.includes(q) ||
         row.email.toLowerCase().includes(q) ||
         row.phone.toLowerCase().includes(q) ||
-        row.whatsapp.toLowerCase().includes(q)
+        row.whatsapp.toLowerCase().includes(q) ||
+        (row.course_title && row.course_title.toLowerCase().includes(q)) ||
+        (row.promo_code && row.promo_code.toLowerCase().includes(q))
       );
     });
-  }, [waitlistRows, searchQuery, statusFilter]);
+  }, [waitlistRows, searchQuery, statusFilter, courseFilter]);
 
   const metrics = useMemo(() => {
     const total = waitlistRows.length;
@@ -468,6 +545,10 @@ export const AdminCheckPage: React.FC = () => {
       'First Name',
       'Last Name',
       'Full Name',
+      'Enrolled Course',
+      'Course Fee (BDT)',
+      'Promo Code Applied',
+      'Final Fee (BDT)',
       'Email Address',
       'Phone Number',
       'WhatsApp Number',
@@ -491,6 +572,10 @@ export const AdminCheckPage: React.FC = () => {
           escapeCsv(r.first_name),
           escapeCsv(r.last_name),
           escapeCsv(`${r.first_name} ${r.last_name}`),
+          escapeCsv(r.course_title || 'Pending Selection'),
+          escapeCsv(r.course_fee || ''),
+          escapeCsv(r.promo_code || ''),
+          escapeCsv(r.final_fee !== undefined ? r.final_fee : (r.course_fee || '')),
           escapeCsv(r.email),
           escapeCsv(r.phone),
           escapeCsv(r.whatsapp),
@@ -524,6 +609,278 @@ export const AdminCheckPage: React.FC = () => {
       )
     );
     setTimeout(() => setCsvExportNotice(''), 4500);
+  };
+
+  // ============================================================================
+  // COURSE & PROMO CODE MANAGEMENT HANDLERS
+  // ============================================================================
+  const openNewCourseModal = () => {
+    setEditingCourseId(null);
+    setCourseForm({
+      title: '',
+      category: 'মার্কেটিং কিভাবে করবেন',
+      subtitle: '',
+      description: '',
+      price: 1000,
+      discountPrice: 1000,
+      duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
+      highlights: '',
+      badge: '',
+      isActive: true,
+    });
+    setIsCourseModalOpen(true);
+  };
+
+  const openEditCourseModal = (course: CourseItem) => {
+    setEditingCourseId(course.id);
+    setCourseForm({
+      title: course.title,
+      category: course.category,
+      subtitle: course.subtitle,
+      description: course.description,
+      price: course.price,
+      discountPrice: course.discountPrice !== undefined ? course.discountPrice : course.price,
+      duration: course.duration,
+      highlights: course.highlights.join('\n'),
+      badge: course.badge || '',
+      isActive: course.isActive,
+    });
+    setIsCourseModalOpen(true);
+  };
+
+  const handleSaveCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseForm.title.trim()) {
+      alert('Course title is required.');
+      return;
+    }
+
+    setIsSavingCourses(true);
+    const splitHighlights = courseForm.highlights
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    let updatedCourses: CourseItem[];
+    if (editingCourseId) {
+      updatedCourses = adminCourses.map((c) =>
+        c.id === editingCourseId
+          ? {
+              ...c,
+              title: courseForm.title.trim(),
+              category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
+              subtitle: courseForm.subtitle.trim(),
+              description: courseForm.description.trim(),
+              price: Number(courseForm.price) || 1000,
+              discountPrice: Number(courseForm.discountPrice) || Number(courseForm.price) || 1000,
+              duration: courseForm.duration.trim() || '৮ সপ্তাহ · লাইভ ক্লাস',
+              highlights: splitHighlights.length > 0 ? splitHighlights : c.highlights,
+              badge: courseForm.badge.trim() || undefined,
+              isActive: courseForm.isActive,
+            }
+          : c
+      );
+    } else {
+      const newCourse: CourseItem = {
+        id: `course-${Date.now()}`,
+        title: courseForm.title.trim(),
+        category: courseForm.category.trim() || 'মার্কেটিং কিভাবে করবেন',
+        subtitle: courseForm.subtitle.trim(),
+        description: courseForm.description.trim(),
+        price: Number(courseForm.price) || 1000,
+        discountPrice: Number(courseForm.discountPrice) || Number(courseForm.price) || 1000,
+        promoCodeEligible: true,
+        duration: courseForm.duration.trim() || '৮ সপ্তাহ · লাইভ ক্লাস',
+        highlights: splitHighlights.length > 0 ? splitHighlights : ['হ্যান্ডস-অন প্রজেক্ট ও লাইভ সাপোর্ট'],
+        badge: courseForm.badge.trim() || undefined,
+        isActive: courseForm.isActive,
+        sortOrder: adminCourses.length + 1,
+      };
+      updatedCourses = [...adminCourses, newCourse];
+    }
+
+    setAdminCourses(updatedCourses);
+    await saveCoursesList(updatedCourses);
+    setIsSavingCourses(false);
+    setIsCourseModalOpen(false);
+    setCourseFeedback(
+      editingCourseId
+        ? `কোর্স "${courseForm.title.trim()}" সফলভাবে আপডেট করা হয়েছে!`
+        : `নতুন কোর্স "${courseForm.title.trim()}" সফলভাবে যুক্ত করা হয়েছে!`
+    );
+    setTimeout(() => setCourseFeedback(''), 5000);
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    const updated = adminCourses.filter((c) => c.id !== courseId);
+    setAdminCourses(updated);
+    await saveCoursesList(updated);
+    setCourseFeedback('কোর্সটি সফলভাবে মুছে ফেলা হয়েছে।');
+    setTimeout(() => setCourseFeedback(''), 4000);
+  };
+
+  const handleToggleCourseActive = async (courseId: string) => {
+    const updated = adminCourses.map((c) =>
+      c.id === courseId ? { ...c, isActive: !c.isActive } : c
+    );
+    setAdminCourses(updated);
+    await saveCoursesList(updated);
+  };
+
+  const handleRestoreDefaultCoursesList = async () => {
+    const defaults = await restoreDefaultCourses();
+    setAdminCourses(defaults);
+    setCourseFeedback('ডিফল্ট ৩টি কোর্স পুনরুদ্ধার করা হয়েছে।');
+    setTimeout(() => setCourseFeedback(''), 4000);
+  };
+
+  // Promo Handlers
+  const openNewPromoModal = () => {
+    setEditingPromoId(null);
+    setPromoForm({
+      code: '',
+      discountType: 'fixed',
+      discountValue: 300,
+      description: '',
+      isActive: true,
+    });
+    setIsPromoModalOpen(true);
+  };
+
+  const openEditPromoModal = (promo: PromoCodeItem) => {
+    setEditingPromoId(promo.id);
+    setPromoForm({
+      code: promo.code,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+      description: promo.description,
+      isActive: promo.isActive,
+    });
+    setIsPromoModalOpen(true);
+  };
+
+  const handleSavePromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoForm.code.trim()) {
+      alert('Promo code is required.');
+      return;
+    }
+
+    const cleanCode = promoForm.code.trim().toUpperCase();
+    let updatedPromos: PromoCodeItem[];
+
+    if (editingPromoId) {
+      updatedPromos = adminPromoCodes.map((p) =>
+        p.id === editingPromoId
+          ? {
+              ...p,
+              code: cleanCode,
+              discountType: promoForm.discountType,
+              discountValue: Number(promoForm.discountValue) || 100,
+              description: promoForm.description.trim(),
+              isActive: promoForm.isActive,
+            }
+          : p
+      );
+    } else {
+      const newPromo: PromoCodeItem = {
+        id: `promo-${Date.now()}`,
+        code: cleanCode,
+        discountType: promoForm.discountType,
+        discountValue: Number(promoForm.discountValue) || 100,
+        description: promoForm.description.trim(),
+        isActive: promoForm.isActive,
+      };
+      updatedPromos = [...adminPromoCodes, newPromo];
+    }
+
+    setAdminPromoCodes(updatedPromos);
+    await savePromoCodesList(updatedPromos);
+    setIsPromoModalOpen(false);
+    setCourseFeedback(`প্রোমো কোড "${cleanCode}" সফলভাবে সংরক্ষিত হয়েছে!`);
+    setTimeout(() => setCourseFeedback(''), 5000);
+  };
+
+  const handleDeletePromo = async (promoId: string) => {
+    const updated = adminPromoCodes.filter((p) => p.id !== promoId);
+    setAdminPromoCodes(updated);
+    await savePromoCodesList(updated);
+    setCourseFeedback('প্রোমো কোড মুছে ফেলা হয়েছে।');
+    setTimeout(() => setCourseFeedback(''), 4000);
+  };
+
+  const handleRestoreDefaultPromosList = async () => {
+    const defaults = await restoreDefaultPromoCodes();
+    setAdminPromoCodes(defaults);
+    setCourseFeedback('ডিফল্ট প্রোমো কোডসমূহ পুনরুদ্ধার করা হয়েছে।');
+    setTimeout(() => setCourseFeedback(''), 4000);
+  };
+
+  // Direct Assign Course to Applicant
+  const handleAssignUserCourseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignUserModal || !assignCourseId) return;
+
+    const targetCourse = adminCourses.find((c) => c.id === assignCourseId);
+    if (!targetCourse) return;
+
+    const baseFee = targetCourse.discountPrice !== undefined ? targetCourse.discountPrice : targetCourse.price;
+
+    setWaitlistRows((prev) =>
+      prev.map((r) =>
+        r.id === assignUserModal.id
+          ? {
+              ...r,
+              course_id: targetCourse.id,
+              course_title: targetCourse.title,
+              course_fee: baseFee,
+              final_fee: baseFee,
+            }
+          : r
+      )
+    );
+
+    // Save to local storage waitlist
+    try {
+      const raw = localStorage.getItem('da_local_waitlist_entries_v1');
+      if (raw) {
+        const list: WaitlistDbRow[] = JSON.parse(raw);
+        const nextList = list.map((item) =>
+          item.id === assignUserModal.id || item.email.toLowerCase() === assignUserModal.email.toLowerCase()
+            ? {
+                ...item,
+                course_id: targetCourse.id,
+                course_title: targetCourse.title,
+                course_fee: baseFee,
+                final_fee: baseFee,
+              }
+            : item
+        );
+        localStorage.setItem('da_local_waitlist_entries_v1', JSON.stringify(nextList));
+      }
+    } catch {
+      // Ignore
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('waitlist')
+          .update({
+            course_id: targetCourse.id,
+            course_title: targetCourse.title,
+            course_fee: baseFee,
+            final_fee: baseFee,
+          })
+          .eq('id', assignUserModal.id);
+      } catch {
+        // Ignore
+      }
+    }
+
+    setCourseFeedback(`"${assignUserModal.first_name}"-কে "${targetCourse.title}" কোর্সে যুক্ত করা হয়েছে!`);
+    setAssignUserModal(null);
+    setTimeout(() => setCourseFeedback(''), 5000);
   };
 
   // ============================================================================
@@ -1001,6 +1358,23 @@ export const AdminCheckPage: React.FC = () => {
           >
             {t('সাইট কন্টেন্ট এডিটর', 'Site Content Editor')}
           </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'courses'}
+            onClick={() => setActiveTab('courses')}
+            className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+              activeTab === 'courses'
+                ? 'bg-[#171412] text-[#fbf9ef]'
+                : 'text-[#171412] hover:bg-[#ebe9df]'
+            }`}
+          >
+            {t(
+              `কোর্স ও প্রোমো কোড ব্যবস্থাপনা (${adminCourses.length})`,
+              `Courses & Promos (${adminCourses.length})`
+            )}
+          </button>
         </div>
 
         {/* =====================================================================
@@ -1078,6 +1452,26 @@ export const AdminCheckPage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="course-filter-select" className="text-[12px] font-bold text-[#813502] whitespace-nowrap">
+                    {t('কোর্স:', 'Course:')}
+                  </label>
+                  <select
+                    id="course-filter-select"
+                    value={courseFilter}
+                    onChange={(e) => setCourseFilter(e.target.value)}
+                    className="min-h-[40px] px-3 py-1.5 rounded-[50px] bg-[#fff] border border-[#171412]/30 text-[12px] font-bold text-[#171412] cursor-pointer"
+                  >
+                    <option value="all">{t('সকল কোর্স (All)', 'All Courses')}</option>
+                    {adminCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
+                      </option>
+                    ))}
+                    <option value="none">{t('বাছাই বাকি (Pending)', 'Pending Selection')}</option>
+                  </select>
+                </div>
+
                 {(['all', 'pending', 'approved', 'rejected', 'contacted'] as const).map((st) => (
                   <button
                     key={st}
@@ -1107,7 +1501,7 @@ export const AdminCheckPage: React.FC = () => {
                   </span>
                 </button>
 
-                {(statusFilter !== 'all' || searchQuery.trim() !== '') && (
+                {(statusFilter !== 'all' || courseFilter !== 'all' || searchQuery.trim() !== '') && (
                   <button
                     type="button"
                     onClick={() => handleExportCsv('filtered')}
@@ -1146,7 +1540,7 @@ export const AdminCheckPage: React.FC = () => {
                 <p className="text-[15px] text-[#171412]/75 max-w-md mx-auto">
                   {waitlistRows.length === 0
                     ? 'As soon as visitors verify their 6-digit OTP on /join, all of their details will appear here automatically.'
-                    : 'No applicants match your current search or status filter.'}
+                    : 'No applicants match your current search, course, or status filter.'}
                 </p>
               </div>
             ) : (
@@ -1157,6 +1551,7 @@ export const AdminCheckPage: React.FC = () => {
                       <tr className="bg-[#171412] text-[#fbf9ef] text-[11px] sm:text-[12px] font-bold uppercase tracking-wider">
                         <th className="py-3 px-3 whitespace-nowrap">#</th>
                         <th className="py-3 px-3 whitespace-nowrap">Full Name</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Enrolled Course & Fee</th>
                         <th className="py-3 px-3 whitespace-nowrap">Email Address</th>
                         <th className="py-3 px-3 whitespace-nowrap">Phone Number</th>
                         <th className="py-3 px-3 whitespace-nowrap">WhatsApp</th>
@@ -1191,6 +1586,30 @@ export const AdminCheckPage: React.FC = () => {
                               <div className="text-[10px] text-[#171412]/60 font-mono mt-0.5">
                                 ID: {user.id.slice(0, 8)}
                               </div>
+                            </td>
+
+                            <td className="py-3.5 px-3">
+                              {user.course_title ? (
+                                <div className="max-w-[210px]">
+                                  <div className="font-bold text-[#171412] text-[13px] leading-snug">
+                                    {user.course_title}
+                                  </div>
+                                  <div className="text-[12px] text-[#813502] font-semibold flex flex-wrap items-center gap-1.5 mt-0.5">
+                                    <span className="tabular-nums">
+                                      ৳{user.final_fee !== undefined ? user.final_fee.toLocaleString() : (user.course_fee || 1000)}
+                                    </span>
+                                    {user.promo_code && (
+                                      <span className="text-[10px] font-mono bg-[#e8f5e9] text-[#1b5e20] px-1.5 py-0.2 rounded border border-[#2e7d32]/30 font-bold">
+                                        {user.promo_code}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-[12px] text-[#171412]/50 italic">
+                                  {t('বাছাই বাকি', 'Pending selection')}
+                                </span>
+                              )}
                             </td>
 
                             <td className="py-3.5 px-3">
@@ -1335,6 +1754,18 @@ export const AdminCheckPage: React.FC = () => {
                                     📧 Email
                                   </button>
                                 )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAssignUserModal(user);
+                                    setAssignCourseId(user.course_id || adminCourses[0]?.id || '');
+                                  }}
+                                  title="কোর্স নির্ধারণ বা পরিবর্তন করুন"
+                                  className="min-h-[30px] px-2.5 py-1 rounded-[6px] bg-[#f2f0e7] hover:bg-[#ffc765]/50 text-[#813502] border border-[#171412]/30 text-[11px] font-bold transition-colors cursor-pointer"
+                                >
+                                  🎓 {t('কোর্স', 'Course')}
+                                </button>
 
                                 {!isConfirmingDelete ? (
                                   <button

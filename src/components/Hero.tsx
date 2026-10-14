@@ -1,4 +1,3 @@
-import AnimatedStudent from "./AnimatedStudent";
 import "../styles/hero.css";
 
 type Lang = "bn" | "en";
@@ -27,9 +26,10 @@ interface Props {
   lang?: Lang;
   onRegister: () => void;
   onScrollToSteps?: () => void;
+  onOpenContact?: () => void;
 }
 
-export default function Hero({ lang = "bn", onRegister, onScrollToSteps }: Props) {
+export default function Hero({ lang = "bn", onRegister, onScrollToSteps, onOpenContact }: Props) {
   const T = TXT[lang];
   return (
     <section className="hero3">
@@ -50,11 +50,36 @@ export default function Hero({ lang = "bn", onRegister, onScrollToSteps }: Props
               </button>
             </div>
           </div>
-          <div className="h3-art"><AnimatedStudent /></div>
+          <div className="h3-art">
+            <img
+              src="/student-3d-animated.svg"
+              alt="Student studying on a laptop"
+              width="720"
+              height="733"
+              style={{ width: "100%", height: "auto", display: "block" }}
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.dataset.triedFallback) {
+                  img.dataset.triedFallback = "true";
+                  img.src = "/academy-student-3d.webp";
+                } else {
+                  img.style.display = "none";
+                }
+              }}
+            />
+          </div>
           <ul className="h3-trust">
             <li><span className="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-4 3-6 7-6s7 2 7 6z" /></svg></span><span>{T.f1}</span></li>
             <li><span className="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></svg></span><span>{T.f2}</span></li>
-            <li><span className="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1" /><rect x="3" y="13" width="4" height="6" rx="1.5" /><rect x="17" y="13" width="4" height="6" rx="1.5" /></svg></span><span>{T.f3}</span></li>
+            <li
+              onClick={onOpenContact}
+              className={onOpenContact ? "cursor-pointer hover:bg-[#ffc765]/20 transition-colors" : ""}
+              role={onOpenContact ? "button" : undefined}
+              tabIndex={onOpenContact ? 0 : undefined}
+              onKeyDown={onOpenContact ? (e) => { if (e.key === "Enter" || e.key === " ") onOpenContact(); } : undefined}
+            >
+              <span className="ti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1" /><rect x="3" y="13" width="4" height="6" rx="1.5" /><rect x="17" y="13" width="4" height="6" rx="1.5" /></svg></span><span>{T.f3}</span>
+            </li>
           </ul>
         </div>
       </div>

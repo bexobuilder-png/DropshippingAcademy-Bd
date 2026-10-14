@@ -10,11 +10,13 @@ const HOME_SECTION_IDS = ['hero', 'results', 'learn', 'about', 'faq', 'contact']
 export interface NavigationProps {
   setAnim: React.Dispatch<React.SetStateAction<null | AnimKind>>;
   onRegisterClick?: () => void;
+  onOpenContact?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
   setAnim,
   onRegisterClick,
+  onOpenContact,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,7 +103,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => handleAnchorScroll('contact')}
+              onClick={onOpenContact || (() => handleAnchorScroll('contact'))}
               className={getNavButtonClass(['faq', 'contact'])}
             >
               {t('যোগাযোগ', 'Contact')}
@@ -193,7 +195,11 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => handleAnchorScroll('faq')}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenContact) onOpenContact();
+                else handleAnchorScroll('faq');
+              }}
               className="text-left py-2 font-bold text-[#171412]/90"
             >
               {t('যোগাযোগ ও সাহায্য', 'Contact & FAQ')}
@@ -254,7 +260,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         <button
           type="button"
-          onClick={() => handleAnchorScroll('contact')}
+          onClick={onOpenContact || (() => handleAnchorScroll('contact'))}
           className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

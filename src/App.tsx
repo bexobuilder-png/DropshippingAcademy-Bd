@@ -23,6 +23,9 @@ const PrivacyPage = React.lazy(() =>
 const AdminCheckPage = React.lazy(() =>
   import('./pages/AdminCheckPage').then((m) => ({ default: m.AdminCheckPage }))
 );
+const ProfilePage = React.lazy(() =>
+  import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
+);
 const NotFoundPage = React.lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 );
@@ -127,6 +130,7 @@ function AppShell() {
                 }
               />
               <Route path="/waitlist-confirmed" element={<WaitlistConfirmedPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/check" element={<AdminCheckPage />} />

@@ -7,17 +7,17 @@
 
 .h3-card{position:relative;z-index:1;display:grid;padding:24px 18px 22px;border:2px solid var(--on-orange);border-radius:30px;box-shadow:6px 6px 0 var(--on-orange);
   background:repeating-linear-gradient(135deg,transparent 0 16px,rgba(143,63,16,.045) 16px 17px),linear-gradient(150deg,var(--surface-2) 30%,var(--peach));
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"chip chip" "h1 art" "lead art" "btns btns" "trust trust";gap:10px 12px}
-@media(max-width:859px){.h3-art{margin-right:-14px}}
-.h3-text{display:contents}
-.h3-text>.hx-chip{grid-area:chip;justify-self:start}
-.h3-text>h1{grid-area:h1;align-self:end;margin:0;font-family:var(--display,inherit);font-weight:800;font-size:clamp(1.35rem,5.8vw,3.5rem);line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+  grid-template-columns:minmax(0,1fr) 45%;
+  grid-template-areas:"text art" "trust trust";gap:14px 12px;align-items:center}
+.h3-text{grid-area:text;display:grid;gap:12px;align-content:start;min-width:0}
+.h3-text>.hx-chip{justify-self:start}
+.h3-text>h1{margin:0;font-family:var(--display,inherit);font-weight:800;font-size:clamp(1.2rem,5vw,3.5rem);line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
 .h3-text>h1 span{display:block}
 .h3-text>h1 span+span{color:var(--orange)}
-.h3-text>.hx-lead{grid-area:lead;align-self:start;margin:0;font-size:.88rem;line-height:1.6;color:var(--muted)}
-.h3-btns{grid-area:btns;margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px}
-.h3-art{grid-area:art;align-self:center;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;overflow:visible}
+.h3-text>.hx-lead{margin:0;font-size:.88rem;line-height:1.6;color:var(--muted)}
+.h3-btns{margin-top:2px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.h3-art{grid-area:art;align-self:center;width:100%;aspect-ratio:720 / 733;display:flex;align-items:center;justify-content:center;min-width:0;overflow:visible}
+.h3-art img{width:100%;height:auto;display:block;max-width:100%}
 .h3-trust{grid-area:trust;display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .h3-trust li{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border:2px solid var(--line);border-radius:99px;background:var(--surface-2);font-weight:600;font-size:.95rem;color:var(--ink)}
 .h3-trust .ti{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--peach)}

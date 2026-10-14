@@ -1,0 +1,15 @@
+/* Contact kit styles (Academy BD palette) */
+.ck-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;min-height:44px;padding:0 16px;border:2px solid #1B1610;border-radius:14px;background:#EF7F3C;color:#1B1610;font:700 15px/1 inherit;box-shadow:3px 3px 0 #1B1610;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.ck-btn.alt{background:#FFFFFD}
+.ck-overlay{position:fixed;inset:0;z-index:100;display:grid;align-items:end;justify-items:center;background:rgba(27,22,16,.55)}
+.ck-sheet{background:#FCF9EE;color:#1B1610;border:2px solid #1B1610;border-radius:22px 22px 0 0;padding:18px 16px 22px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-sizing:border-box}
+@media(min-width:600px){.ck-overlay{align-items:center}.ck-sheet{border-radius:22px}}
+.ck-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ck-head h3{margin:0;font-size:1.25rem}
+.ck-x{width:44px;height:44px;border:2px solid #1B1610;border-radius:50%;background:#FFFFFD;font-size:20px;cursor:pointer}
+.ck-list{display:grid;gap:10px;margin:12px 0}
+.ck-list .ck-btn{justify-content:flex-start}
+.ck-sub{margin:0;color:#8F3F10;font-size:.9rem}
+.ck-field{display:grid;gap:6px;font-weight:600;font-size:.9rem;margin-bottom:10px}
+.ck-field input,.ck-field textarea{font:inherit;padding:11px 12px;border:2px solid #1B1610;border-radius:12px;background:#FFFFFD;color:#1B1610;width:100%;box-sizing:border-box}
+.ck-ok{color:#1d6b3a;font-weight:700;margin:8px 0 0}

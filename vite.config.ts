@@ -4,11 +4,47 @@ import path from 'path';
 import { defineConfig, Plugin } from 'vite';
 import { handleSendEmailCore } from './api/send-email';
 import { handleValidateRegistrationCore } from './api/validate-registration';
+import { handleContactGetCore, handleContactPutCore } from './api/contact';
 
 function devEmailApiPlugin(): Plugin {
   return {
     name: 'dev-email-api-plugin',
     configureServer(server) {
+      server.middlewares.use('/api/contact', (req, res) => {
+        if (req.method === 'GET') {
+          handleContactGetCore().then((result) => {
+            res.statusCode = result.statusCode;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result.data));
+          });
+          return;
+        }
+
+        if (req.method === 'PUT') {
+          let bodyRaw = '';
+          req.on('data', (chunk: Buffer | string) => {
+            bodyRaw += chunk.toString();
+          });
+          req.on('end', async () => {
+            try {
+              const body = bodyRaw ? JSON.parse(bodyRaw) : {};
+              const result = await handleContactPutCore(body);
+              res.statusCode = result.statusCode;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result.data));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err?.message || 'Server Error' }));
+            }
+          });
+          return;
+        }
+
+        res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+      });
       server.middlewares.use('/api/validate-registration', (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
