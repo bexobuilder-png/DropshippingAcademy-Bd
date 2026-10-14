@@ -54,15 +54,7 @@ export default function Hero({ lang = "bn", onRegister, onScrollToSteps, onOpenC
             <div className="h3-stage-wrap">
               <img
                 src="/student-3d-animated.svg"
-                alt=""
-                aria-hidden="true"
-                width="720"
-                height="733"
-                className="h3-stage-svg"
-              />
-              <img
-                src="/academy-student-3d.webp"
-                alt="Student studying on a laptop"
+                alt={lang === "bn" ? "ল্যাপটপে পড়াশোনা করা শিক্ষার্থী" : "Student studying on a laptop"}
                 width="720"
                 height="733"
                 className="h3-student-img"
@@ -70,7 +62,7 @@ export default function Hero({ lang = "bn", onRegister, onScrollToSteps, onOpenC
                   const img = e.currentTarget;
                   if (!img.dataset.triedFallback) {
                     img.dataset.triedFallback = "true";
-                    img.src = "/student-hero.png";
+                    img.src = "/academy-student-3d.webp";
                   }
                 }}
               />
