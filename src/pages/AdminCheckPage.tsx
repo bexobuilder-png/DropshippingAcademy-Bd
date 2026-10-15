@@ -1,6 +1,7 @@
+import { AdminContactForm } from "../components/ContactKit";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { FounderProfile } from '../config/founders';
 import {
   ALLOWED_ADMIN_EMAILS,
@@ -131,7 +132,7 @@ export const AdminCheckPage: React.FC = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Control Center active tab
-  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content' | 'courses'>('waitlist');
+  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content' | 'courses' | 'contact'>('waitlist');
   const [contentLang, setContentLang] = useState<'bn' | 'en'>('bn');
   const [contentSubTab, setContentSubTab] = useState<
     'slider' | 'why-choose' | 'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'
@@ -1374,6 +1375,19 @@ export const AdminCheckPage: React.FC = () => {
               `কোর্স ও প্রোমো কোড ব্যবস্থাপনা (${adminCourses.length})`,
               `Courses & Promos (${adminCourses.length})`
             )}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'contact'}
+            onClick={() => setActiveTab('contact')}
+            className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+              activeTab === 'contact'
+                ? 'bg-[#171412] text-[#fbf9ef]'
+                : 'text-[#171412] hover:bg-[#ebe9df]'
+            }`}
+          >
+            {t('যোগাযোগ ও সাপোর্ট', 'Contact & Support')}
           </button>
         </div>
 
@@ -2821,6 +2835,382 @@ export const AdminCheckPage: React.FC = () => {
         )}
 
         {/* =====================================================================
+            TAB 4: COURSES & PROMO CODES CONTROL CENTER
+        ===================================================================== */}
+        {activeTab === 'courses' && (
+          <section aria-label="Course and promo code management" className="flex flex-col gap-6">
+            {/* Header Card */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-[16px] bg-[#f2f0e7] border-2 border-[#171412]">
+              <div>
+                <span className="text-[12px] font-extrabold text-[#813502] uppercase tracking-wider block mb-1">
+                  {t('লাইভ কোর্স ও ছাড় কন্ট্রোল প্যানেল', 'Live Course & Discount Control Panel')}
+                </span>
+                <h2 className="font-display text-[26px] sm:text-[32px] font-extrabold text-[#171412] leading-tight">
+                  {t('কোর্স ও প্রোমো কোড ব্যবস্থাপনা', 'Course & Promo Code Management')}
+                </h2>
+                <p className="text-[14px] text-[#171412]/80 mt-1 max-w-2xl leading-relaxed">
+                  {t(
+                    'রেজিস্ট্রেশন শেষে শিক্ষার্থীরা কোন কোন কোর্স দেখতে পারবে (যেমন: ড্রপশিপিং রিসেলিং, মার্কেটিং কিভাবে করবেন, কোর্স শিখুন), সেগুলোর ফি (১,০০০ টাকা বা কাস্টম) এবং প্রোমো কোড এখান থেকে যোগ বা পরিবর্তন করুন।',
+                    'Manage courses shown after registration (e.g. Dropshipping Reselling, Marketing Strategy, Learn Course), adjust 1,000 BDT or custom fees, and configure discount promo codes.'
+                  )}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                {coursesSubTab === 'courses' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={openNewCourseModal}
+                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border-2 border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+                    >
+                      <span>+ {t('নতুন কোর্স যোগ করুন', 'Add New Course')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRestoreDefaultCoursesList}
+                      className="min-h-[44px] px-4 py-2 rounded-[50px] bg-[#fbf9ef] hover:bg-[#fff] text-[#171412] text-[12px] font-bold border border-[#171412]/30 transition-colors cursor-pointer"
+                    >
+                      {t('ডিফল্ট ৩টি কোর্স পুনরুদ্ধার', 'Reset Default Courses')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={openNewPromoModal}
+                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border-2 border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+                    >
+                      <span>+ {t('নতুন প্রোমো কোড তৈরি করুন', 'Create Promo Code')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRestoreDefaultPromosList}
+                      className="min-h-[44px] px-4 py-2 rounded-[50px] bg-[#fbf9ef] hover:bg-[#fff] text-[#171412] text-[12px] font-bold border border-[#171412]/30 transition-colors cursor-pointer"
+                    >
+                      {t('ডিফল্ট প্রোমো কোড পুনরুদ্ধার', 'Reset Default Promos')}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Feedback notification */}
+            {courseFeedback && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="p-4 rounded-[12px] bg-[#e8f5e9] border-2 border-[#2e7d32] text-[#1b5e20] text-[14px] font-bold flex items-center justify-between animate-fadeIn"
+              >
+                <div className="flex items-center gap-2.5">
+                  <CheckSvgIcon className="w-5 h-5 text-[#2e7d32] shrink-0" />
+                  <span>{courseFeedback}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCourseFeedback('')}
+                  className="text-[12px] underline text-[#1b5e20] cursor-pointer font-semibold"
+                >
+                  {t('বাতিল', 'Dismiss')}
+                </button>
+              </div>
+            )}
+
+            {/* Sub-tab navigation: Courses vs Promo Codes */}
+            <div className="flex flex-wrap items-center gap-2 border-b-2 border-[#171412]/15 pb-3">
+              <button
+                type="button"
+                onClick={() => setCoursesSubTab('courses')}
+                className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  coursesSubTab === 'courses'
+                    ? 'bg-[#171412] text-[#fbf9ef] shadow-sm'
+                    : 'bg-[#f2f0e7] text-[#171412] hover:bg-[#ebe9df] border border-[#171412]/20'
+                }`}
+              >
+                <span>📚 {t('কোর্স তালিকা', 'Available Courses')}</span>
+                <span className="px-2 py-0.2 rounded-full bg-[#ff7722] text-[#171412] text-[11px] font-black">
+                  {adminCourses.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCoursesSubTab('promos')}
+                className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  coursesSubTab === 'promos'
+                    ? 'bg-[#171412] text-[#fbf9ef] shadow-sm'
+                    : 'bg-[#f2f0e7] text-[#171412] hover:bg-[#ebe9df] border border-[#171412]/20'
+                }`}
+              >
+                <span>🏷️ {t('প্রোমো কোড ও ছাড়', 'Promo Codes & Discounts')}</span>
+                <span className="px-2 py-0.2 rounded-full bg-[#ffc765] text-[#171412] text-[11px] font-black">
+                  {adminPromoCodes.length}
+                </span>
+              </button>
+            </div>
+
+            {/* -------------------------------------------------------------
+                SUB-VIEW 1: COURSES LIST
+            -------------------------------------------------------------- */}
+            {coursesSubTab === 'courses' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <div className="text-[13px] font-bold text-[#813502]">
+                    {t(
+                      `মোট ${adminCourses.length} টি কোর্স কনফিগার করা রয়েছে (${adminCourses.filter((c) => c.isActive).length} টি লাইভ/সক্রিয়)`,
+                      `Total ${adminCourses.length} course(s) configured (${adminCourses.filter((c) => c.isActive).length} active/live)`
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openNewCourseModal}
+                    className="text-[13px] font-bold text-[#ff7722] hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <span>+</span>
+                    <span>{t('আরেকটি কোর্স যুক্ত করুন', 'Add another course')}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {adminCourses.map((course, idx) => (
+                    <div
+                      key={course.id}
+                      className={`rounded-[18px] border-2 p-6 flex flex-col justify-between transition-all ${
+                        course.isActive
+                          ? 'bg-[#ffffff] border-[#171412] shadow-sm'
+                          : 'bg-[#f8f6f0] border-[#171412]/30 opacity-75'
+                      }`}
+                    >
+                      <div>
+                        {/* Top Badges */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <span className="px-2.5 py-0.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[11px] font-extrabold uppercase tracking-wide">
+                            {course.category}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            {course.badge && (
+                              <span className="px-2 py-0.5 rounded-[50px] bg-[#ff7722] text-[#171412] text-[10px] font-extrabold">
+                                {course.badge}
+                              </span>
+                            )}
+                            <span
+                              className={`px-2 py-0.5 rounded-[50px] text-[10px] font-extrabold border ${
+                                course.isActive
+                                  ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30'
+                                  : 'bg-[#f3f4f6] text-[#6b7280] border-[#9ca3af]/40'
+                              }`}
+                            >
+                              {course.isActive ? '● সক্রিয় (Active)' : '○ নিষ্ক্রিয় (Draft)'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title & Subtitle */}
+                        <h3 className="font-display text-[20px] font-extrabold text-[#171412] leading-snug mb-2">
+                          {course.title}
+                        </h3>
+                        <p className="text-[13px] text-[#171412]/80 leading-relaxed mb-4">
+                          {course.subtitle}
+                        </p>
+
+                        {/* Detailed Description */}
+                        {course.description && (
+                          <p className="text-[12px] text-[#171412]/65 line-clamp-2 mb-4 italic">
+                            &ldquo;{course.description}&rdquo;
+                          </p>
+                        )}
+
+                        {/* Highlights */}
+                        <div className="mb-4 pt-3 border-t border-[#171412]/10">
+                          <span className="text-[11px] font-bold text-[#813502] uppercase tracking-wider block mb-1.5">
+                            {t('মূল মডিউল ও সুবিধাসমূহ:', 'Highlights:')}
+                          </span>
+                          <ul className="space-y-1.5 text-[12px] text-[#171412]/85">
+                            {course.highlights.map((h, i) => (
+                              <li key={i} className="flex items-start gap-1.5">
+                                <span className="text-[#813502] font-bold">✓</span>
+                                <span className="line-clamp-1">{h}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Footer: Price, Duration & Action buttons */}
+                      <div className="pt-4 border-t border-[#171412]/15">
+                        <div className="flex items-baseline justify-between mb-4">
+                          <div>
+                            <span className="text-[11px] text-[#171412]/60 block font-medium">
+                              {course.duration}
+                            </span>
+                            <div className="flex items-baseline gap-2 mt-0.5">
+                              <span className="font-display text-[22px] font-extrabold text-[#171412] tabular-nums">
+                                ৳{(course.discountPrice !== undefined ? course.discountPrice : course.price).toLocaleString()}
+                              </span>
+                              {course.discountPrice !== undefined && course.discountPrice < course.price && (
+                                <span className="text-[12px] text-[#171412]/50 line-through tabular-nums">
+                                  ৳{course.price.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <span className="text-[11px] text-[#813502] font-bold bg-[#ffc765]/40 px-2 py-1 rounded">
+                            {course.promoCodeEligible ? '🏷️ প্রোমো কোড প্রযোজ্য' : 'প্রোমো ছাড় নেই'}
+                          </span>
+                        </div>
+
+                        {/* Card Buttons */}
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#171412]/10">
+                          <button
+                            type="button"
+                            onClick={() => openEditCourseModal(course)}
+                            className="flex-1 py-1.5 px-3 rounded-[8px] bg-[#f2f0e7] hover:bg-[#ebe9df] border border-[#171412]/20 text-[12px] font-bold text-[#171412] transition-colors cursor-pointer text-center"
+                          >
+                            ✏️ {t('সম্পাদনা', 'Edit')}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCourseActive(course.id)}
+                            className={`py-1.5 px-3 rounded-[8px] text-[12px] font-bold border transition-colors cursor-pointer ${
+                              course.isActive
+                                ? 'bg-[#fff] text-[#813502] border-[#171412]/20 hover:bg-[#ffc765]/30'
+                                : 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30 hover:bg-[#c8e6c9]'
+                            }`}
+                          >
+                            {course.isActive ? t('পজ করুন', 'Pause') : t('সক্রিয় করুন', 'Activate')}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`আপনি কি নিশ্চিত যে "${course.title}" কোর্সটি মুছে ফেলতে চান?`)) {
+                                handleDeleteCourse(course.id);
+                              }
+                            }}
+                            className="py-1.5 px-2.5 rounded-[8px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] transition-colors cursor-pointer"
+                            title={t('মুছে ফেলুন', 'Delete')}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* -------------------------------------------------------------
+                SUB-VIEW 2: PROMO CODES LIST
+            -------------------------------------------------------------- */}
+            {coursesSubTab === 'promos' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-display text-[20px] font-extrabold text-[#171412]">
+                      {t('উপলব্ধ প্রোমো কোড ও ছাড় কনফিগারেশন', 'Promo Codes & Discounts')}
+                    </h3>
+                    <p className="text-[13px] text-[#813502] font-semibold mt-0.5">
+                      {t(
+                        'শিক্ষার্থীরা কোর্স বাছাই করার সময় এই কোডগুলো দিয়ে ছাড় বা ফ্রি এক্সেস পাবে',
+                        'Students can enter these codes during enrollment for instant fee discount or free access'
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openNewPromoModal}
+                    className="min-h-[40px] px-4 py-2 rounded-[50px] bg-[#ff7722] text-[#171412] font-bold text-[13px] border border-[#171412] hover:bg-[#ff8f44] cursor-pointer"
+                  >
+                    + {t('নতুন কোড তৈরি', 'Add Code')}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {adminPromoCodes.map((promo) => (
+                    <div
+                      key={promo.id}
+                      className={`p-5 rounded-[16px] border-2 flex flex-col justify-between transition-all ${
+                        promo.isActive
+                          ? 'bg-[#ffffff] border-[#171412] shadow-sm'
+                          : 'bg-[#f8f6f0] border-[#171412]/30 opacity-70'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="font-mono font-extrabold text-[16px] text-[#813502] bg-[#f2f0e7] px-2.5 py-1 rounded-[6px] border border-[#171412]/20">
+                            {promo.code}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-[50px] text-[10px] font-extrabold border ${
+                              promo.isActive
+                                ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30'
+                                : 'bg-[#f3f4f6] text-[#6b7280] border-[#9ca3af]/40'
+                            }`}
+                          >
+                            {promo.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                          </span>
+                        </div>
+
+                        <div className="text-[18px] font-display font-extrabold text-[#171412] mb-1">
+                          {promo.discountType === 'percentage'
+                            ? `${promo.discountValue}% ছাড় (Discount)`
+                            : `৳${promo.discountValue} নগদ ছাড়`}
+                        </div>
+
+                        <p className="text-[12px] text-[#171412]/75 leading-relaxed mb-4">
+                          {promo.description || t('সাধারণ ছাড় প্রোমো কোড', 'Standard discount promo code')}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#171412]/15 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditPromoModal(promo)}
+                          className="text-[12px] font-bold text-[#813502] hover:underline cursor-pointer"
+                        >
+                          ✏️ {t('সম্পাদনা', 'Edit')}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = adminPromoCodes.map((p) =>
+                              p.id === promo.id ? { ...p, isActive: !p.isActive } : p
+                            );
+                            setAdminPromoCodes(updated);
+                            savePromoCodesList(updated);
+                          }}
+                          className="text-[12px] font-semibold text-[#171412] hover:underline cursor-pointer"
+                        >
+                          {promo.isActive ? t('নিষ্ক্রিয় করুন', 'Deactivate') : t('সক্রিয় করুন', 'Activate')}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`প্রোমো কোড "${promo.code}" মুছে ফেলতে চান?`)) {
+                              handleDeletePromo(promo.id);
+                            }
+                          }}
+                          className="text-[12px] font-bold text-[#ff3c34] hover:underline cursor-pointer"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* =====================================================================
             MODAL: BANGLA CUSTOM EMAIL & STATUS UPDATE NOTIFICATION
         ===================================================================== */}
         {emailModalUser && (
@@ -3066,7 +3456,467 @@ export const AdminCheckPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* =====================================================================
+            MODAL 1: ADD / EDIT COURSE
+        ===================================================================== */}
+        {isCourseModalOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="course-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="relative w-full max-w-2xl bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
+                <div>
+                  <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
+                    {editingCourseId ? 'কোর্স তথ্য সম্পাদনা' : 'নতুন কোর্স তৈরি'}
+                  </span>
+                  <h2
+                    id="course-modal-title"
+                    className="font-display text-[22px] sm:text-[26px] font-extrabold text-[#171412]"
+                  >
+                    {editingCourseId ? 'কোর্সের বিস্তারিত পরিবর্তন করুন' : 'অ্যাডমিন থেকে নতুন কোর্স যুক্ত করুন'}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCourseModalOpen(false)}
+                  className="w-9 h-9 rounded-full bg-[#f2f0e7] hover:bg-[#e2e0d7] border border-[#171412]/30 flex items-center justify-center text-[#171412] font-bold transition-colors cursor-pointer shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCourse} className="flex flex-col gap-4 text-left">
+                {/* Course Title */}
+                <div>
+                  <label htmlFor="course-title-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    কোর্সের নাম (Course Title) *
+                  </label>
+                  <input
+                    id="course-title-input"
+                    type="text"
+                    required
+                    value={courseForm.title}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="যেমন: ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস / মার্কেটিং কিভাবে করবেন"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                  />
+                </div>
+
+                {/* Category & Presets */}
+                <div>
+                  <label htmlFor="course-category-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    ক্যাটাগরি (Category) *
+                  </label>
+                  <input
+                    id="course-category-input"
+                    type="text"
+                    required
+                    value={courseForm.category}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, category: e.target.value }))}
+                    placeholder="যেমন: ড্রপশিপিং রিসেলিং / মার্কেটিং কিভাবে করবেন / কোর্স শিখুন"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                  />
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px]">
+                    <span className="font-bold text-[#813502]">দ্রুত সিলেক্ট:</span>
+                    {(['ড্রপশিপিং রিসেলিং', 'মার্কেটিং কিভাবে করবেন', 'কোর্স শিখুন', 'শপিফাই ড্রপশিপিং'] as const).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setCourseForm((prev) => ({ ...prev, category: cat }))}
+                        className="px-2 py-0.5 rounded-[50px] bg-[#f2f0e7] hover:bg-[#ffc765] border border-[#171412]/20 font-semibold cursor-pointer"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subtitle */}
+                <div>
+                  <label htmlFor="course-subtitle-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    ট্যাগলাইন / সংক্ষিপ্ত উপশিরোনাম (Subtitle)
+                  </label>
+                  <input
+                    id="course-subtitle-input"
+                    type="text"
+                    value={courseForm.subtitle}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, subtitle: e.target.value }))}
+                    placeholder="যেমন: পণ্য না কিনেই শূন্য ইনভেস্টমেন্টে রিসেলিং ও ড্রপশিপিংয়ের মাধ্যমে নিয়মিত আয়"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label htmlFor="course-desc-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    কোর্সের বিস্তারিত বিবরণ (Description)
+                  </label>
+                  <textarea
+                    id="course-desc-input"
+                    rows={3}
+                    value={courseForm.description}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="কোর্সের পূর্ণাঙ্গ সিলেবাস, সাপ্লায়ার নেটওয়ার্ক ও লাইভ সাপোর্ট সংক্রান্ত তথ্য..."
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                  />
+                </div>
+
+                {/* Price, Discount Price & Duration */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label htmlFor="course-price-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      মূল ফি (BDT) *
+                    </label>
+                    <input
+                      id="course-price-input"
+                      type="number"
+                      required
+                      min={0}
+                      step={50}
+                      value={courseForm.price}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                    />
+                    <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">যেমন: ১০০০ টাকা</span>
+                  </div>
+
+                  <div>
+                    <label htmlFor="course-discount-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ছাড়ের মূল্য / অফার ফি (BDT)
+                    </label>
+                    <input
+                      id="course-discount-input"
+                      type="number"
+                      min={0}
+                      step={50}
+                      value={courseForm.discountPrice}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, discountPrice: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                    />
+                    <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">যেমন: ১০০০ টাকা</span>
+                  </div>
+
+                  <div>
+                    <label htmlFor="course-duration-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ক্লাস সময়কাল (Duration)
+                    </label>
+                    <input
+                      id="course-duration-input"
+                      type="text"
+                      value={courseForm.duration}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, duration: e.target.value }))}
+                      placeholder="যেমন: ৮ সপ্তাহ · লাইভ ক্লাস"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                    />
+                  </div>
+                </div>
+
+                {/* Highlights */}
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <label htmlFor="course-highlights-input" className="text-[13px] font-bold text-[#171412]">
+                      মূল বৈশিষ্ট্যসমূহ (Highlights - প্রতি লাইনে একটি):
+                    </label>
+                    <span className="text-[11px] text-[#813502] font-semibold">বুলেট পয়েন্ট হিসেবে দেখাবে</span>
+                  </div>
+                  <textarea
+                    id="course-highlights-input"
+                    rows={4}
+                    value={courseForm.highlights}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, highlights: e.target.value }))}
+                    placeholder="জিরো ইনভেন্টরি রিসেলিং মেথডোলজি&#10;ভেরিফাইড হোলসেল সাপ্লায়ার তালিকা&#10;প্রতি অর্ডারে ৩০০–১,৫০০ টাকা নিশ্চিত নিট মার্জিন"
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] text-[#171412] font-mono leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                  />
+                </div>
+
+                {/* Badge & Active Checkbox */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2 border-t border-[#171412]/15">
+                  <div>
+                    <label htmlFor="course-badge-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      হাইলাইট ব্যাজ (Badge Text)
+                    </label>
+                    <input
+                      id="course-badge-input"
+                      type="text"
+                      value={courseForm.badge}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, badge: e.target.value }))}
+                      placeholder="যেমন: সবচেয়ে জনপ্রিয় / নতুন ব্যাচ"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px]"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fbf9ef] border border-[#171412]/20 cursor-pointer select-none mt-4 sm:mt-5">
+                    <input
+                      type="checkbox"
+                      checked={courseForm.isActive}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                      className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
+                    />
+                    <span className="text-[13px] font-bold text-[#171412]">
+                      কোর্সটি সক্রিয় ও শিক্ষার্থীদের জন্য দৃশ্যমান রাখুন
+                    </span>
+                  </label>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-[#171412]/15">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCourseModalOpen(false)}
+                  >
+                    বাতিল
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="orange"
+                    isLoading={isSavingCourses}
+                    loadingText="সংরক্ষণ হচ্ছে..."
+                  >
+                    {editingCourseId ? 'কোর্স পরিবর্তন সংরক্ষণ করুন' : 'নতুন কোর্স প্রকাশ করুন'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            MODAL 2: ADD / EDIT PROMO CODE
+        ===================================================================== */}
+        {isPromoModalOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="promo-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="relative w-full max-w-lg bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
+                <div>
+                  <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
+                    {editingPromoId ? 'প্রোমো কোড সম্পাদনা' : 'নতুন প্রোমো কোড তৈরি'}
+                  </span>
+                  <h2
+                    id="promo-modal-title"
+                    className="font-display text-[22px] font-extrabold text-[#171412]"
+                  >
+                    {editingPromoId ? 'প্রোমো কোড আপডেট করুন' : 'নতুন ছাড় বা প্রোমো কোড যুক্ত করুন'}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPromoModalOpen(false)}
+                  className="w-9 h-9 rounded-full bg-[#f2f0e7] hover:bg-[#e2e0d7] border border-[#171412]/30 flex items-center justify-center text-[#171412] font-bold transition-colors cursor-pointer shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSavePromo} className="flex flex-col gap-4 text-left">
+                {/* Promo Code Input */}
+                <div>
+                  <label htmlFor="promo-code-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    প্রোমো কোড (Promo Code) *
+                  </label>
+                  <input
+                    id="promo-code-input"
+                    type="text"
+                    required
+                    value={promoForm.code}
+                    onChange={(e) => setPromoForm((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    placeholder="যেমন: PROMO1000 / RESELLER500 / WELCOME50 / FREE1000"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[15px] font-mono font-bold text-[#171412] uppercase focus:border-[#ff7722] focus:outline-none"
+                  />
+                </div>
+
+                {/* Discount Type & Value */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="promo-type-select" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ছাড়ের ধরন (Discount Type) *
+                    </label>
+                    <select
+                      id="promo-type-select"
+                      value={promoForm.discountType}
+                      onChange={(e) => setPromoForm((prev) => ({ ...prev, discountType: e.target.value as any }))}
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
+                    >
+                      <option value="fixed">নির্দিষ্ট টাকা ছাড় (Fixed BDT)</option>
+                      <option value="percentage">শতকরা ছাড় (Percentage %)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="promo-val-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ছাড়ের পরিমাণ (Value) *
+                    </label>
+                    <input
+                      id="promo-val-input"
+                      type="number"
+                      required
+                      min={1}
+                      value={promoForm.discountValue}
+                      onChange={(e) => setPromoForm((prev) => ({ ...prev, discountValue: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                    />
+                    <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">
+                      {promoForm.discountType === 'percentage' ? 'যেমন: ৫০ মানে ৫০% ছাড়' : 'যেমন: ৩০০ বা ১০০০ টাকা ছাড়'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label htmlFor="promo-desc-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    বিবরণ / নোট (Description)
+                  </label>
+                  <input
+                    id="promo-desc-input"
+                    type="text"
+                    value={promoForm.description}
+                    onChange={(e) => setPromoForm((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="যেমন: স্পেশাল ১,০০০ টাকা প্রোমো কোড (৳৩০০ ছাড়)"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                  />
+                </div>
+
+                {/* Active Checkbox */}
+                <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fbf9ef] border border-[#171412]/20 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={promoForm.isActive}
+                    onChange={(e) => setPromoForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                    className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
+                  />
+                  <span className="text-[13px] font-bold text-[#171412]">
+                    প্রোমো কোডটি সক্রিয় রাখুন
+                  </span>
+                </label>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#171412]/15">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsPromoModalOpen(false)}
+                  >
+                    বাতিল
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="orange"
+                  >
+                    {editingPromoId ? 'প্রোমো আপডেট করুন' : 'প্রোমো কোড সংরক্ষণ করুন'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            MODAL 3: DIRECT ASSIGN / CHANGE COURSE TO APPLICANT
+        ===================================================================== */}
+        {assignUserModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="assign-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="relative w-full max-w-lg bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8">
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
+                <div>
+                  <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
+                    অ্যাডমিন অ্যাসাইনমেন্ট
+                  </span>
+                  <h2
+                    id="assign-modal-title"
+                    className="font-display text-[22px] font-extrabold text-[#171412]"
+                  >
+                    শিক্ষার্থীর কোর্স নির্ধারণ করুন
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAssignUserModal(null)}
+                  className="w-9 h-9 rounded-full bg-[#f2f0e7] hover:bg-[#e2e0d7] border border-[#171412]/30 flex items-center justify-center text-[#171412] font-bold transition-colors cursor-pointer shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Student Summary */}
+              <div className="p-3.5 rounded-[12px] bg-[#fbf9ef] border border-[#171412]/20 mb-5 text-[13px]">
+                <div className="font-bold text-[#171412] text-[15px]">
+                  {assignUserModal.first_name} {assignUserModal.last_name}
+                </div>
+                <div className="text-[#171412]/70 text-[12px] mt-0.5">
+                  ইমেইল: {assignUserModal.email} · ফোন: {assignUserModal.phone}
+                </div>
+                {assignUserModal.course_title && (
+                  <div className="mt-2 pt-2 border-t border-[#171412]/10 text-[12px]">
+                    <span className="text-[#813502] font-semibold">বর্তমান কোর্স: </span>
+                    <strong className="text-[#171412]">{assignUserModal.course_title}</strong> (৳{assignUserModal.final_fee || assignUserModal.course_fee || 1000})
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleAssignUserCourseSubmit} className="flex flex-col gap-4 text-left">
+                <div>
+                  <label htmlFor="assign-course-select" className="block text-[13px] font-bold text-[#171412] mb-1.5">
+                    কাঙ্ক্ষিত কোর্স নির্বাচন করুন *
+                  </label>
+                  <select
+                    id="assign-course-select"
+                    value={assignCourseId}
+                    onChange={(e) => setAssignCourseId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412] cursor-pointer"
+                  >
+                    {adminCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title} — [{c.category}] (৳{c.discountPrice || c.price})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#171412]/15">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAssignUserModal(null)}
+                  >
+                    বাতিল
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="orange"
+                  >
+                    কোর্স সংরক্ষণ ও নির্ধারণ করুন
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* =====================================================================
+            TAB 5: CONTACT & SUPPORT CONTROL CENTER
+        ===================================================================== */}
+        {activeTab === 'contact' && (
+          <section aria-label="Contact and support information management" className="py-6">
+            <AdminContactForm />
+          </section>
+        )}
+
       </div>
     </main>
   );
 };
+
+

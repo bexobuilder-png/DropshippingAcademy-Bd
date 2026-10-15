@@ -85,9 +85,34 @@ export const WaitlistConfirmedPage: React.FC = () => {
     };
   }, []);
 
-  // Route Guard: Only reachable after successful verification
+  // Route Guard: If not verified or no session found, show registration prompt
   if (!confirmed) {
-    return <Navigate to="/" replace />;
+    return (
+      <main id="main-content" className="py-20 bg-[#fbf9ef] text-[#171412] text-center">
+        <div className="specimen-container max-w-lg">
+          <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] p-8 sm:p-10 shadow-md">
+            <span className="text-[44px] block mb-3">🎓</span>
+            <h1 className="font-display text-[26px] sm:text-[32px] font-extrabold text-[#171412] mb-3">
+              {t('কোর্সে ভর্তি সংক্রান্ত তথ্য', 'Course Enrollment')}
+            </h1>
+            <p className="text-[14px] text-[#171412]/80 mb-6 leading-relaxed">
+              {t(
+                'রেজিস্ট্রেশন সম্পন্ন হওয়ার পরে এবং সব তথ্য দেওয়ার পরেই পছন্দের কোর্সে ভর্তি হওয়ার অপশন উন্মুক্ত হয়। অনুগ্রহ করে প্রথমে নিবন্ধন সম্পন্ন করুন।',
+                'Course enrollment options appear immediately after completing registration and providing all required information. Please register first.'
+              )}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button variant="orange" size="lg" onClick={() => navigate('/join')}>
+                {t('রেজিস্ট্রেশন করুন', 'Register Now')}
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => navigate('/')}>
+                {t('হোম পেজে যান', 'Back to Home')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   const alreadyOnWaitlist =
@@ -333,11 +358,17 @@ export const WaitlistConfirmedPage: React.FC = () => {
               <div className="flex items-center justify-between gap-2 pb-3 mb-6 border-b-2 border-[#171412]">
                 <div>
                   <span className="text-[12px] font-extrabold text-[#813502] uppercase tracking-wider block">
-                    {t('ধাপ ৩ · কোর্স ও ভর্তি নির্বাচন', 'Step 3 · Course & Enrollment Selection')}
+                    {t('ধাপ ৩ · কোর্স নির্বাচন ও ভর্তি', 'Step 3 · Course Selection & Enrollment')}
                   </span>
                   <h2 className="font-display text-[22px] sm:text-[28px] font-extrabold text-[#171412] mt-0.5">
-                    {t('কোন কোর্সে ভর্তি হতে চান?', 'Which course would you like to enroll in?')}
+                    {t('কোন কোর্সে ভর্তি হতে চান? (১,০০০ টাকা অথবা প্রোমো কোড)', 'Which course would you like to enroll in? (1,000 BDT or Promo Code)')}
                   </h2>
+                  <p className="text-[13px] text-[#171412]/75 mt-1">
+                    {t(
+                      'ড্রপশিপিং রিসেলিং, মার্কেটিং কিভাবে করবেন বা কোর্স শিখুন — আপনার কাঙ্ক্ষিত কোর্স বেছে নিন।',
+                      'Dropshipping Reselling, Marketing Strategy, or Complete Course — choose your path.'
+                    )}
+                  </p>
                 </div>
 
                 <div className="hidden sm:block text-right">
@@ -465,12 +496,12 @@ export const WaitlistConfirmedPage: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-4">
                       <div>
                         <div className="font-display text-[16px] font-extrabold text-[#171412]">
-                          {t('প্রোমো কোড ও বিশেষ ছাড় (Promo Code)', 'Promo Code & Discount')}
+                          {t('১,০০০ টাকা অথবা প্রোমো কোড দিয়ে বিশেষ ছাড় (Promo Code & Fee)', '1,000 BDT Course Fee or Promo Code Discount')}
                         </div>
                         <div className="text-[13px] text-[#171412]/75 mt-0.5">
                           {t(
-                            'আপনার কাছে কোনো প্রোমো কোড থাকলে নিচে লিখুন এবং ছাড় উপভোগ করুন।',
-                            'Have a promo code? Enter it below to unlock special discount.'
+                            'আপনার কাছে কোনো প্রোমো কোড থাকলে নিচে লিখুন এবং ছাড় উপভোগ করুন। (যেমন: PROMO1000, RESELLER500, WELCOME50, FREE1000)',
+                            'Have a promo code? Enter it below to unlock special discount or free scholarship.'
                           )}
                         </div>
                       </div>
@@ -495,7 +526,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                         />
                         <Button
                           variant="primary"
-                          size="md"
+                          size="default"
                           onClick={() => handleApplyPromo()}
                         >
                           {t('প্রয়োগ করুন', 'Apply')}

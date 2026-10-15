@@ -199,8 +199,35 @@ export function saveConfirmedWaitlist(record: ConfirmedWaitlistRecord): void {
 export function loadConfirmedWaitlist(): ConfirmedWaitlistRecord | null {
   try {
     const raw = sessionStorage.getItem(CONFIRMED_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as ConfirmedWaitlistRecord;
+    if (raw) return JSON.parse(raw) as ConfirmedWaitlistRecord;
+
+    // Fallback recovery if page refreshed or reopened in same browser
+    const localRaw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
+    if (localRaw) {
+      const list: WaitlistDbRow[] = JSON.parse(localRaw);
+      if (Array.isArray(list) && list.length > 0) {
+        const last = list[list.length - 1];
+        const recovered: ConfirmedWaitlistRecord = {
+          firstName: last.first_name,
+          lastName: last.last_name,
+          email: last.email,
+          phone: last.phone,
+          whatsapp: last.whatsapp,
+          whatsappConfirmedByUser: true,
+          dateOfBirth: last.date_of_birth,
+          alreadyOnWaitlist: false,
+          confirmedAt: last.created_at,
+          selectedCourseId: last.course_id,
+          selectedCourseTitle: last.course_title,
+          courseFee: last.course_fee,
+          promoCode: last.promo_code,
+          finalFee: last.final_fee,
+        };
+        sessionStorage.setItem(CONFIRMED_STORAGE_KEY, JSON.stringify(recovered));
+        return recovered;
+      }
+    }
+    return null;
   } catch {
     return null;
   }

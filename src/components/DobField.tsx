@@ -23,7 +23,7 @@ export function validateDob(value: string, lang: Lang = "bn"): string {
   if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d || y < 1920 || dt > new Date()) return T.bad;
   const now = new Date();
   const age = now.getFullYear() - y - (now.getMonth() < mo - 1 || (now.getMonth() === mo - 1 && now.getDate() < d) ? 1 : 0);
-  return age < 18 ? T.young : "";
+  return age < 12 ? T.young : "";
 }
 
 interface Props {
@@ -64,7 +64,7 @@ export function DobField({ value, onChange, lang = "bn", error = "", onValidity,
   if (+m >= 1 && +m <= 12) words.push(MON[lang][+m - 1]);
   if (y) words.push(fmt(y));
   const live = words.join(" ") + (age !== null ? " · " + T.age(fmt(age)) : "");
-  const ok = age !== null && age >= 18 && !err;
+  const ok = age !== null && age >= 12 && !err;
 
   const go = (i: number, end = false) => {
     const el = refs[i]?.current; if (!el) return;
@@ -111,7 +111,7 @@ export function DobField({ value, onChange, lang = "bn", error = "", onValidity,
 
   const openCalendar = () => {
     const el = pick.current; if (!el) return;
-    const max = new Date(); max.setFullYear(max.getFullYear() - 18); el.max = max.toISOString().slice(0, 10);
+    const max = new Date(); max.setFullYear(max.getFullYear() - 12); el.max = max.toISOString().slice(0, 10);
     try { el.showPicker(); } catch { go(0); }
   };
 

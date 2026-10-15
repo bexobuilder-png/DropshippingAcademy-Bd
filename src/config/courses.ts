@@ -71,7 +71,7 @@ export const DEFAULT_COURSES: CourseItem[] = [
     category: 'কোর্স শিখুন',
     subtitle: 'আন্তর্জাতিক ও দেশীয় বাজারে বিশ্বমানের অনলাইন শপ তৈরি ও স্কেলিং',
     description: 'আন্তর্জাতিক মানের শপিফাই ড্রপশিপিং স্টোর বিল্ড করা, ইন্টারন্যাশনাল পেমেন্ট গেটওয়ে সেটআপ এবং ফুলফিলমেন্ট অটোমেশনের এ টু জেড।',
-    price: 1500,
+    price: 1000,
     discountPrice: 1000,
     promoCodeEligible: true,
     duration: '১০ সপ্তাহ · প্রজেক্ট ও সার্টিফিকেট',
@@ -109,7 +109,7 @@ export const DEFAULT_PROMO_CODES: PromoCodeItem[] = [
     code: 'WELCOME50',
     discountType: 'percentage',
     discountValue: 50,
-    description: 'নতুন শিক্ষার্থীদের ৫০% ওয়েলকাম ছাড়',
+    description: 'নতুন শিক্ষার্থীদের ৫০% ওয়েলকাম ছাড় (৳৫০০ ছাড়)',
     isActive: true,
   },
   {
@@ -118,6 +118,14 @@ export const DEFAULT_PROMO_CODES: PromoCodeItem[] = [
     discountType: 'fixed',
     discountValue: 200,
     description: 'স্টুডেন্ট স্পেশাল ছাড় (৳২০০ অফ)',
+    isActive: true,
+  },
+  {
+    id: 'promo-5',
+    code: 'FREE1000',
+    discountType: 'fixed',
+    discountValue: 1000,
+    description: '১০০% ফ্রি স্কলারশিপ কোড (৳১,০০০ সম্পূর্ণ ফ্রি)',
     isActive: true,
   },
 ];

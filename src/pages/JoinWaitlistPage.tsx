@@ -501,8 +501,8 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
                     </label>
                     <p id="dob-hint" className="text-[13px] text-[#171412]/75 mb-2.5">
                       {t(
-                        'দিন, মাস ও বছর লিখুন — পরের ঘরে নিজে নিজেই চলে যাবে। বয়স ন্যূনতম ১৮ বছর হতে হবে।',
-                        'Type day, month and year. It jumps to the next box by itself. You must be at least 18.'
+                        'দিন, মাস ও বছর লিখুন — পরের ঘরে নিজে নিজেই চলে যাবে। বয়স সর্বনিম্ন ১২ বছর হতে হবে। ১২ বছর ঊর্ধ্বে রেজিস্ট্রেশন করতে পারবে।',
+                        'Type day, month and year. It jumps to the next box by itself. Minimum age must be 12 years.'
                       )}
                     </p>
                     <DobField

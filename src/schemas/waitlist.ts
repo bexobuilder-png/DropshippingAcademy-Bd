@@ -161,14 +161,14 @@ export function validateAdultBirthDate(dateStr: string): {
     return { valid: false, reason: 'Please enter a valid birth year (1905 or later).' };
   }
 
-  const eighteenYearsAgo = new Date(
-    today.getFullYear() - 18,
+  const twelveYearsAgo = new Date(
+    today.getFullYear() - 12,
     today.getMonth(),
     today.getDate()
   );
 
-  if (parsed > eighteenYearsAgo) {
-    return { valid: false, reason: 'You must be at least 18 years old to join the waitlist.' };
+  if (parsed > twelveYearsAgo) {
+    return { valid: false, reason: 'বয়স সর্বনিম্ন ১২ বছর হতে হবে। ১২ বছর ঊর্ধ্বে রেজিস্ট্রেশন করতে পারবে।' };
   }
 
   return { valid: true };
@@ -201,7 +201,7 @@ export const waitlistStep1Schema = z.object({
       if (!check.valid) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: check.reason || 'You must be 18+ to join.',
+          message: check.reason || 'বয়স সর্বনিম্ন ১২ বছর হতে হবে।',
         });
       }
     }),

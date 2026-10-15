@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from "react";
 import "./contact.css";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 /* Contact kit: stored contact info + contact popup + admin form.
    Public site:  const info = useContact();  <ContactModal open={open} onClose={...} info={info} />
