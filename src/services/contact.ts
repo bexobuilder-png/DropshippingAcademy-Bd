@@ -88,7 +88,14 @@ export async function fetchContactSettings(): Promise<ContactItem[]> {
         .select('*')
         .order('display_order', { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
+        if (data.length === 0) {
+          // Seed defaults into Supabase if table is empty
+          for (const item of DEFAULT_CONTACT_ITEMS) {
+            await supabase.from('contact_settings').upsert(item);
+          }
+          return DEFAULT_CONTACT_ITEMS;
+        }
         return data as ContactItem[];
       }
     }
@@ -100,7 +107,7 @@ export async function fetchContactSettings(): Promise<ContactItem[]> {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
@@ -116,7 +123,7 @@ export async function saveContactSettings(items: ContactItem[]): Promise<{ succe
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
 
     if (isSupabaseConfigured) {
-      // Upsert items
+      // Upsert all items to Supabase
       for (const item of items) {
         const { error } = await supabase
           .from('contact_settings')
@@ -131,6 +138,7 @@ export async function saveContactSettings(items: ContactItem[]): Promise<{ succe
           });
         if (error) {
           console.error('Error upserting contact setting:', error);
+          return { success: false, error: error.message };
         }
       }
     }
