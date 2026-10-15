@@ -20,6 +20,9 @@ const TermsPage = React.lazy(() =>
 const PrivacyPage = React.lazy(() =>
   import('./pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage }))
 );
+const ContactPage = React.lazy(() =>
+  import('./pages/ContactPage').then((m) => ({ default: m.ContactPage }))
+);
 const AdminCheckPage = React.lazy(() =>
   import('./pages/AdminCheckPage').then((m) => ({ default: m.AdminCheckPage }))
 );
@@ -133,6 +136,7 @@ function AppShell() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/contact" element={<ContactPage />} />
               <Route path="/check" element={<AdminCheckPage />} />
               <Route
                 path="*"

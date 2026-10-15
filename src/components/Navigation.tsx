@@ -103,7 +103,10 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
             <button
               type="button"
-              onClick={onOpenContact || (() => handleAnchorScroll('contact'))}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                navigate('/contact');
+              }}
               className={getNavButtonClass(['faq', 'contact'])}
             >
               {t('যোগাযোগ', 'Contact')}
@@ -260,7 +263,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         <button
           type="button"
-          onClick={onOpenContact || (() => handleAnchorScroll('contact'))}
+          onClick={() => navigate('/contact')}
           className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
