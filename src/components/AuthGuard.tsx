@@ -7,7 +7,6 @@ import {
   getCurrentUserSession,
   UserSession,
 } from '../services/auth';
-import { Button } from './Button';
 import { Input } from './Input';
 import { OtpInput } from './OtpInput';
 import { AlertCircleSvgIcon } from './svg/NavIcons';
@@ -30,14 +29,16 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  // Mode: 'register_prompt' | 'quick_login'
+  // Mode: 'prompt' | 'login'
   const [mode, setMode] = useState<'prompt' | 'login'>('prompt');
   const [identifier, setIdentifier] = useState('');
   const [otpToken, setOtpToken] = useState('');
   const [loginStep, setLoginStep] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [errorCode, setErrorCode] = useState<string>('');
   const [noticeMsg, setNoticeMsg] = useState('');
+  const [maskedEmailHint, setMaskedEmailHint] = useState<string>('');
 
   if (!isOpen) return null;
 
@@ -49,6 +50,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setErrorCode('');
     setNoticeMsg('');
 
     const clean = identifier.trim();
@@ -67,24 +69,34 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
     setIsLoading(false);
 
     if (!result.success) {
+      setErrorCode(result.code || '');
       setErrorMsg(
         result.error ||
-          t('আবেদনকারী পাওয়া যায়নি।', 'Applicant record not found.')
+          t(
+            'এই ফোন নম্বর বা ইমেইলে কোনো রেজিস্ট্রেশন রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে প্রথমে রেজিস্ট্রেশন করুন।',
+            'No registration record found for this phone number or email. Please register first.'
+          )
       );
       return;
     }
 
+    setMaskedEmailHint(result.maskedEmail || '');
     setLoginStep(2);
+
+    const baseNotice = result.maskedEmail
+      ? t(
+          `ভেরিফিকেশন কোড পাঠানো হয়েছে: ${result.maskedEmail}`,
+          `Code sent to ${result.maskedEmail}`
+        )
+      : t(
+          'আপনার ইমেইলে ৬-ডিজিটের ভেরিফিকেশন কোড পাঠানো হয়েছে।',
+          'A 6-digit verification code has been sent to your email.'
+        );
+
     setNoticeMsg(
       result.demoOtp
-        ? t(
-            `ভেরিফিকেশন কোড পাঠানো হয়েছে! (টেস্ট কোড: ${result.demoOtp})`,
-            `Verification code sent! (Test Code: ${result.demoOtp})`
-          )
-        : t(
-            'আপনার ইমেইলে ৬-ডিজিটের ভেরিফিকেশন কোড পাঠানো হয়েছে।',
-            'A 6-digit verification code has been sent to your email.'
-          )
+        ? `${baseNotice} (Test Code: ${result.demoOtp})`
+        : baseNotice
     );
   };
 
@@ -186,6 +198,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
               onClick={() => {
                 setErrorMsg('');
                 setNoticeMsg('');
+                setErrorCode('');
                 setMode('login');
               }}
               className="text-[13px] font-bold text-[#813502] hover:underline cursor-pointer py-1"
@@ -205,6 +218,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
                   setMode('prompt');
                   setLoginStep(1);
                   setErrorMsg('');
+                  setErrorCode('');
                 }}
                 className="text-[13px] font-bold text-[#813502] hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
@@ -224,29 +238,49 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
             <p className="text-[13px] text-[#171412]/80 mb-5">
               {loginStep === 1
                 ? t(
-                    'রেজিস্ট্রেশনের সময় ব্যবহৃত ফোন নম্বর বা ইমেইল দিন।',
-                    'Enter your phone number or email used during registration.'
+                    'রেজিস্ট্রেশনের সময় ব্যবহৃত ফোন নম্বর (যেমন 017XXXXXXXX) বা ইমেইল দিন।',
+                    'Enter your phone number (e.g. 01XXXXXXXXX) or email used during registration.'
                   )
-                : t(
-                    '৬-ডিজিটের ভেরিফিকেশন কোডটি নিচে লিখুন।',
-                    'Enter the 6-digit verification code below.'
+                : (
+                    <span>
+                      {maskedEmailHint ? (
+                        <span className="font-semibold text-[#813502] block mb-1">
+                          {t(`ইমেইল পাঠানো হয়েছে: ${maskedEmailHint}`, `Code sent to ${maskedEmailHint}`)}
+                        </span>
+                      ) : null}
+                      {t(
+                        '১০ মিনিটের মধ্যে পাওয়া ৬-ডিজিটের কোডটি নিচে লিখুন।',
+                        'Enter the 6-digit code received within 10 minutes.'
+                      )}
+                    </span>
                   )}
             </p>
 
             {errorMsg && (
               <div
                 role="alert"
-                className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-[13px] font-medium flex items-center gap-2"
+                className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-[13px] font-medium flex flex-col gap-2"
               >
-                <AlertCircleSvgIcon className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{errorMsg}</span>
+                <div className="flex items-center gap-2">
+                  <AlertCircleSvgIcon className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{errorMsg}</span>
+                </div>
+                {errorCode === 'not_found' && (
+                  <button
+                    type="button"
+                    onClick={handleGoToRegister}
+                    className="self-start text-[12px] font-extrabold text-[#813502] underline hover:no-underline"
+                  >
+                    {t('এখনই রেজিস্ট্রেশন পেইজে যান →', 'Go to Registration Page →')}
+                  </button>
+                )}
               </div>
             )}
 
             {noticeMsg && (
               <div
                 role="status"
-                className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-[13px] font-medium"
+                className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-[13px] font-medium"
               >
                 {noticeMsg}
               </div>
@@ -257,7 +291,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
                 <Input
                   id="guard-identifier"
                   label={t('ফোন নম্বর অথবা ইমেইল', 'Phone number or Email')}
-                  placeholder={t('যেমন: 01700000000 বা name@gmail.com', 'e.g. 01700000000 or email')}
+                  placeholder={t('যেমন: 01712345678 বা name@gmail.com', 'e.g. 01712345678 or name@gmail.com')}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required
@@ -289,6 +323,28 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
                     ? t('ভেরিফাই হচ্ছে...', 'Verifying...')
                     : t('সাইন ইন নিশ্চিত করুন', 'Confirm Sign In')}
                 </button>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStep(1);
+                      setOtpToken('');
+                      setErrorMsg('');
+                    }}
+                    className="text-[12px] font-bold text-[#813502] hover:underline"
+                  >
+                    {t('পুনরায় ফোন/ইমেইল পরিবর্তন করুন', 'Change phone/email')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendCode}
+                    disabled={isLoading}
+                    className="text-[12px] font-bold text-[#171412]/80 hover:underline"
+                  >
+                    {t('পুনরায় কোড পাঠান', 'Resend code')}
+                  </button>
+                </div>
               </form>
             )}
           </div>

@@ -1,6 +1,5 @@
 import "../styles/home.css";
 import { STEP_ART } from "../data/stepArt";
-import { RunningCourseCard } from "./RunningCourseCard";
 
 type Lang = "bn" | "en";
 const N = (s: string, lang: Lang) => (lang === "bn" ? s.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : s);
@@ -89,9 +88,6 @@ export default function HomeSections({ lang = "bn", onRegister }: Props) {
       <div className="hm-wrap">
         <section className="hm-block" id="path">
           <h2>{T.pathT}</h2>
-          <div className="mb-6">
-            <RunningCourseCard variant="featured" onLearnMore={onRegister} />
-          </div>
           <ol className="hm-steps">
             {T.steps.map((s, i) => (
               <li className="hm-st" key={i}>

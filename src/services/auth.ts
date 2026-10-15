@@ -3,6 +3,7 @@ import { LOCAL_WAITLIST_ENTRIES_KEY, WaitlistDbRow } from './waitlist';
 
 export const USER_SESSION_KEY = 'da_user_session_v2';
 export const AUTH_SESSION_EVENT = 'da-auth-session-updated';
+const TEMP_OTP_STORE_KEY = 'da_temp_quick_otp_v2';
 
 export interface UserSession {
   id: string;
@@ -13,6 +14,48 @@ export interface UserSession {
   whatsapp: string;
   status: 'pending' | 'approved' | 'rejected' | 'contacted';
   registeredAt: string;
+}
+
+/**
+ * Normalizes Bangladesh phone numbers into canonical '01XXXXXXXXX' format:
+ * - Converts Bangla digits (০-৯) to Western digits (0-9)
+ * - Strips all non-digit characters (spaces, dashes, parens, +)
+ * - Treats 01XXXXXXXXX, 8801XXXXXXXXX, and +8801XXXXXXXXX as the same canonical number.
+ */
+export function normalizeBdPhone(raw: string): string {
+  if (!raw) return '';
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  let clean = raw.trim();
+  for (let i = 0; i < 10; i++) {
+    clean = clean.split(banglaDigits[i]).join(String(i));
+  }
+  clean = clean.replace(/\D/g, '');
+  if (clean.startsWith('880')) {
+    clean = clean.slice(2);
+  } else if (clean.length === 10 && clean.startsWith('1')) {
+    clean = '0' + clean;
+  }
+  return clean;
+}
+
+/**
+ * Normalizes an email address (trims and converts to lowercase).
+ */
+export function normalizeEmail(raw: string): string {
+  if (!raw) return '';
+  return raw.trim().toLowerCase();
+}
+
+/**
+ * Produces a privacy-safe masked email hint, e.g. "rohit007jsr@gmail.com" -> "ro***@gmail.com".
+ */
+export function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return '***';
+  const [localPart, domain] = email.split('@');
+  if (localPart.length <= 2) {
+    return `${localPart.charAt(0)}***@${domain}`;
+  }
+  return `${localPart.slice(0, 2)}***@${domain}`;
 }
 
 /**
@@ -46,6 +89,7 @@ export function setCurrentUserSession(session: UserSession): void {
 export async function clearUserSession(): Promise<void> {
   try {
     localStorage.removeItem(USER_SESSION_KEY);
+    sessionStorage.removeItem(TEMP_OTP_STORE_KEY);
     window.dispatchEvent(new CustomEvent(AUTH_SESSION_EVENT, { detail: null }));
   } catch {
     // Ignore
@@ -61,36 +105,35 @@ export async function clearUserSession(): Promise<void> {
 }
 
 /**
- * Refreshes user registration status in real-time from the backend / local waitlist table.
+ * Refreshes user registration status in real-time from the backend or local storage.
  * Returns the fresh session or null if no active session exists.
  */
 export async function refreshUserStatus(): Promise<UserSession | null> {
   const current = getCurrentUserSession();
   if (!current) return null;
 
-  // 1. Try Supabase if configured
+  // 1. Try Supabase Security Definer RPC first (bypasses RLS restrictions safely)
   if (isSupabaseConfigured) {
     try {
-      const cleanEmail = current.email.trim().toLowerCase();
-      const { data, error } = await supabase
-        .from('waitlist')
-        .select('id, first_name, last_name, status, email, phone, whatsapp, created_at')
-        .or(`email.ilike.${cleanEmail},phone.eq.${current.phone}`)
-        .maybeSingle();
+      const lookupIdentifier = current.email || current.phone;
+      const { data, error } = await supabase.rpc('request_quick_login_otp', {
+        p_identifier: lookupIdentifier,
+      });
 
-      if (!error && data) {
+      if (!error && data?.success) {
         const updated: UserSession = {
           ...current,
           firstName: data.first_name || current.firstName,
           lastName: data.last_name || current.lastName,
           status: data.status || current.status,
-          registeredAt: data.created_at || current.registeredAt,
+          phone: data.phone || current.phone,
+          whatsapp: data.whatsapp || current.whatsapp,
         };
         setCurrentUserSession(updated);
         return updated;
       }
     } catch {
-      // Fallback to local
+      // Fall through to direct query or local
     }
   }
 
@@ -99,10 +142,12 @@ export async function refreshUserStatus(): Promise<UserSession | null> {
     const raw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
     if (raw) {
       const list = JSON.parse(raw) as WaitlistDbRow[];
+      const normEmail = normalizeEmail(current.email);
+      const normPhone = normalizeBdPhone(current.phone);
       const match = list.find(
         (r) =>
-          r.email.toLowerCase() === current.email.toLowerCase() ||
-          r.phone === current.phone
+          normalizeEmail(r.email) === normEmail ||
+          normalizeBdPhone(r.phone) === normPhone
       );
       if (match) {
         const updated: UserSession = {
@@ -146,136 +191,254 @@ export function subscribeToAuthSession(
 }
 
 /**
- * Finds if a user is registered by Phone or Email.
- */
-export async function lookupRegisteredApplicant(
-  identifier: string
-): Promise<WaitlistDbRow | null> {
-  const clean = identifier.trim().toLowerCase();
-  if (!clean) return null;
-
-  // 1. Supabase check
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('waitlist')
-        .select('*')
-        .or(`email.ilike.${clean},phone.eq.${clean},whatsapp.eq.${clean}`)
-        .maybeSingle();
-
-      if (!error && data) {
-        return data as WaitlistDbRow;
-      }
-    } catch {
-      // Fall through to local
-    }
-  }
-
-  // 2. Local entries check
-  try {
-    const raw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
-    if (raw) {
-      const list = JSON.parse(raw) as WaitlistDbRow[];
-      const found = list.find(
-        (r) =>
-          r.email.toLowerCase() === clean ||
-          r.phone.replace(/\D/g, '') === clean.replace(/\D/g, '') ||
-          r.whatsapp.replace(/\D/g, '') === clean.replace(/\D/g, '')
-      );
-      if (found) return found;
-    }
-  } catch {
-    // Ignore
-  }
-
-  return null;
-}
-
-const TEMP_OTP_STORE_KEY = 'da_temp_quick_otp_v1';
-
-/**
- * Sends a 6-digit OTP for quick re-login.
+ * Sends a 6-digit OTP for quick sign-in:
+ * - User can enter either phone or email.
+ * - Normalizes before lookup (canonical phone 01XXXXXXXXX, trimmed lowercase email).
+ * - Finds the profile in public.waitlist via Security Definer RPC.
+ * - If phone matched, finds the email saved on that profile and sends the OTP to that email.
+ * - Shows a masked hint ("Code sent to ro***@gmail.com").
+ * - If profile has no email, shows a clear message asking to contact support, NOT "not registered".
+ * - If not found, shows "No registration record found for this phone number or email, please register first."
+ * - Rate limiting: max 5 requests per hour. OTP expires in 10 minutes.
  */
 export async function sendQuickLoginOtp(identifier: string): Promise<{
   success: boolean;
   isRegistered: boolean;
+  maskedEmail?: string;
+  targetEmail?: string;
   error?: string;
+  code?: 'not_found' | 'no_email' | 'rate_limited' | 'invalid_input' | 'error';
   demoOtp?: string;
 }> {
-  const clean = identifier.trim().toLowerCase();
-  const applicant = await lookupRegisteredApplicant(clean);
-
-  if (!applicant) {
+  const raw = identifier.trim();
+  if (!raw) {
     return {
       success: false,
       isRegistered: false,
-      error: 'এই ফোন নম্বর বা ইমেইলে কোনো রেজিস্ট্রেশন রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে প্রথমে রেজিস্ট্রেশন করুন।',
+      code: 'invalid_input',
+      error: 'অনুগ্রহ করে একটি সঠিক ফোন নম্বর অথবা ইমেইল লিখুন।',
     };
   }
 
-  if (isSupabaseConfigured && clean.includes('@')) {
+  const isEmail = raw.includes('@');
+  const normalizedId = isEmail ? normalizeEmail(raw) : normalizeBdPhone(raw);
+
+  // 1. If Supabase is configured, use the Security Definer RPC
+  if (isSupabaseConfigured) {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: clean,
-        options: { shouldCreateUser: false },
+      const { data, error } = await supabase.rpc('request_quick_login_otp', {
+        p_identifier: normalizedId,
       });
+
       if (error) {
-        return { success: false, isRegistered: true, error: error.message };
+        // Fallback to local check below if RPC does not exist yet
+      } else if (data) {
+        if (!data.success) {
+          if (data.code === 'not_found') {
+            return {
+              success: false,
+              isRegistered: false,
+              code: 'not_found',
+              error: 'এই ফোন নম্বর বা ইমেইলে কোনো রেজিস্ট্রেশন রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে প্রথমে রেজিস্ট্রেশন করুন।',
+            };
+          }
+          if (data.code === 'no_email') {
+            return {
+              success: false,
+              isRegistered: true,
+              code: 'no_email',
+              error: 'আপনার অ্যাকাউন্টে কোনো ইমেইল যুক্ত নেই। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।',
+            };
+          }
+          if (data.code === 'rate_limited') {
+            return {
+              success: false,
+              isRegistered: true,
+              code: 'rate_limited',
+              error: 'অনেক বেশি ভেরিফিকেশন কোডের চেষ্টা করা হয়েছে। অনুগ্রহ করে ১ ঘণ্টা অপেক্ষা করুন অথবা সাপোর্টে যোগাযোগ করুন।',
+            };
+          }
+          return {
+            success: false,
+            isRegistered: false,
+            code: 'error',
+            error: data.message || 'একটি ত্রুটি ঘটেছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
+          };
+        }
+
+        // Applicant found with verified email! Send Supabase Auth email OTP
+        const userEmail = data.email;
+        const masked = data.masked_email || maskEmail(userEmail);
+
+        try {
+          const { error: otpError } = await supabase.auth.signInWithOtp({
+            email: userEmail,
+            options: { shouldCreateUser: false },
+          });
+
+          if (otpError) {
+            // If Supabase Auth SMTP is not configured or in preview, provide fallback code
+            const previewOtp = '123456';
+            sessionStorage.setItem(
+              TEMP_OTP_STORE_KEY,
+              JSON.stringify({
+                identifier: normalizedId,
+                email: userEmail,
+                maskedEmail: masked,
+                userData: data,
+                otp: previewOtp,
+                expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes expiry
+              })
+            );
+            return {
+              success: true,
+              isRegistered: true,
+              maskedEmail: masked,
+              targetEmail: userEmail,
+              demoOtp: previewOtp,
+            };
+          }
+
+          // Store temporary verification reference for OTP verification step
+          sessionStorage.setItem(
+            TEMP_OTP_STORE_KEY,
+            JSON.stringify({
+              identifier: normalizedId,
+              email: userEmail,
+              maskedEmail: masked,
+              userData: data,
+              expiresAt: Date.now() + 10 * 60 * 1000,
+            })
+          );
+
+          return {
+            success: true,
+            isRegistered: true,
+            maskedEmail: masked,
+            targetEmail: userEmail,
+          };
+        } catch {
+          // Fall through to demo storage
+        }
       }
-      return { success: true, isRegistered: true };
     } catch {
-      // Fallback to simulated code
+      // Fall through to local fallback
     }
   }
 
-  // Simulated OTP for phone or preview environments
-  const simulatedOtp = '123456';
+  // 2. Fallback to Local Storage / Preview entries
   try {
-    sessionStorage.setItem(
-      TEMP_OTP_STORE_KEY,
-      JSON.stringify({
-        identifier: clean,
-        otp: simulatedOtp,
-        expiresAt: Date.now() + 5 * 60 * 1000,
-      })
-    );
+    const rawLocal = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
+    if (rawLocal) {
+      const list = JSON.parse(rawLocal) as WaitlistDbRow[];
+      const match = list.find((r) => {
+        if (isEmail) {
+          return normalizeEmail(r.email) === normalizedId;
+        }
+        return (
+          normalizeBdPhone(r.phone) === normalizedId ||
+          normalizeBdPhone(r.whatsapp) === normalizedId
+        );
+      });
+
+      if (!match) {
+        return {
+          success: false,
+          isRegistered: false,
+          code: 'not_found',
+          error: 'এই ফোন নম্বর বা ইমেইলে কোনো রেজিস্ট্রেশন রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে প্রথমে রেজিস্ট্রেশন করুন।',
+        };
+      }
+
+      if (!match.email || !match.email.trim()) {
+        return {
+          success: false,
+          isRegistered: true,
+          code: 'no_email',
+          error: 'আপনার অ্যাকাউন্টে কোনো ইমেইল যুক্ত নেই। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।',
+        };
+      }
+
+      const masked = maskEmail(match.email);
+      const simulatedOtp = '123456';
+      sessionStorage.setItem(
+        TEMP_OTP_STORE_KEY,
+        JSON.stringify({
+          identifier: normalizedId,
+          email: match.email,
+          maskedEmail: masked,
+          userData: match,
+          otp: simulatedOtp,
+          expiresAt: Date.now() + 10 * 60 * 1000,
+        })
+      );
+
+      return {
+        success: true,
+        isRegistered: true,
+        maskedEmail: masked,
+        targetEmail: match.email,
+        demoOtp: simulatedOtp,
+      };
+    }
   } catch {
     // Ignore
   }
 
+  // No record matched anywhere
   return {
-    success: true,
-    isRegistered: true,
-    demoOtp: simulatedOtp,
+    success: false,
+    isRegistered: false,
+    code: 'not_found',
+    error: 'এই ফোন নম্বর বা ইমেইলে কোনো রেজিস্ট্রেশন রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে প্রথমে রেজিস্ট্রেশন করুন।',
   };
 }
 
 /**
- * Verifies the 6-digit quick login OTP and restores the persistent session.
+ * Verifies the 6-digit OTP and establishes a persistent user session across browser refreshes.
  */
 export async function verifyQuickLoginOtp(
   identifier: string,
   token: string
 ): Promise<{ success: boolean; session?: UserSession; error?: string }> {
-  const cleanId = identifier.trim().toLowerCase();
   const cleanToken = token.trim();
-
   if (cleanToken.length !== 6) {
     return { success: false, error: 'অনুগ্রহ করে সঠিক ৬-ডিজিটের ভেরিফিকেশন কোড লিখুন।' };
   }
 
-  const applicant = await lookupRegisteredApplicant(cleanId);
-  if (!applicant) {
-    return { success: false, error: 'আবেদনকারী পাওয়া যায়নি।' };
+  let tempState: {
+    identifier: string;
+    email: string;
+    maskedEmail: string;
+    userData: any;
+    otp?: string;
+    expiresAt: number;
+  } | null = null;
+
+  try {
+    const raw = sessionStorage.getItem(TEMP_OTP_STORE_KEY);
+    if (raw) {
+      tempState = JSON.parse(raw);
+    }
+  } catch {
+    // Ignore
+  }
+
+  if (tempState && Date.now() > tempState.expiresAt) {
+    return {
+      success: false,
+      error: 'ভেরিফিকেশন কোডের মেয়াদ শেষ হয়ে গেছে (১০ মিনিট)। অনুগ্রহ করে নতুন কোডের অনুরোধ করুন।',
+    };
   }
 
   let verified = false;
+  const targetEmail = tempState?.email || (identifier.includes('@') ? normalizeEmail(identifier) : '');
 
-  // Supabase verify if email
-  if (isSupabaseConfigured && cleanId.includes('@')) {
+  // 1. Try Supabase Auth email OTP verification if configured
+  if (isSupabaseConfigured && targetEmail) {
     try {
       const { data, error } = await supabase.auth.verifyOtp({
-        email: cleanId,
+        email: targetEmail,
         token: cleanToken,
         type: 'email',
       });
@@ -283,52 +446,44 @@ export async function verifyQuickLoginOtp(
         verified = true;
       }
     } catch {
-      // Fallback
+      // Fall through to simulated check
     }
   }
 
-  // Check simulated OTP
-  if (!verified) {
-    try {
-      const raw = sessionStorage.getItem(TEMP_OTP_STORE_KEY);
-      if (raw) {
-        const payload = JSON.parse(raw);
-        if (
-          payload.identifier === cleanId &&
-          payload.otp === cleanToken &&
-          Date.now() <= payload.expiresAt
-        ) {
-          verified = true;
-        }
-      }
-      // In preview, allow 123456 as master test code
-      if (cleanToken === '123456') {
-        verified = true;
-      }
-    } catch {
-      // Ignore
+  // 2. Check preview test code or simulated OTP
+  if (!verified && tempState) {
+    if (tempState.otp && tempState.otp === cleanToken) {
+      verified = true;
+    } else if (cleanToken === '123456') {
+      verified = true;
     }
+  } else if (!verified && cleanToken === '123456') {
+    verified = true;
   }
 
   if (!verified) {
     return {
       success: false,
-      error: 'ভুল বা মেয়াদোত্তীর্ণ ভেরিফিকেশন কোড। অনুগ্রহ করে পুনরায় চেষ্টা করুন। (টেস্ট কোড: 123456)',
+      error: 'ভুল ভেরিফিকেশন কোড। অনুগ্রহ করে পুনরায় চেষ্টা করুন। (টেস্ট কোড: 123456)',
     };
   }
 
+  // Build and persist user session
+  const u = tempState?.userData;
   const session: UserSession = {
-    id: applicant.id || applicant.user_id || `user-${Date.now()}`,
-    firstName: applicant.first_name,
-    lastName: applicant.last_name,
-    email: applicant.email,
-    phone: applicant.phone,
-    whatsapp: applicant.whatsapp,
-    status: applicant.status || 'pending',
-    registeredAt: applicant.created_at || new Date().toISOString(),
+    id: u?.id || u?.user_id || `user-${Date.now()}`,
+    firstName: u?.first_name || 'Student',
+    lastName: u?.last_name || '',
+    email: targetEmail || u?.email || '',
+    phone: u?.phone || '',
+    whatsapp: u?.whatsapp || '',
+    status: u?.status || 'pending',
+    registeredAt: u?.created_at || new Date().toISOString(),
   };
 
+  // Persist session across refreshes and browser restarts until user taps Sign out
   setCurrentUserSession(session);
+
   try {
     sessionStorage.removeItem(TEMP_OTP_STORE_KEY);
   } catch {

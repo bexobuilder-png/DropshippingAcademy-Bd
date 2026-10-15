@@ -2,8 +2,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { getCurrentUserSession, UserSession, subscribeToAuthSession } from '../services/auth';
-import { fetchAllWaitlistUsers } from '../services/admin';
-import { WaitlistDbRow } from '../services/waitlist';
+import {
+  fetchWaitlistPublicDirectory,
+  fetchWaitlistAggregateCounts,
+  WaitlistPublicDirectoryItem,
+  WaitlistCounts,
+} from '../services/waitlist';
 import { StatusBadge } from '../components/StatusBadge';
 import { AuthGuardModal } from '../components/AuthGuard';
 
@@ -14,7 +18,8 @@ export const WaitlistPage: React.FC = () => {
   const [session, setSession] = useState<UserSession | null>(() => getCurrentUserSession());
   const [showAuthModal, setShowAuthModal] = useState<boolean>(!session);
   const [loading, setLoading] = useState<boolean>(true);
-  const [users, setUsers] = useState<WaitlistDbRow[]>([]);
+  const [items, setItems] = useState<WaitlistPublicDirectoryItem[]>([]);
+  const [counts, setCounts] = useState<WaitlistCounts>({ total: 0, approved: 0, pending: 0, rejected: 0 });
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
@@ -31,8 +36,12 @@ export const WaitlistPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetchAllWaitlistUsers();
-      setUsers(res.rows || []);
+      const [dirItems, aggCounts] = await Promise.all([
+        fetchWaitlistPublicDirectory(statusFilter, searchTerm),
+        fetchWaitlistAggregateCounts(),
+      ]);
+      setItems(dirItems);
+      setCounts(aggCounts);
     } catch {
       // Fallback
     } finally {
@@ -44,10 +53,10 @@ export const WaitlistPage: React.FC = () => {
     if (session) {
       loadData();
     }
-  }, [session]);
+  }, [session, statusFilter, searchTerm]);
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
+  const filteredItems = useMemo(() => {
+    return items.filter((u) => {
       const matchesSearch =
         !searchTerm.trim() ||
         (u.first_name || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
@@ -57,11 +66,7 @@ export const WaitlistPage: React.FC = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [users, searchTerm, statusFilter]);
-
-  const totalCount = users.length;
-  const approvedCount = users.filter((u) => (u.status || '').toLowerCase() === 'approved').length;
-  const pendingCount = users.filter((u) => (u.status || '').toLowerCase() === 'pending').length;
+  }, [items, searchTerm, statusFilter]);
 
   return (
     <main id="main-content" className="py-8 md:py-14 bg-[#fbf9ef] text-[#171412] min-h-[80vh]">
@@ -129,54 +134,42 @@ export const WaitlistPage: React.FC = () => {
                 {t('মোট নিবন্ধিত', 'Total Registered')}
               </span>
               <span className="font-display text-[32px] sm:text-[36px] font-black text-[#171412] tabular-nums block">
-                {loading ? '...' : totalCount}
+                {loading ? '...' : (counts.total || items.length)}
               </span>
               <span className="text-[11px] text-[#171412]/60 font-medium">
-                {approvedCount} {t('অনুমোদিত', 'approved')} · {pendingCount} {t('অপেক্ষমান', 'pending')}
+                {counts.approved} {t('অনুমোদিত', 'approved')} · {counts.pending} {t('অপেক্ষমান', 'pending')}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Controls: Search & Filter Tabs */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
-          {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
+        {/* Search & Filter Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Search by First Name */}
+          <div className="relative flex-1 max-w-sm">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#171412]/40">
+              🔍
+            </span>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t('প্রথম নাম দিয়ে খুঁজুন...', 'Search by first name...')}
-              className="w-full min-h-[44px] h-11 pl-10 pr-4 rounded-xl bg-[#f2f0e7] border border-[#171412]/25 text-[14px] text-[#171412] placeholder-[#171412]/50 focus:outline-hidden focus:border-[#ff7722] focus:ring-2 focus:ring-[#ff7722]/30 transition-all"
+              className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#f2f0e7] border border-[#171412]/20 text-[14px] text-[#171412] placeholder-[#171412]/40 focus:outline-none focus:border-[#ff7722]"
             />
-            <svg
-              className="w-4 h-4 text-[#171412]/50 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#171412]/60 hover:text-[#171412]"
-              >
-                ✕
-              </button>
-            )}
           </div>
 
-          {/* Status Filter Buttons */}
+          {/* Filter Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
             {(['all', 'pending', 'approved', 'rejected'] as const).map((filterKey) => {
-              const label = {
-                all: t('সকল', 'All'),
-                pending: t('অপেক্ষমান', 'Pending'),
-                approved: t('অনুমোদিত', 'Approved'),
-                rejected: t('বাতিল', 'Rejected'),
-              }[filterKey];
+              const label =
+                filterKey === 'all'
+                  ? t('সকল', 'All')
+                  : filterKey === 'pending'
+                  ? t('অপেক্ষমান', 'Pending')
+                  : filterKey === 'approved'
+                  ? t('অনুমোদিত', 'Approved')
+                  : t('বাতিল', 'Rejected');
 
               const isActive = statusFilter === filterKey;
 
@@ -208,7 +201,7 @@ export const WaitlistPage: React.FC = () => {
               />
             ))}
           </div>
-        ) : filteredUsers.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="rounded-2xl bg-[#f2f0e7] border-2 border-dashed border-[#171412]/20 p-8 text-center text-[#171412]">
             <p className="text-[15px] font-bold">
               {searchTerm || statusFilter !== 'all'
@@ -218,7 +211,7 @@ export const WaitlistPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {filteredUsers.map((applicant, index) => {
+            {filteredItems.map((applicant, index) => {
               // Strictly display FIRST NAME ONLY per user confirmation!
               const firstNameOnly = (applicant.first_name || '').trim();
 
@@ -235,8 +228,8 @@ export const WaitlistPage: React.FC = () => {
 
               const isCurrentUser =
                 session &&
-                applicant.email &&
-                applicant.email.toLowerCase() === session.email.toLowerCase();
+                applicant.first_name &&
+                applicant.first_name.trim().toLowerCase() === session.firstName.trim().toLowerCase();
 
               return (
                 <div

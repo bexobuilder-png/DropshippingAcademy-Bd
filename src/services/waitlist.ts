@@ -491,3 +491,109 @@ export function maskEmailAddress(email: string): string {
   }
   return `${local[0]}***${local[local.length - 1]}${domain}`;
 }
+
+export interface WaitlistPublicDirectoryItem {
+  id: string;
+  first_name: string;
+  status: 'pending' | 'approved' | 'rejected' | 'contacted' | string;
+  created_at: string;
+}
+
+export interface WaitlistCounts {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+}
+
+/**
+ * Fetches privacy-safe public waitlist directory (first name, status, created_at only).
+ * Protected by PostgreSQL SECURITY DEFINER RPC.
+ */
+export async function fetchWaitlistPublicDirectory(
+  statusFilter?: string,
+  searchTerm?: string
+): Promise<WaitlistPublicDirectoryItem[]> {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.rpc('get_waitlist_directory', {
+        p_status: statusFilter && statusFilter !== 'all' ? statusFilter : null,
+        p_search: searchTerm ? searchTerm.trim() : null,
+        p_limit: 300,
+        p_offset: 0,
+      });
+
+      if (!error && Array.isArray(data)) {
+        return data as WaitlistPublicDirectoryItem[];
+      }
+    } catch {
+      // Fall through to local fallback
+    }
+  }
+
+  // Fallback to local entries
+  try {
+    const raw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
+    if (raw) {
+      const list = JSON.parse(raw) as WaitlistDbRow[];
+      return list
+        .filter((r) => {
+          const matchStatus =
+            !statusFilter || statusFilter === 'all' || (r.status || 'pending').toLowerCase() === statusFilter.toLowerCase();
+          const matchSearch =
+            !searchTerm || (r.first_name || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
+          return matchStatus && matchSearch;
+        })
+        .map((r) => ({
+          id: r.id || `loc-${Math.random()}`,
+          first_name: r.first_name,
+          status: r.status || 'pending',
+          created_at: r.created_at || new Date().toISOString(),
+        }));
+    }
+  } catch {
+    // Ignore
+  }
+
+  return [];
+}
+
+/**
+ * Fetches accurate waitlist aggregate counts across all students.
+ */
+export async function fetchWaitlistAggregateCounts(): Promise<WaitlistCounts> {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.rpc('get_waitlist_counts');
+      if (!error && Array.isArray(data) && data[0]) {
+        return {
+          total: Number(data[0].total_count) || 0,
+          approved: Number(data[0].approved_count) || 0,
+          pending: Number(data[0].pending_count) || 0,
+          rejected: Number(data[0].rejected_count) || 0,
+        };
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
+  // Fallback to local entries
+  try {
+    const raw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
+    if (raw) {
+      const list = JSON.parse(raw) as WaitlistDbRow[];
+      return {
+        total: list.length,
+        approved: list.filter((r) => (r.status || '').toLowerCase() === 'approved').length,
+        pending: list.filter((r) => (r.status || 'pending').toLowerCase() === 'pending').length,
+        rejected: list.filter((r) => (r.status || '').toLowerCase() === 'rejected').length,
+      };
+    }
+  } catch {
+    // Ignore
+  }
+
+  return { total: 0, approved: 0, pending: 0, rejected: 0 };
+}
+

@@ -30,6 +30,7 @@ import {
 import {
   fetchCoursesList,
   saveCoursesList,
+  deleteCourse,
   restoreDefaultCourses,
   fetchPromoCodesList,
   savePromoCodesList,
@@ -766,7 +767,7 @@ export const AdminCheckPage: React.FC = () => {
   const handleDeleteCourse = async (courseId: string) => {
     const updated = adminCourses.filter((c) => c.id !== courseId);
     setAdminCourses(updated);
-    await saveCoursesList(updated);
+    await deleteCourse(courseId);
     setCourseFeedback('কোর্সটি সফলভাবে মুছে ফেলা হয়েছে।');
     setTimeout(() => setCourseFeedback(''), 4000);
   };

@@ -1,6 +1,6 @@
 {
-  "summary": "Architecture and implementation plan for the redesigned mobile Menu drawer with live registration status, persistent session, running course sync, waiting list social proof page, and admin management.",
-  "updatedAt": "2026-10-15T13:53:55.186579437Z",
+  "summary": "Architecture and implementation plan to fix Quick Sign-In phone/email lookup, shared courses table with real-time sync, privacy-safe registered waitlist directory with aggregate counts, single running course card UI cleanup, and idempotent SQL migration script.",
+  "updatedAt": "2026-10-15T15:04:15.532761190Z",
   "requestFeedback": true,
   "userFacing": true
 }
