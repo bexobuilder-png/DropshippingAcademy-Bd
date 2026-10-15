@@ -2,6 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import Hero from '../components/Hero';
 import HomeSections from '../components/HomeSections';
+import { RunningCourseCard } from '../components/RunningCourseCard';
 import type { AnimKind } from '../components/EduAnimation';
 
 export interface HomePageProps {
@@ -34,6 +35,12 @@ export const HomePage: React.FC<HomePageProps> = ({
     <main id="main-content" className="overflow-x-hidden">
       {/* HERO & SECTIONS */}
       <Hero lang={lang} onRegister={triggerRegister} onScrollToSteps={scrollToPath} />
+
+      {/* Featured Running Course Card below Hero */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2">
+        <RunningCourseCard variant="featured" onLearnMore={scrollToPath} />
+      </div>
+
       <HomeSections lang={lang} onRegister={triggerRegister} />
     </main>
   );

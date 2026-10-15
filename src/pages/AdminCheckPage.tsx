@@ -149,6 +149,7 @@ export const AdminCheckPage: React.FC = () => {
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [courseForm, setCourseForm] = useState<{
     title: string;
+    batchName: string;
     category: string;
     subtitle: string;
     description: string;
@@ -158,8 +159,11 @@ export const AdminCheckPage: React.FC = () => {
     highlights: string;
     badge: string;
     isActive: boolean;
+    isRunning: boolean;
+    isVisible: boolean;
   }>({
     title: '',
+    batchName: '',
     category: 'ড্রপশিপিং রিসেলিং',
     subtitle: '',
     description: '',
@@ -169,6 +173,8 @@ export const AdminCheckPage: React.FC = () => {
     highlights: '',
     badge: '',
     isActive: true,
+    isRunning: false,
+    isVisible: true,
   });
 
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
@@ -619,6 +625,7 @@ export const AdminCheckPage: React.FC = () => {
     setEditingCourseId(null);
     setCourseForm({
       title: '',
+      batchName: '',
       category: 'মার্কেটিং কিভাবে করবেন',
       subtitle: '',
       description: '',
@@ -628,6 +635,8 @@ export const AdminCheckPage: React.FC = () => {
       highlights: '',
       badge: '',
       isActive: true,
+      isRunning: false,
+      isVisible: true,
     });
     setIsCourseModalOpen(true);
   };
@@ -636,6 +645,7 @@ export const AdminCheckPage: React.FC = () => {
     setEditingCourseId(course.id);
     setCourseForm({
       title: course.title,
+      batchName: course.batchName || '',
       category: course.category,
       subtitle: course.subtitle,
       description: course.description,
@@ -645,6 +655,8 @@ export const AdminCheckPage: React.FC = () => {
       highlights: course.highlights.join('\n'),
       badge: course.badge || '',
       isActive: course.isActive,
+      isRunning: Boolean(course.isRunning),
+      isVisible: course.isVisible !== false,
     });
     setIsCourseModalOpen(true);
   };
@@ -664,27 +676,36 @@ export const AdminCheckPage: React.FC = () => {
 
     let updatedCourses: CourseItem[];
     if (editingCourseId) {
-      updatedCourses = adminCourses.map((c) =>
-        c.id === editingCourseId
-          ? {
-              ...c,
-              title: courseForm.title.trim(),
-              category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
-              subtitle: courseForm.subtitle.trim(),
-              description: courseForm.description.trim(),
-              price: Number(courseForm.price) || 1000,
-              discountPrice: Number(courseForm.discountPrice) || Number(courseForm.price) || 1000,
-              duration: courseForm.duration.trim() || '৮ সপ্তাহ · লাইভ ক্লাস',
-              highlights: splitHighlights.length > 0 ? splitHighlights : c.highlights,
-              badge: courseForm.badge.trim() || undefined,
-              isActive: courseForm.isActive,
-            }
-          : c
-      );
+      updatedCourses = adminCourses.map((c) => {
+        if (c.id === editingCourseId) {
+          return {
+            ...c,
+            title: courseForm.title.trim(),
+            batchName: courseForm.batchName.trim() || undefined,
+            category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
+            subtitle: courseForm.subtitle.trim(),
+            description: courseForm.description.trim(),
+            price: Number(courseForm.price) || 1000,
+            discountPrice: Number(courseForm.discountPrice) || Number(courseForm.price) || 1000,
+            duration: courseForm.duration.trim() || '৮ সপ্তাহ · লাইভ ক্লাস',
+            highlights: splitHighlights.length > 0 ? splitHighlights : c.highlights,
+            badge: courseForm.badge.trim() || undefined,
+            isActive: courseForm.isActive,
+            isRunning: courseForm.isRunning,
+            isVisible: courseForm.isVisible,
+          };
+        }
+        // If this course is being marked as running, unmark other courses
+        if (courseForm.isRunning) {
+          return { ...c, isRunning: false };
+        }
+        return c;
+      });
     } else {
       const newCourse: CourseItem = {
         id: `course-${Date.now()}`,
         title: courseForm.title.trim(),
+        batchName: courseForm.batchName.trim() || undefined,
         category: courseForm.category.trim() || 'মার্কেটিং কিভাবে করবেন',
         subtitle: courseForm.subtitle.trim(),
         description: courseForm.description.trim(),
@@ -695,9 +716,17 @@ export const AdminCheckPage: React.FC = () => {
         highlights: splitHighlights.length > 0 ? splitHighlights : ['হ্যান্ডস-অন প্রজেক্ট ও লাইভ সাপোর্ট'],
         badge: courseForm.badge.trim() || undefined,
         isActive: courseForm.isActive,
+        isRunning: courseForm.isRunning,
+        isVisible: courseForm.isVisible,
         sortOrder: adminCourses.length + 1,
       };
-      updatedCourses = [...adminCourses, newCourse];
+
+      if (courseForm.isRunning) {
+        updatedCourses = adminCourses.map((c) => ({ ...c, isRunning: false }));
+        updatedCourses.push(newCourse);
+      } else {
+        updatedCourses = [...adminCourses, newCourse];
+      }
     }
 
     setAdminCourses(updatedCourses);
@@ -710,6 +739,28 @@ export const AdminCheckPage: React.FC = () => {
         : `নতুন কোর্স "${courseForm.title.trim()}" সফলভাবে যুক্ত করা হয়েছে!`
     );
     setTimeout(() => setCourseFeedback(''), 5000);
+  };
+
+  const handleSetRunningCourse = async (courseId: string) => {
+    const updated = adminCourses.map((c) => ({
+      ...c,
+      isRunning: c.id === courseId,
+    }));
+    setAdminCourses(updated);
+    await saveCoursesList(updated);
+    const target = updated.find((c) => c.id === courseId);
+    setCourseFeedback(
+      `"${target?.batchName || target?.title}"-কে সফলভাবে প্রধান চলতি কোর্স (Running Course) হিসেবে নির্ধারণ করা হয়েছে!`
+    );
+    setTimeout(() => setCourseFeedback(''), 4500);
+  };
+
+  const handleToggleCourseVisibility = async (courseId: string) => {
+    const updated = adminCourses.map((c) =>
+      c.id === courseId ? { ...c, isVisible: c.isVisible === false ? true : false } : c
+    );
+    setAdminCourses(updated);
+    await saveCoursesList(updated);
   };
 
   const handleDeleteCourse = async (courseId: string) => {
@@ -2989,9 +3040,25 @@ export const AdminCheckPage: React.FC = () => {
                             {course.category}
                           </span>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {course.isRunning && (
+                              <span className="px-2.5 py-0.5 rounded-[50px] bg-[#ff7722] text-[#171412] text-[10px] font-black flex items-center gap-1 border border-[#171412] shadow-xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#171412]" />
+                                চলতি কোর্স (Running)
+                              </span>
+                            )}
+                            {course.batchName && (
+                              <span className="px-2 py-0.5 rounded-[50px] bg-[#fbf9ef] text-[#813502] text-[10px] font-extrabold border border-[#171412]/20">
+                                {course.batchName}
+                              </span>
+                            )}
+                            {course.isVisible === false && (
+                              <span className="px-2 py-0.5 rounded-[50px] bg-stone-200 text-stone-700 text-[10px] font-bold">
+                                লুকানো (Hidden)
+                              </span>
+                            )}
                             {course.badge && (
-                              <span className="px-2 py-0.5 rounded-[50px] bg-[#ff7722] text-[#171412] text-[10px] font-extrabold">
+                              <span className="px-2 py-0.5 rounded-[50px] bg-[#ff7722]/30 text-[#171412] text-[10px] font-extrabold">
                                 {course.badge}
                               </span>
                             )}
@@ -3002,7 +3069,7 @@ export const AdminCheckPage: React.FC = () => {
                                   : 'bg-[#f3f4f6] text-[#6b7280] border-[#9ca3af]/40'
                               }`}
                             >
-                              {course.isActive ? '● সক্রিয় (Active)' : '○ নিষ্ক্রিয় (Draft)'}
+                              {course.isActive ? '● সক্রিয়' : '○ ড্রাফট'}
                             </span>
                           </div>
                         </div>
@@ -3063,25 +3130,47 @@ export const AdminCheckPage: React.FC = () => {
                         </div>
 
                         {/* Card Buttons */}
-                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#171412]/10">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-[#171412]/10">
                           <button
                             type="button"
                             onClick={() => openEditCourseModal(course)}
-                            className="flex-1 py-1.5 px-3 rounded-[8px] bg-[#f2f0e7] hover:bg-[#ebe9df] border border-[#171412]/20 text-[12px] font-bold text-[#171412] transition-colors cursor-pointer text-center"
+                            className="py-1.5 px-2.5 rounded-[8px] bg-[#f2f0e7] hover:bg-[#ebe9df] border border-[#171412]/20 text-[12px] font-bold text-[#171412] transition-colors cursor-pointer text-center"
                           >
                             ✏️ {t('সম্পাদনা', 'Edit')}
                           </button>
 
                           <button
                             type="button"
+                            onClick={() => handleSetRunningCourse(course.id)}
+                            className={`py-1.5 px-2.5 rounded-[8px] text-[11px] font-extrabold border transition-colors cursor-pointer ${
+                              course.isRunning
+                                ? 'bg-[#ff7722] text-[#171412] border-[#171412]'
+                                : 'bg-[#fff] text-[#813502] border-[#171412]/25 hover:bg-[#ffc765]/30'
+                            }`}
+                            title="চলতি কোর্স হিসেবে সেট করুন"
+                          >
+                            {course.isRunning ? '★ চলতি কোর্স' : 'চলতি বানান'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCourseVisibility(course.id)}
+                            className="py-1.5 px-2 rounded-[8px] text-[11px] font-bold border border-[#171412]/20 bg-[#fff] text-[#171412] hover:bg-[#f2f0e7] transition-colors cursor-pointer"
+                            title={course.isVisible !== false ? 'লুকান (Hide from public)' : 'দৃশ্যমান করুন (Make visible)'}
+                          >
+                            {course.isVisible !== false ? '👀 দৃশ্যমান' : '🙈 লুকানো'}
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleToggleCourseActive(course.id)}
-                            className={`py-1.5 px-3 rounded-[8px] text-[12px] font-bold border transition-colors cursor-pointer ${
+                            className={`py-1.5 px-2 rounded-[8px] text-[11px] font-bold border transition-colors cursor-pointer ${
                               course.isActive
                                 ? 'bg-[#fff] text-[#813502] border-[#171412]/20 hover:bg-[#ffc765]/30'
                                 : 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30 hover:bg-[#c8e6c9]'
                             }`}
                           >
-                            {course.isActive ? t('পজ করুন', 'Pause') : t('সক্রিয় করুন', 'Activate')}
+                            {course.isActive ? 'পজ' : 'সক্রিয়'}
                           </button>
 
                           <button
@@ -3091,7 +3180,7 @@ export const AdminCheckPage: React.FC = () => {
                                 handleDeleteCourse(course.id);
                               }
                             }}
-                            className="py-1.5 px-2.5 rounded-[8px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] transition-colors cursor-pointer"
+                            className="py-1.5 px-2 rounded-[8px] text-[12px] font-bold text-[#ff3c34] hover:bg-[#fff0f0] transition-colors cursor-pointer"
                             title={t('মুছে ফেলুন', 'Delete')}
                           >
                             🗑️
@@ -3490,20 +3579,35 @@ export const AdminCheckPage: React.FC = () => {
               </div>
 
               <form onSubmit={handleSaveCourse} className="flex flex-col gap-4 text-left">
-                {/* Course Title */}
-                <div>
-                  <label htmlFor="course-title-input" className="block text-[13px] font-bold text-[#171412] mb-1">
-                    কোর্সের নাম (Course Title) *
-                  </label>
-                  <input
-                    id="course-title-input"
-                    type="text"
-                    required
-                    value={courseForm.title}
-                    onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="যেমন: ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস / মার্কেটিং কিভাবে করবেন"
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
-                  />
+                {/* Batch Name & Course Title */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="course-batch-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ব্যাচের নাম (Batch Name)
+                    </label>
+                    <input
+                      id="course-batch-input"
+                      type="text"
+                      value={courseForm.batchName}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, batchName: e.target.value }))}
+                      placeholder="যেমন: Sakku Batch 1 বা সাক্কু ব্যাচ ০১"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="course-title-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      কোর্সের নাম (Course Title) *
+                    </label>
+                    <input
+                      id="course-title-input"
+                      type="text"
+                      required
+                      value={courseForm.title}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="যেমন: ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Category & Presets */}
@@ -3633,8 +3737,8 @@ export const AdminCheckPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Badge & Active Checkbox */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2 border-t border-[#171412]/15">
+                {/* Badge, Running Course & Visibility Checkboxes */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[#171412]/15">
                   <div>
                     <label htmlFor="course-badge-input" className="block text-[13px] font-bold text-[#171412] mb-1">
                       হাইলাইট ব্যাজ (Badge Text)
@@ -3649,15 +3753,27 @@ export const AdminCheckPage: React.FC = () => {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fbf9ef] border border-[#171412]/20 cursor-pointer select-none mt-4 sm:mt-5">
+                  <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fff8eb] border border-[#ff7722]/40 cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      checked={courseForm.isActive}
-                      onChange={(e) => setCourseForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                      checked={courseForm.isRunning}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, isRunning: e.target.checked }))}
                       className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
                     />
-                    <span className="text-[13px] font-bold text-[#171412]">
-                      কোর্সটি সক্রিয় ও শিক্ষার্থীদের জন্য দৃশ্যমান রাখুন
+                    <span className="text-[12px] font-extrabold text-[#813502]">
+                      ★ প্রধান চলতি কোর্স (Running Course)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-3 rounded-[10px] bg-[#fbf9ef] border border-[#171412]/20 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={courseForm.isVisible}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, isVisible: e.target.checked }))}
+                      className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
+                    />
+                    <span className="text-[12px] font-bold text-[#171412]">
+                      ওয়েবসাইটে দৃশ্যমান (Visible)
                     </span>
                   </label>
                 </div>

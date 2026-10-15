@@ -251,3 +251,40 @@ export async function enrollStudentInCourse(
 
   return { success: true };
 }
+
+/**
+ * Fetches the currently active running course batch.
+ */
+export async function fetchRunningCourse(): Promise<CourseItem | null> {
+  try {
+    const list = await fetchCoursesList();
+    if (!Array.isArray(list) || list.length === 0) return null;
+
+    // Look for explicitly marked running course that is active and visible
+    const running = list.find((c) => c.isRunning && c.isActive !== false && c.isVisible !== false);
+    if (running) return running;
+
+    // Fallback to first active course
+    const firstActive = list.find((c) => c.isActive !== false && c.isVisible !== false);
+    return firstActive || list[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Marks a specific course batch as the active running course.
+ */
+export async function setRunningCourse(courseId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const list = await fetchCoursesList();
+    const updated = list.map((c) => ({
+      ...c,
+      isRunning: c.id === courseId,
+    }));
+    return await saveCoursesList(updated);
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to update running course' };
+  }
+}
+

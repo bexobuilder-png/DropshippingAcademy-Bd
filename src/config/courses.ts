@@ -12,6 +12,9 @@ export interface CourseItem {
   badge?: string;
   isActive: boolean;
   sortOrder: number;
+  isRunning?: boolean;
+  batchName?: string;
+  isVisible?: boolean;
 }
 
 export interface PromoCodeItem {
@@ -26,8 +29,9 @@ export interface PromoCodeItem {
 
 export const DEFAULT_COURSES: CourseItem[] = [
   {
-    id: 'course-dropshipping-reselling',
-    title: 'ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস',
+    id: 'course-sakku-batch-1',
+    title: 'Sakku Batch 1 - ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস',
+    batchName: 'Sakku Batch 1',
     category: 'ড্রপশিপিং রিসেলিং',
     subtitle: 'পণ্য না কিনেই শূন্য ইনভেস্টমেন্টে রিসেলিং ও ড্রপশিপিংয়ের মাধ্যমে নিয়মিত আয়',
     description: 'দেশীয় ও আন্তর্জাতিক সাপ্লায়ারদের সাথে সংযোগ, পণ্যের লাভজনক মার্জিন নির্ধারণ, অটোমেটেড অর্ডার ডেলিভারি এবং ক্যাশ-অন-ডেলিভারি হ্যান্ডলিংয়ের সম্পূর্ণ গাইডলাইন।',
@@ -41,8 +45,10 @@ export const DEFAULT_COURSES: CourseItem[] = [
       'প্রতি অর্ডারে ৩০০–১,৫০০ টাকা নিশ্চিত নিট মার্জিন',
       'ক্যাশ-অন-ডেলিভারি রিটার্ন কমানোর গোপন টেকনিক',
     ],
-    badge: 'সবচেয়ে জনপ্রিয়',
+    badge: 'চলতি ব্যাচ',
     isActive: true,
+    isRunning: true,
+    isVisible: true,
     sortOrder: 1,
   },
   {

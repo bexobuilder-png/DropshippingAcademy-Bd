@@ -4,6 +4,7 @@ import {
   validateWhatsAppNumberFormat,
   type WaitlistFormValues,
 } from '../schemas/waitlist';
+import { setCurrentUserSession } from './auth';
 
 const DRAFT_STORAGE_KEY = 'da_waitlist_draft_v1';
 const CONFIRMED_STORAGE_KEY = 'da_waitlist_confirmed_v1';
@@ -362,6 +363,19 @@ export async function verifyEmailOtpAndInsertWaitlist(
     saveConfirmedWaitlist(confirmed);
     appendLocalWaitlistEntry(formData);
     clearWaitlistDraft();
+
+    // Persist active session across browser refreshes
+    setCurrentUserSession({
+      id: `local-${Date.now()}`,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: normalizedEmail,
+      phone: formData.phone,
+      whatsapp: formData.whatsapp,
+      status: 'pending',
+      registeredAt: new Date().toISOString(),
+    });
+
     triggerConfirmationEmail(normalizedEmail, formData.firstName.trim(), formData.lastName.trim());
     return { success: true, alreadyOnWaitlist: false };
   }
@@ -439,7 +453,18 @@ export async function verifyEmailOtpAndInsertWaitlist(
     saveConfirmedWaitlist(confirmed);
     appendLocalWaitlistEntry(formData);
     clearWaitlistDraft();
-    await supabase.auth.signOut();
+
+    // Persist active user session without signing out
+    setCurrentUserSession({
+      id: userId,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: normalizedEmail,
+      phone: formData.phone,
+      whatsapp: formData.whatsapp,
+      status: 'pending',
+      registeredAt: new Date().toISOString(),
+    });
 
     triggerConfirmationEmail(normalizedEmail, formData.firstName.trim(), formData.lastName.trim());
 

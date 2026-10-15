@@ -248,10 +248,30 @@ export async function updateWaitlistStatus(
       const list = JSON.parse(raw) as WaitlistDbRow[];
       const updated = list.map((r) => (r.id === id ? { ...r, status } : r));
       localStorage.setItem(LOCAL_WAITLIST_ENTRIES_KEY, JSON.stringify(updated));
+
+      // Also check if currently active session belongs to this user
+      const sessionRaw = localStorage.getItem('da_user_session_v2');
+      if (sessionRaw) {
+        const currentSession = JSON.parse(sessionRaw);
+        const match = list.find((r) => r.id === id);
+        if (
+          match &&
+          (currentSession.id === id ||
+            currentSession.email.toLowerCase() === match.email.toLowerCase())
+        ) {
+          localStorage.setItem(
+            'da_user_session_v2',
+            JSON.stringify({ ...currentSession, status })
+          );
+          window.dispatchEvent(new CustomEvent('da-auth-session-updated'));
+        }
+      }
     }
   } catch {
     // Ignore
   }
+
+  window.dispatchEvent(new Event('waitlist-entries-updated'));
 
   if (!isSupabaseConfigured) {
     return { success: true };

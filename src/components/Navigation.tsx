@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import type { AnimKind } from './EduAnimation';
 import { ReadingProgressBar, useReadingProgress } from './ReadingProgressBar';
 import { DropshippingAcademyBdLogo } from './svg/BrandLogo';
+import { MenuDrawer } from './MenuDrawer';
 
 const HOME_SECTION_IDS = ['hero', 'results', 'learn', 'about', 'faq', 'contact'];
 
@@ -146,87 +147,36 @@ export const Navigation: React.FC<NavigationProps> = ({
               <span aria-hidden="true" className="font-bold max-[420px]:hidden">→</span>
             </button>
 
-            {/* Hamburger Toggle — Hidden under 900px (since bottom nav has মেনু), shown only on desktop >=900px */}
+            {/* Hamburger Toggle — opens MenuDrawer */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="hidden min-[900px]:inline-flex flex-none min-w-[44px] min-h-[44px] w-11 h-11 rounded-lg bg-[#f2f0e7] border border-[#171412]/20 items-center justify-center text-[#171412] cursor-pointer"
-              aria-label="Toggle menu"
+              onClick={() => setMobileMenuOpen(true)}
+              className="hidden min-[900px]:inline-flex flex-none min-w-[44px] min-h-[44px] w-11 h-11 rounded-lg bg-[#f2f0e7] border border-[#171412]/20 items-center justify-center text-[#171412] cursor-pointer hover:bg-[#e5e2d6] transition-colors"
+              aria-label="Toggle menu drawer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           </div>
 
         </div>
 
-        {/* Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="bg-[#f2f0e7] border-b border-[#171412]/15 px-4 py-4 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => handleAnchorScroll('hero')}
-              className="text-left py-2 font-bold text-[#813502]"
-            >
-              {t('হোম', 'Home')}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAnchorScroll('results')}
-              className="text-left py-2 font-bold text-[#171412]/90"
-            >
-              {t('নির্বাচিত ফলাফল', 'Results')}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAnchorScroll('why-choose')}
-              className="text-left py-2 font-bold text-[#171412]/90"
-            >
-              {t('কেন আমাদের একাডেমি?', 'Why Us')}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAnchorScroll('about')}
-              className="text-left py-2 font-bold text-[#171412]/90"
-            >
-              {t('আমাদের সম্পর্কে', 'About Us')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenContact) onOpenContact();
-                else handleAnchorScroll('faq');
-              }}
-              className="text-left py-2 font-bold text-[#171412]/90"
-            >
-              {t('যোগাযোগ ও সাহায্য', 'Contact & FAQ')}
-            </button>
-            <div className="pt-2 border-t border-[#171412]/15 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={handleRegister}
-                className="px-4 py-2 bg-[#ff7722] text-[#171412] border border-[#171412] rounded-full font-bold text-xs"
-              >
-                {t('রেজিস্ট্রেশন করুন →', 'Register →')}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Subtle Top Navigation Reading Progress Bar */}
         <ReadingProgressBar variant="navigation" />
       </header>
 
+      {/* Slide-out Menu Drawer from the right edge */}
+      <MenuDrawer
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        onRegisterClick={handleRegister}
+      />
+
       {/* Mobile Fixed Bottom Navigation Bar (shown on screens under 900px) */}
       <nav
         aria-label="Mobile Bottom App Bar"
-        className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-50 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
+        className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-40 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
       >
         <button
           type="button"
@@ -274,7 +224,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         <button
           type="button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => setMobileMenuOpen(true)}
           className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

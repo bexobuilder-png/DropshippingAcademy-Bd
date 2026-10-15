@@ -1,6 +1,6 @@
 {
-  "summary": "Comprehensive implementation plan for dynamic contact section, admin contact settings with Supabase Realtime sync, contact form submissions, and smooth navigation triggers.",
-  "updatedAt": "2026-10-15T05:15:58.476736639Z",
+  "summary": "Architecture and implementation plan for the redesigned mobile Menu drawer with live registration status, persistent session, running course sync, waiting list social proof page, and admin management.",
+  "updatedAt": "2026-10-15T13:53:55.186579437Z",
   "requestFeedback": true,
   "userFacing": true
 }
