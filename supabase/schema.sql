@@ -172,3 +172,83 @@ exception
     null;
 end $$;
 
+-- ============================================================================
+-- TABLE 4: public.contact_settings (Managed from Admin Contact Settings)
+-- ============================================================================
+create table if not exists public.contact_settings (
+  id text primary key,
+  type text not null,
+  label text not null,
+  value text not null,
+  visible boolean not null default true,
+  display_order integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.contact_settings enable row level security;
+
+grant select on table public.contact_settings to anon, authenticated;
+grant insert, update, delete on table public.contact_settings to authenticated;
+
+drop policy if exists "Public can view contact settings" on public.contact_settings;
+create policy "Public can view contact settings"
+  on public.contact_settings
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "Authorized admins can manage contact settings" on public.contact_settings;
+create policy "Authorized admins can manage contact settings"
+  on public.contact_settings
+  for all
+  to authenticated
+  using (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'))
+  with check (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'));
+
+-- ============================================================================
+-- TABLE 5: public.contact_messages (Visitor Inquiries)
+-- ============================================================================
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  contact_info text not null,
+  message text not null,
+  status text not null default 'unread' check (status in ('unread', 'read', 'replied')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.contact_messages enable row level security;
+
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on table public.contact_messages to anon, authenticated;
+
+drop policy if exists "Anyone can insert contact messages" on public.contact_messages;
+create policy "Anyone can insert contact messages"
+  on public.contact_messages
+  for insert
+  to anon, authenticated
+  with check (true);
+
+drop policy if exists "Only admins can view and manage contact messages" on public.contact_messages;
+create policy "Only admins can view and manage contact messages"
+  on public.contact_messages
+  for all
+  to authenticated
+  using (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'))
+  with check (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'));
+
+-- Add to Realtime Publication
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'contact_settings') then
+    alter publication supabase_realtime add table public.contact_settings;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'contact_messages') then
+    alter publication supabase_realtime add table public.contact_messages;
+  end if;
+exception
+  when undefined_object then
+    null;
+end $$;
+
+
