@@ -5,7 +5,7 @@ export interface SendEmailBody {
   email: string;
   firstName: string;
   lastName?: string;
-  action?: 'waitlist_confirmed' | 'approved' | 'rejected';
+  action?: 'waitlist_confirmed' | 'approved' | 'rejected' | 'contact_message';
   customMessage?: string;
   subject?: string;
 }

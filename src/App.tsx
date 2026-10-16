@@ -35,6 +35,9 @@ const NotFoundPage = React.lazy(() =>
 const WaitlistPage = React.lazy(() =>
   import('./pages/WaitlistPage').then((m) => ({ default: m.WaitlistPage }))
 );
+const LoginPage = React.lazy(() =>
+  import('./pages/LoginPage').then((m) => ({ default: m.LoginPage }))
+);
 
 const ANIM_WORDS: Record<
   'bn' | 'en',
@@ -151,6 +154,8 @@ function AppShell() {
               />
               <Route path="/waitlist-confirmed" element={<WaitlistConfirmedPage />} />
               <Route path="/waitlist" element={<WaitlistPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/dashboard" element={<ProfilePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />

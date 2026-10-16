@@ -199,7 +199,7 @@ export const AdminContactForm: React.FC = () => {
   };
 
   const handleToggleMsgStatus = async (msgId: string, currentStatus: ContactMessage['status']) => {
-    const nextStatus = currentStatus === 'unread' ? 'read' : currentStatus === 'read' ? 'replied' : 'unread';
+    const nextStatus = currentStatus === 'new' ? 'read' : currentStatus === 'read' ? 'replied' : 'new';
     await updateMessageStatus(msgId, nextStatus);
     setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, status: nextStatus } : m)));
   };
@@ -465,7 +465,7 @@ export const AdminContactForm: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <span className="font-display text-[16px] font-extrabold text-[#171412]">{msg.name}</span>
                       <span className="text-[13px] font-bold text-[#813502] bg-[#ff7722]/15 px-2.5 py-0.5 rounded-full">
-                        {msg.contact_info}
+                        {msg.contact}
                       </span>
                     </div>
 
@@ -474,14 +474,14 @@ export const AdminContactForm: React.FC = () => {
                         type="button"
                         onClick={() => handleToggleMsgStatus(msg.id, msg.status)}
                         className={`px-3 py-1 rounded-[50px] text-[12px] font-bold border cursor-pointer ${
-                          msg.status === 'unread'
+                          msg.status === 'new'
                             ? 'bg-[#ffc765]/40 text-[#171412] border-[#ffc765]'
                             : msg.status === 'read'
                             ? 'bg-[#3d2fa9]/15 text-[#3d2fa9] border-[#3d2fa9]/30'
                             : 'bg-[#2e7d32]/15 text-[#2e7d32] border-[#2e7d32]/30'
                         }`}
                       >
-                        {msg.status === 'unread' ? 'অপাঠ্য (Unread)' : msg.status === 'read' ? 'পঠিত (Read)' : 'উত্তরিত (Replied)'}
+                        {msg.status === 'new' ? 'নতুন (New)' : msg.status === 'read' ? 'পঠিত (Read)' : 'উত্তরিত (Replied)'}
                       </button>
 
                       <button

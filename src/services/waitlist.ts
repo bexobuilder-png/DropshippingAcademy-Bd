@@ -642,4 +642,29 @@ export async function fetchWaitlistAggregateCounts(): Promise<WaitlistCounts> {
   return { total: 0 };
 }
 
+export interface PublicWaitlistResponse {
+  total: number;
+  items: { id: string; firstName: string; isYou: boolean }[];
+  nextCursor?: string | null;
+}
+
+export async function fetchUnifiedPublicWaitlist(cursor?: string): Promise<PublicWaitlistResponse> {
+  try {
+    const url = cursor ? `/api/waitlist/public?cursor=${encodeURIComponent(cursor)}` : '/api/waitlist/public';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (res.ok && data) {
+      return {
+        total: Number(data.total) || 0,
+        items: Array.isArray(data.items) ? data.items : [],
+        nextCursor: data.nextCursor || null,
+      };
+    }
+  } catch {
+    // Fallback
+  }
+  return { total: 0, items: [], nextCursor: null };
+}
+
+
 

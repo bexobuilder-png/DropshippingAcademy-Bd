@@ -5,6 +5,7 @@ import { defineConfig, Plugin } from 'vite';
 import { handleSendEmailCore } from './api/send-email';
 import { handleValidateRegistrationCore } from './api/validate-registration';
 import { handleContactGetCore, handleContactPutCore } from './api/contact';
+import { handleWaitlistPublicCore } from './api/waitlist-public';
 
 function devEmailApiPlugin(): Plugin {
   return {
@@ -103,6 +104,30 @@ function devEmailApiPlugin(): Plugin {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: false, error: err?.message || 'Server Error' }));
           }
+        });
+      });
+      server.middlewares.use('/api/waitlist/public', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, error: 'Method Not Allowed' }));
+          return;
+        }
+
+        const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const query: Record<string, string> = {};
+        urlObj.searchParams.forEach((val, key) => {
+          query[key] = val;
+        });
+
+        handleWaitlistPublicCore(query, req.headers.cookie).then((result) => {
+          res.statusCode = result.statusCode;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result.data));
+        }).catch((err: any) => {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, error: err?.message || 'Server Error' }));
         });
       });
     },
