@@ -134,4 +134,20 @@ export const DEFAULT_PROMO_CODES: PromoCodeItem[] = [
     description: '১০০% ফ্রি স্কলারশিপ কোড (৳১,০০০ সম্পূর্ণ ফ্রি)',
     isActive: true,
   },
+  {
+    id: 'promo-6',
+    code: 'DROP1000',
+    discountType: 'fixed',
+    discountValue: 1000,
+    description: 'ড্রপশিপিং স্পেশাল ১০০০ টাকা ছাড় (৳১,০০০ অফ)',
+    isActive: true,
+  },
+  {
+    id: 'promo-7',
+    code: 'BD1000',
+    discountType: 'fixed',
+    discountValue: 1000,
+    description: 'বাংলাদেশ একাডেমি ১০০০ টাকা স্কলারশিপ',
+    isActive: true,
+  },
 ];
