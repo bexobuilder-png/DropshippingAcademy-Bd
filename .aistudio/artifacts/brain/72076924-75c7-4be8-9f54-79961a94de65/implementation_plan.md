@@ -1,54 +1,37 @@
-# Dropshipping Academy BD: Phase 0 & Phase 1 Implementation Plan
+# Phase A Implementation Plan: Redirection, Blocked Registration & Celebration Pages
 
-This implementation plan covers Phase 0 (Unified Public Waitlist & Count Synchronization) and Phase 1 (Supabase Email OTP Login, Session Management, and Dashboard Integration) for "Dropshipping Academy BD".
+This implementation plan covers Phase A requirements for "Dropshipping Academy BD": enforcing session-based redirection rules, blocking registration for already logged-in users, adding the `/welcome` post-registration celebration page with 6-second countdown/animation, and displaying a 1.2-second "Welcome back" splash for returning visitors.
 
 ## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> All requirements confirmed during Phase 1 clarification have been incorporated:
-> - **Waitlist Sync**: Unified `GET /api/waitlist/public` endpoint returning `{ total, items: [{ id, firstName, isYou }], nextCursor }`.
-> - **Privacy & Filtering**: Verified & non-deleted only; privacy-toggled names rendered as "A student"; `isYou` computed securely on the server via session cookie.
-> - **Authentication**: Supabase Auth email OTP login flow, auto-session creation on registration verification, and secure httpOnly cookies.
-> - **UI Synchronization**: Immediate optimistic update on registration success followed by background refetch and periodic polling.
+> - **Redirection Rules**: Logged-in visitors to `/`, `/register`, `/join`, `/login` are automatically redirected to `/dashboard`. Unauthenticated visitors to `/dashboard` or `/profile` are redirected to `/login`.
+> - **Already Registered Page**: 4-second countdown warning page when opening `/register` while logged in, with options to go to dashboard or log out.
+> - **Welcome Celebration (`/welcome`)**: 6-second celebration animation with count-up queue number, seal pop tick, and confetti before auto-redirecting to dashboard.
+> - **Welcome-Back Splash**: 1.2-second greeting splash shown once per browser session when returning to `/`.
 
 ---
 
 ## 1. Overview & Core Concept
 
-- **What It Does**: Unifies waitlist counting and public name display into a single bulletproof endpoint (`GET /api/waitlist/public`), and implements passwordless Supabase Email OTP login with session cookie protection for student dashboards.
-- **Key Value**: Flawless count accuracy, 100% data privacy (first names only / "A student"), frictionless passwordless authentication, and real-time UI synchronization.
+- **What It Does**: Implements strict route guarding, server/client session validation, anti-duplicate registration checks (HTTP 409 / already registered warning), and celebratory post-registration animations.
+- **Key Value**: Seamless, professional membership UX where logged-in students never see public marketing/registration forms again, while unauthenticated users are guided securely to login.
 
 ---
 
 ## 2. User Experience & Visual Design
 
-- **Visual Theme**: Existing brand palette (`--bg #FCF9EE`, `--surface #F4F0E7`, `--ink #1B1610`, `--orange #EF7F3C`, `--yellow #F6C974`), 2px ink outlines, hard offset shadows, Anek Bangla + Hind Siliguri fonts, and light/dark mode support.
+- **Visual Theme**: Existing warm cream/orange/ink brand palette, 2px ink borders, hard offset shadows, Anek Bangla + Hind Siliguri typography.
 - **Key Flows**:
-  1. **Registration & Auto-Login**: User registers with name, email, WhatsApp, DOB, language -> 6-digit email OTP verification -> auto-login session created -> immediate redirect to `/dashboard` with success toast and immediate waitlist inclusion with "YOU" tag.
-  2. **Public Waitlist Screen**: Total count and paginated list (20 items/page + "Load more") fetched from `/api/waitlist/public`. Refreshed automatically on tab focus and every 60 seconds.
-  3. **Login Screen (`/login`)**: Email input -> 6-digit OTP code boxes with auto-advance and paste support -> secure session establishment.
-  4. **Navigation & Menu**: Dynamic header showing student first name and Dashboard link when logged in, or Login/Register when logged out.
+  1. **Logged-in Root Access**: Visiting `/` shows a quick 1.2-second "Welcome back, [First Name]" splash, then loads dashboard home.
+  2. **Already Registered Guard**: Opening `/register` while logged in displays an alert with a 4-second countdown, direct button to dashboard, and "Not you? Log out" link.
+  3. **Post-Registration Celebration (`/welcome`)**: Displays 6-second celebratory animation with queue position count-up and confetti before redirecting to dashboard.
+  4. **Dynamic Header & Navigation**: Replaces Register CTA with student avatar and Dashboard link when authenticated.
 
 ---
 
 ## 3. Technical Architecture & Data Strategy
 
-```
-┌─────────────────────────┐          ┌─────────────────────────┐
-│     Client (React)      │          │     Server (Express)    │
-│  - /login & /dashboard  │◄────────►│  - /api/waitlist/public │
-│  - Waitlist UI & Polls  │          │  - /api/auth/me         │
-└─────────────────────────┘          └────────────┬────────────┘
-                                                  │
-                                                  ▼
-                                     ┌─────────────────────────┐
-                                     │ Supabase Database & Auth│
-                                     │  - students table       │
-                                     │  - RLS Policies & OTP   │
-                                     └─────────────────────────┘
-```
-
-- **Data Models**:
-  - `students`: `id`, `full_name`, `email`, `email_verified_at`, `whatsapp`, `dob`, `language`, `status`, `show_first_name`, `is_admin`, `created_at`.
-  - `login_codes` / Supabase Auth OTP.
-- **Security**: Server-side session verification via HttpOnly cookies, RLS policies on Supabase tables, rate-limiting on public endpoints.
+- **Session State**: Managed via `getCurrentUserSession()` / `clearUserSession()` in `src/services/auth.ts`, backed by localStorage and HttpOnly cookies.
+- **Route Guards**: Client-side and server proxy route guards (`/dashboard`, `/login`, `/register`, `/welcome`).
+- **Animations**: CSS transitions respecting `prefers-reduced-motion`.

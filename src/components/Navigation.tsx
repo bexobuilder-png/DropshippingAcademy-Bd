@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import type { AnimKind } from './EduAnimation';
 import { ReadingProgressBar, useReadingProgress } from './ReadingProgressBar';
 import { DropshippingAcademyBdLogo } from './svg/BrandLogo';
 import { MenuDrawer } from './MenuDrawer';
+import { getCurrentUserSession, subscribeToAuthSession, UserSession } from '../services/auth';
 
 const HOME_SECTION_IDS = ['hero', 'results', 'learn', 'about', 'faq', 'contact'];
 
@@ -24,9 +25,18 @@ export const Navigation: React.FC<NavigationProps> = ({
   const { lang, toggleLang, t } = useLanguage();
   const isHomePage = location.pathname === '/';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [session, setSession] = useState<UserSession | null>(() => getCurrentUserSession());
+
+  useEffect(() => {
+    return subscribeToAuthSession((s) => setSession(s));
+  }, []);
 
   const handleRegister = () => {
     setMobileMenuOpen(false);
+    if (session) {
+      navigate('/dashboard');
+      return;
+    }
     if (onRegisterClick) {
       onRegisterClick();
     } else {
@@ -61,13 +71,13 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <>
-      {/* Top Sticky Bar — Original Warm Cream & Espresso Palette */}
+      {/* Top Sticky Bar */}
       <header className="sticky top-0 z-40 w-full box-border overflow-hidden bg-[#fbf9ef]/95 backdrop-blur-md border-b border-[#171412]/12 text-[#171412]">
         <div className="w-full max-w-[1440px] mx-auto box-border px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2 flex-nowrap">
           
-          {/* Zone 1: Graduation Cap Logo + Brand Wordmark */}
+          {/* Zone 1: Brand Logo */}
           <Link
-            to="/"
+            to={session ? '/dashboard' : '/'}
             onClick={() => {
               if (isHomePage) window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -114,9 +124,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
           </nav>
 
-          {/* Zone 3: Reading Indicator + Language Switcher + Orange Action Button */}
+          {/* Zone 3: Reading Indicator + Language Switcher + Action Button */}
           <div className="flex items-center gap-2 flex-none">
-            {/* Subtle Reading Progress Pill on Long-Form Scroll */}
             {isScrollable && hasScrolled && (
               <div
                 aria-hidden="true"
@@ -132,22 +141,33 @@ export const Navigation: React.FC<NavigationProps> = ({
               type="button"
               onClick={toggleLang}
               aria-label={lang === 'bn' ? 'Switch language to English' : 'ওয়েবসাইটের ভাষা বাংলায় পরিবর্তন করুন'}
-              className="flex-none min-w-[44px] min-h-[44px] h-11 px-3 max-[420px]:w-11 max-[420px]:px-0 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] border border-[#171412]/20 text-[12px] font-bold text-[#171412] inline-flex items-center justify-center transition-colors cursor-pointer whitespace-nowrap"
+              className="flex-none min-w-[44px] min-h-[44px] h-11 px-3 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] border border-[#171412]/20 text-[12px] font-bold text-[#171412] inline-flex items-center justify-center transition-colors cursor-pointer whitespace-nowrap"
             >
               {lang === 'bn' ? 'EN' : 'বাং'}
             </button>
 
-            {/* Registration CTA Button */}
-            <button
-              type="button"
-              onClick={handleRegister}
-              className="flex-none min-w-[44px] min-h-[44px] h-11 px-4 sm:px-5 max-[420px]:px-3 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[14px] max-[420px]:text-[14px] inline-flex items-center justify-center gap-1.5 transition-all shadow-sm hover:shadow-md cursor-pointer whitespace-nowrap"
-            >
-              <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
-              <span aria-hidden="true" className="font-bold max-[420px]:hidden">→</span>
-            </button>
+            {/* CTA Button: Register vs Dashboard */}
+            {session ? (
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="flex-none min-w-[44px] min-h-[44px] h-11 px-4 sm:px-5 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[14px] inline-flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer whitespace-nowrap"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[#171412] animate-pulse" />
+                <span>{session.firstName} · {t('ড্যাশবোর্ড', 'Dashboard')}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRegister}
+                className="flex-none min-w-[44px] min-h-[44px] h-11 px-4 sm:px-5 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[14px] inline-flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer whitespace-nowrap"
+              >
+                <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
+                <span aria-hidden="true" className="font-bold">→</span>
+              </button>
+            )}
 
-            {/* Hamburger Toggle — opens MenuDrawer */}
+            {/* Hamburger Toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
@@ -162,18 +182,16 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         </div>
 
-        {/* Subtle Top Navigation Reading Progress Bar */}
         <ReadingProgressBar variant="navigation" />
       </header>
 
-      {/* Slide-out Menu Drawer from the right edge */}
       <MenuDrawer
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         onRegisterClick={handleRegister}
       />
 
-      {/* Mobile Fixed Bottom Navigation Bar (shown on screens under 900px) */}
+      {/* Mobile Fixed Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom App Bar"
         className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-40 h-16 pb-[env(safe-area-inset-bottom)] bg-[#fbf9ef]/98 backdrop-blur-lg border-t border-[#171412]/15 flex items-center justify-around px-2 text-[#171412] shadow-lg"
@@ -200,16 +218,29 @@ export const Navigation: React.FC<NavigationProps> = ({
           <span className="text-[10px] font-bold tracking-tight">{t('কোর্স', 'Course')}</span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleRegister}
-          className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-          </svg>
-          <span className="text-[10px] font-bold tracking-tight">{t('রেজিস্ট্রেশন', 'Register')}</span>
-        </button>
+        {session ? (
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#813502]"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.654 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-[10px] font-bold tracking-tight">{session.firstName}</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleRegister}
+            className="flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 text-center cursor-pointer text-[#171412]/80 hover:text-[#ff7722]"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span className="text-[10px] font-bold tracking-tight">{t('রেজিস্ট্রেশন', 'Register')}</span>
+          </button>
+        )}
 
         <button
           type="button"
