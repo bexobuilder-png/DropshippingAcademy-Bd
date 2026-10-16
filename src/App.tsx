@@ -135,6 +135,20 @@ function AppShell() {
                   />
                 }
               />
+              <Route
+                path="/register"
+                element={
+                  <JoinWaitlistPage
+                    key={`reg-${joinResetKey}`}
+                    setAnim={setAnim}
+                    onVerifiedSuccess={(alreadyExists) => {
+                      setAlreadyOnWaitlist(alreadyExists);
+                      setAnimRunKey((k) => k + 1);
+                      setAnim('success');
+                    }}
+                  />
+                }
+              />
               <Route path="/waitlist-confirmed" element={<WaitlistConfirmedPage />} />
               <Route path="/waitlist" element={<WaitlistPage />} />
               <Route path="/profile" element={<ProfilePage />} />

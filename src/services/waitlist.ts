@@ -495,36 +495,94 @@ export function maskEmailAddress(email: string): string {
 export interface WaitlistPublicDirectoryItem {
   id: string;
   first_name: string;
-  status: 'pending' | 'approved' | 'rejected' | 'contacted' | string;
-  created_at: string;
+  is_me: boolean;
 }
 
 export interface WaitlistCounts {
   total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
+}
+
+const WAITLIST_DIR_CACHE_KEY = 'da_waitlist_dir_cache_v2';
+let memoryDirCache: { items: WaitlistPublicDirectoryItem[]; total: number; timestamp: number } | null = null;
+
+export function getCachedWaitlistDirectory(): { items: WaitlistPublicDirectoryItem[]; total: number } | null {
+  if (memoryDirCache && Date.now() - memoryDirCache.timestamp < 300000) {
+    return { items: memoryDirCache.items, total: memoryDirCache.total };
+  }
+  try {
+    const raw = sessionStorage.getItem(WAITLIST_DIR_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) {
+        memoryDirCache = parsed;
+        return { items: parsed.items, total: parsed.total || parsed.items.length };
+      }
+    }
+  } catch {
+    // Ignore
+  }
+  return null;
+}
+
+export function setCachedWaitlistDirectory(items: WaitlistPublicDirectoryItem[], total: number): void {
+  const payload = { items, total, timestamp: Date.now() };
+  memoryDirCache = payload;
+  try {
+    sessionStorage.setItem(WAITLIST_DIR_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore
+  }
 }
 
 /**
- * Fetches privacy-safe public waitlist directory (first name, status, created_at only).
- * Protected by PostgreSQL SECURITY DEFINER RPC.
+ * Prefetches the directory when drawer opens to ensure zero-flicker instant navigation.
+ */
+export async function prefetchWaitlistDirectory(): Promise<void> {
+  try {
+    const [items, counts] = await Promise.all([
+      fetchWaitlistPublicDirectory(),
+      fetchWaitlistAggregateCounts(),
+    ]);
+    if (items.length > 0 || counts.total > 0) {
+      setCachedWaitlistDirectory(items, counts.total);
+    }
+  } catch {
+    // Non-blocking
+  }
+}
+
+/**
+ * Fetches privacy-safe public waitlist directory (ONLY first_name and is_me).
+ * Guaranteed at database RPC level: never returns status, created_at, phone, or email.
  */
 export async function fetchWaitlistPublicDirectory(
-  statusFilter?: string,
-  searchTerm?: string
+  searchTerm?: string,
+  limit = 100,
+  offset = 0,
+  userEmail?: string,
+  userPhone?: string
 ): Promise<WaitlistPublicDirectoryItem[]> {
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.rpc('get_waitlist_directory', {
-        p_status: statusFilter && statusFilter !== 'all' ? statusFilter : null,
         p_search: searchTerm ? searchTerm.trim() : null,
-        p_limit: 300,
-        p_offset: 0,
+        p_limit: limit,
+        p_offset: offset,
+        p_user_email: userEmail || null,
+        p_user_phone: userPhone || null,
       });
 
       if (!error && Array.isArray(data)) {
-        return data as WaitlistPublicDirectoryItem[];
+        const mapped = data.map((item: any) => ({
+          id: item.id || `app-${Math.random()}`,
+          first_name: item.first_name || '',
+          is_me: Boolean(item.is_me),
+        }));
+        if (!searchTerm && offset === 0 && mapped.length > 0) {
+          const currentTotal = memoryDirCache?.total || mapped.length;
+          setCachedWaitlistDirectory(mapped, currentTotal);
+        }
+        return mapped;
       }
     } catch {
       // Fall through to local fallback
@@ -538,17 +596,14 @@ export async function fetchWaitlistPublicDirectory(
       const list = JSON.parse(raw) as WaitlistDbRow[];
       return list
         .filter((r) => {
-          const matchStatus =
-            !statusFilter || statusFilter === 'all' || (r.status || 'pending').toLowerCase() === statusFilter.toLowerCase();
-          const matchSearch =
-            !searchTerm || (r.first_name || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
-          return matchStatus && matchSearch;
+          if (!searchTerm) return true;
+          return (r.first_name || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
         })
+        .slice(offset, offset + limit)
         .map((r) => ({
           id: r.id || `loc-${Math.random()}`,
-          first_name: r.first_name,
-          status: r.status || 'pending',
-          created_at: r.created_at || new Date().toISOString(),
+          first_name: r.first_name || '',
+          is_me: userEmail ? (r.email || '').toLowerCase() === userEmail.toLowerCase() : false,
         }));
     }
   } catch {
@@ -559,41 +614,32 @@ export async function fetchWaitlistPublicDirectory(
 }
 
 /**
- * Fetches accurate waitlist aggregate counts across all students.
+ * Fetches accurate waitlist total count across all students.
  */
 export async function fetchWaitlistAggregateCounts(): Promise<WaitlistCounts> {
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.rpc('get_waitlist_counts');
       if (!error && Array.isArray(data) && data[0]) {
-        return {
-          total: Number(data[0].total_count) || 0,
-          approved: Number(data[0].approved_count) || 0,
-          pending: Number(data[0].pending_count) || 0,
-          rejected: Number(data[0].rejected_count) || 0,
-        };
+        const total = Number(data[0].total_count) || 0;
+        return { total };
       }
     } catch {
       // Fall through
     }
   }
 
-  // Fallback to local entries
   try {
     const raw = localStorage.getItem(LOCAL_WAITLIST_ENTRIES_KEY);
     if (raw) {
       const list = JSON.parse(raw) as WaitlistDbRow[];
-      return {
-        total: list.length,
-        approved: list.filter((r) => (r.status || '').toLowerCase() === 'approved').length,
-        pending: list.filter((r) => (r.status || 'pending').toLowerCase() === 'pending').length,
-        rejected: list.filter((r) => (r.status || '').toLowerCase() === 'rejected').length,
-      };
+      return { total: list.length };
     }
   } catch {
     // Ignore
   }
 
-  return { total: 0, approved: 0, pending: 0, rejected: 0 };
+  return { total: 0 };
 }
+
 

@@ -12,6 +12,7 @@ import {
 import { StatusBadge } from './StatusBadge';
 import { RunningCourseCard } from './RunningCourseCard';
 import { AuthGuardModal } from './AuthGuard';
+import { prefetchWaitlistDirectory } from '../services/waitlist';
 
 interface MenuDrawerProps {
   isOpen: boolean;
@@ -43,6 +44,8 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
     });
 
     if (isOpen) {
+      // Prefetch waitlist directory in background on drawer open
+      prefetchWaitlistDirectory();
       setIsRefreshingStatus(true);
       refreshUserStatus().then((refreshed) => {
         if (refreshed) setSession(refreshed);
@@ -123,6 +126,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
       setShowAuthModal(true);
       return;
     }
+    // Close drawer with animation, then navigate without flicker
     onClose();
     navigate('/waitlist');
   };
@@ -412,7 +416,11 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
       {/* Auth Guard Modal for Quick Registration/Sign in */}
       <AuthGuardModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          onClose();
+          navigate('/register');
+        }}
         onAuthenticated={(newSession) => {
           setSession(newSession);
           setShowAuthModal(false);
@@ -420,7 +428,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           navigate('/waitlist');
         }}
         message={t(
-          'To access this information, you must register first.',
+          'ওয়েটলিস্ট দেখতে আপনাকে প্রথমে নিবন্ধন করতে হবে।',
           'To access this information, you must register first.'
         )}
       />

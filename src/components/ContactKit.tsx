@@ -5,10 +5,12 @@ import {
   fetchContactMessages,
   updateMessageStatus,
   deleteContactMessage,
+  buildSenderWhatsAppReplyLink,
   ContactItem,
   ContactMessage,
   DEFAULT_CONTACT_ITEMS,
 } from '../services/contact';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Button } from './Button';
 import { CheckSvgIcon, AlertCircleSvgIcon } from './svg/NavIcons';
 import { useLanguage } from '../context/LanguageContext';
@@ -18,6 +20,8 @@ export const AdminContactForm: React.FC = () => {
   const [items, setItems] = useState<ContactItem[]>(DEFAULT_CONTACT_ITEMS);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<'settings' | 'messages'>('settings');
+  const [msgSearch, setMsgSearch] = useState<string>('');
+  const [msgStatusFilter, setMsgStatusFilter] = useState<'all' | 'new' | 'read' | 'replied'>('all');
 
   // Editing state per item ID
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,6 +47,30 @@ export const AdminContactForm: React.FC = () => {
 
   useEffect(() => {
     loadData();
+
+    let channel: any = null;
+    if (isSupabaseConfigured) {
+      try {
+        channel = supabase
+          .channel('public:admin_inbox_messages')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'messages' },
+            () => {
+              fetchContactMessages().then(setMessages);
+            }
+          )
+          .subscribe();
+      } catch {
+        // Ignore
+      }
+    }
+
+    return () => {
+      if (channel && isSupabaseConfigured) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, []);
 
   const loadData = async () => {

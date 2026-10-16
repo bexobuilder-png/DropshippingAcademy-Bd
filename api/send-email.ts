@@ -367,7 +367,45 @@ export async function handleSendEmailCore(body: SendEmailBody): Promise<{
 
   let emailContent: EmailRenderResult;
 
-  if (action === 'approved') {
+  if (action === 'contact_message') {
+    const contactInfo = customSubject || 'N/A';
+    const msgBody = customMessage || '';
+    const subject = `[নতুন বার্তা] ${firstName} ওয়েবসাইট থেকে যোগাযোগ করেছেন 💬`;
+    const html = `
+      <!DOCTYPE html>
+      <html lang="bn">
+      <head>
+        <meta charset="utf-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #fbf9ef; font-family: 'Hind Siliguri', Arial, sans-serif; color: #171412;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fbf9ef; padding: 24px 12px;">
+          <tr>
+            <td align="center">
+              <table width="100%" style="max-width: 600px; background-color: #ffffff; border: 2px solid #171412; border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 0px #171412;">
+                <tr>
+                  <td style="background-color: #ff7722; padding: 20px; text-align: center; border-bottom: 2px solid #171412;">
+                    <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #171412;">নতুন যোগাযোগ বার্তা</h2>
+                    <p style="margin: 4px 0 0; font-size: 13px; font-weight: bold; color: #171412;">Dropshipping Academy BD Website</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 12px; font-size: 15px;"><strong>প্রেরকের নাম:</strong> ${firstName}</p>
+                    <p style="margin: 0 0 12px; font-size: 15px;"><strong>মোবাইল / ইমেইল:</strong> ${contactInfo}</p>
+                    <div style="background-color: #f2f0e7; border-left: 4px solid #ff7722; padding: 14px; margin: 16px 0; border-radius: 6px; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${msgBody}</div>
+                    <p style="margin: 16px 0 0; font-size: 12px; color: #666;">এই বার্তাটি অ্যাডমিন প্যানেলে সংরক্ষিত হয়েছে।</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+    emailContent = { subject, html };
+  } else if (action === 'approved') {
     emailContent = buildApprovalBanglaEmail({
       firstName,
       lastName,
