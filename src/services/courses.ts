@@ -26,6 +26,9 @@ export interface CourseDbRow {
   is_running: boolean;
   is_visible: boolean;
   sort_order: number;
+  thumbnail_url?: string | null;
+  enrollment_type?: string | null;
+  required_promo_code?: string | null;
   updated_at?: string;
 }
 
@@ -55,6 +58,9 @@ function mapDbRowToCourse(row: CourseDbRow): CourseItem {
     isRunning: Boolean(row.is_running),
     isVisible: row.is_visible !== false,
     sortOrder: typeof row.sort_order === 'number' ? row.sort_order : 0,
+    thumbnailUrl: row.thumbnail_url || defaultMatch?.thumbnailUrl || '/images/course_dropshipping_basic_1791567728755.jpg',
+    enrollmentType: (row.enrollment_type as 'payment' | 'promo_only' | 'both') || defaultMatch?.enrollmentType || 'payment',
+    requiredPromoCode: row.required_promo_code || defaultMatch?.requiredPromoCode || undefined,
   };
 }
 
@@ -75,6 +81,9 @@ function mapCourseToDbRow(course: CourseItem, index: number): CourseDbRow {
     is_running: Boolean(course.isRunning),
     is_visible: course.isVisible !== false,
     sort_order: course.sortOrder ?? index + 1,
+    thumbnail_url: course.thumbnailUrl || null,
+    enrollment_type: course.enrollmentType || 'payment',
+    required_promo_code: course.requiredPromoCode || null,
     updated_at: new Date().toISOString(),
   };
 }

@@ -37,11 +37,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       navigate('/dashboard');
       return;
     }
-    if (onRegisterClick) {
-      onRegisterClick();
-    } else {
-      setAnim('intro');
-    }
+    navigate('/registration');
   };
 
   const { progress, isScrollable, hasScrolled, activeSectionId } =
@@ -100,6 +96,14 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
             <button
               type="button"
+              onClick={handleRegister}
+              className="text-[#813502] font-bold hover:text-[#ff7722] transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1"
+            >
+              <span>🎓</span>
+              <span>{t('কোর্সসমূহ', 'Courses')}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => handleAnchorScroll('results')}
               className={getNavButtonClass(['results', 'learn'])}
             >
@@ -122,6 +126,12 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               {t('যোগাযোগ', 'Contact')}
             </button>
+            <Link
+              to="/check"
+              className="text-xs px-2.5 py-1 rounded-full bg-[#f2f0e7] hover:bg-[#ff7722] hover:text-[#171412] border border-[#171412]/20 text-[#813502] font-bold transition-all whitespace-nowrap"
+            >
+              ⚙️ {t('অ্যাডমিন', 'Admin')}
+            </Link>
           </nav>
 
           {/* Zone 3: Reading Indicator + Language Switcher + Action Button */}

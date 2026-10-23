@@ -37,6 +37,12 @@ import {
   restoreDefaultPromoCodes,
 } from '../services/courses';
 import {
+  fetchStudentEnrollments,
+  updateEnrollmentStatus,
+  deleteStudentEnrollment,
+  StudentEnrollment,
+} from '../services/enrollments';
+import {
   CourseItem,
   PromoCodeItem,
   DEFAULT_COURSES,
@@ -142,12 +148,19 @@ export const AdminCheckPage: React.FC = () => {
   // Courses & Promo Codes Management State
   const [adminCourses, setAdminCourses] = useState<CourseItem[]>(DEFAULT_COURSES);
   const [adminPromoCodes, setAdminPromoCodes] = useState<PromoCodeItem[]>(DEFAULT_PROMO_CODES);
-  const [coursesSubTab, setCoursesSubTab] = useState<'courses' | 'promos'>('courses');
+  const [coursesSubTab, setCoursesSubTab] = useState<'courses' | 'promos' | 'enrollments'>('courses');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [courseFeedback, setCourseFeedback] = useState<string>('');
   const [isSavingCourses, setIsSavingCourses] = useState<boolean>(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+
+  // Student Enrollments State
+  const [studentEnrollments, setStudentEnrollments] = useState<StudentEnrollment[]>([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [enrollmentSearch, setEnrollmentSearch] = useState('');
+  const [enrollmentStatusFilter, setEnrollmentStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
   const [courseForm, setCourseForm] = useState<{
     title: string;
     batchName: string;
@@ -162,6 +175,9 @@ export const AdminCheckPage: React.FC = () => {
     isActive: boolean;
     isRunning: boolean;
     isVisible: boolean;
+    thumbnailUrl: string;
+    enrollmentType: 'payment' | 'promo_only' | 'both';
+    requiredPromoCode: string;
   }>({
     title: '',
     batchName: '',
@@ -176,6 +192,9 @@ export const AdminCheckPage: React.FC = () => {
     isActive: true,
     isRunning: false,
     isVisible: true,
+    thumbnailUrl: '/images/course_dropshipping_basic_1791567728755.jpg',
+    enrollmentType: 'payment',
+    requiredPromoCode: '',
   });
 
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
@@ -334,11 +353,12 @@ export const AdminCheckPage: React.FC = () => {
   const loadDashboardData = async () => {
     setLoadingWaitlist(true);
     setWaitlistError('');
-    const [waitlistRes, foundersRes, coursesRes, promoRes] = await Promise.all([
+    const [waitlistRes, foundersRes, coursesRes, promoRes, enrollmentsRes] = await Promise.all([
       fetchAllWaitlistUsers(),
       fetchFoundersList(),
       fetchCoursesList(),
       fetchPromoCodesList(),
+      fetchStudentEnrollments(),
     ]);
     setWaitlistRows(waitlistRes.rows);
     if (waitlistRes.error) {
@@ -347,8 +367,19 @@ export const AdminCheckPage: React.FC = () => {
     setFounders(foundersRes);
     setAdminCourses(coursesRes);
     setAdminPromoCodes(promoRes);
+    setStudentEnrollments(enrollmentsRes);
     setLoadingWaitlist(false);
   };
+
+  useEffect(() => {
+    const handleEnrollmentUpdate = () => {
+      fetchStudentEnrollments().then((list) => setStudentEnrollments(list));
+    };
+    window.addEventListener('student-enrollments-updated', handleEnrollmentUpdate);
+    return () => {
+      window.removeEventListener('student-enrollments-updated', handleEnrollmentUpdate);
+    };
+  }, []);
 
   // ============================================================================
   // ADMIN AUTH HANDLERS
@@ -627,7 +658,7 @@ export const AdminCheckPage: React.FC = () => {
     setCourseForm({
       title: '',
       batchName: '',
-      category: 'মার্কেটিং কিভাবে করবেন',
+      category: 'ড্রপশিপিং রিসেলিং',
       subtitle: '',
       description: '',
       price: 1000,
@@ -638,6 +669,9 @@ export const AdminCheckPage: React.FC = () => {
       isActive: true,
       isRunning: false,
       isVisible: true,
+      thumbnailUrl: '/images/course_dropshipping_basic_1791567728755.jpg',
+      enrollmentType: 'payment',
+      requiredPromoCode: '',
     });
     setIsCourseModalOpen(true);
   };
@@ -658,6 +692,9 @@ export const AdminCheckPage: React.FC = () => {
       isActive: course.isActive,
       isRunning: Boolean(course.isRunning),
       isVisible: course.isVisible !== false,
+      thumbnailUrl: course.thumbnailUrl || '/images/course_dropshipping_basic_1791567728755.jpg',
+      enrollmentType: course.enrollmentType || 'payment',
+      requiredPromoCode: course.requiredPromoCode || '',
     });
     setIsCourseModalOpen(true);
   };
@@ -683,7 +720,7 @@ export const AdminCheckPage: React.FC = () => {
             ...c,
             title: courseForm.title.trim(),
             batchName: courseForm.batchName.trim() || undefined,
-            category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
+            category: courseForm.category.trim() || 'ড্রপশিপিং ই-কমার্স ব্যবসা',
             subtitle: courseForm.subtitle.trim(),
             description: courseForm.description.trim(),
             price: Number(courseForm.price) || 1000,
@@ -694,6 +731,9 @@ export const AdminCheckPage: React.FC = () => {
             isActive: courseForm.isActive,
             isRunning: courseForm.isRunning,
             isVisible: courseForm.isVisible,
+            thumbnailUrl: courseForm.thumbnailUrl.trim() || undefined,
+            enrollmentType: courseForm.enrollmentType,
+            requiredPromoCode: courseForm.requiredPromoCode.trim() || undefined,
           };
         }
         // If this course is being marked as running, unmark other courses
@@ -707,7 +747,7 @@ export const AdminCheckPage: React.FC = () => {
         id: `course-${Date.now()}`,
         title: courseForm.title.trim(),
         batchName: courseForm.batchName.trim() || undefined,
-        category: courseForm.category.trim() || 'মার্কেটিং কিভাবে করবেন',
+        category: courseForm.category.trim() || 'ড্রপশিপিং ই-কমার্স ব্যবসা',
         subtitle: courseForm.subtitle.trim(),
         description: courseForm.description.trim(),
         price: Number(courseForm.price) || 1000,
@@ -719,6 +759,9 @@ export const AdminCheckPage: React.FC = () => {
         isActive: courseForm.isActive,
         isRunning: courseForm.isRunning,
         isVisible: courseForm.isVisible,
+        thumbnailUrl: courseForm.thumbnailUrl.trim() || undefined,
+        enrollmentType: courseForm.enrollmentType,
+        requiredPromoCode: courseForm.requiredPromoCode.trim() || undefined,
         sortOrder: adminCourses.length + 1,
       };
 
@@ -740,6 +783,26 @@ export const AdminCheckPage: React.FC = () => {
         : `নতুন কোর্স "${courseForm.title.trim()}" সফলভাবে যুক্ত করা হয়েছে!`
     );
     setTimeout(() => setCourseFeedback(''), 5000);
+  };
+
+  const handleApproveEnrollment = async (id: string) => {
+    await updateEnrollmentStatus(id, 'approved');
+    const updated = await fetchStudentEnrollments();
+    setStudentEnrollments(updated);
+  };
+
+  const handleRejectEnrollment = async (id: string) => {
+    await updateEnrollmentStatus(id, 'rejected');
+    const updated = await fetchStudentEnrollments();
+    setStudentEnrollments(updated);
+  };
+
+  const handleDeleteEnrollment = async (id: string) => {
+    if (window.confirm('আবেদনটি স্থায়ীভাবে মুছে ফেলতে চান?')) {
+      await deleteStudentEnrollment(id);
+      const updated = await fetchStudentEnrollments();
+      setStudentEnrollments(updated);
+    }
   };
 
   const handleSetRunningCourse = async (courseId: string) => {
@@ -3000,6 +3063,24 @@ export const AdminCheckPage: React.FC = () => {
                   {adminPromoCodes.length}
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setCoursesSubTab('enrollments')}
+                className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  coursesSubTab === 'enrollments'
+                    ? 'bg-[#171412] text-[#fbf9ef] shadow-sm'
+                    : 'bg-[#f2f0e7] text-[#171412] hover:bg-[#ebe9df] border border-[#171412]/20'
+                }`}
+              >
+                <span>🎓 {t('ভর্তি আবেদন', 'Student Enrollments')}</span>
+                <span className="px-2 py-0.2 rounded-full bg-[#22c55e] text-white text-[11px] font-black">
+                  {studentEnrollments.length}
+                </span>
+                {studentEnrollments.filter((e) => e.status === 'pending').length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-ping" />
+                )}
+              </button>
             </div>
 
             {/* -------------------------------------------------------------
@@ -3035,6 +3116,24 @@ export const AdminCheckPage: React.FC = () => {
                       }`}
                     >
                       <div>
+                        {/* Course Thumbnail in Admin Card */}
+                        {course.thumbnailUrl && (
+                          <div className="relative aspect-[16/9] w-full rounded-[12px] overflow-hidden mb-3.5 border border-[#171412]/20 bg-[#171412]">
+                            <img
+                              src={course.thumbnailUrl}
+                              alt={course.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-white text-[10px] font-bold">
+                              {course.enrollmentType === 'promo_only'
+                                ? '🏷️ শুধুমাত্র প্রমো কোড'
+                                : course.enrollmentType === 'both'
+                                ? 'টাকা বা প্রমো কোড'
+                                : 'পেইড কোর্স'}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Top Badges */}
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                           <span className="px-2.5 py-0.5 rounded-[50px] bg-[#f2f0e7] border border-[#171412]/20 text-[#813502] text-[11px] font-extrabold uppercase tracking-wide">
@@ -3295,6 +3394,253 @@ export const AdminCheckPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* -------------------------------------------------------------
+                SUB-VIEW 3: STUDENT ENROLLMENTS & REGISTRATIONS
+            -------------------------------------------------------------- */}
+            {coursesSubTab === 'enrollments' && (
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-display text-[20px] font-extrabold text-[#171412]">
+                      {t('কোর্স ভর্তি ও রেজিস্ট্রেশন আবেদনসমূহ', 'Course Registrations & Student Applications')}
+                    </h3>
+                    <p className="text-[13px] text-[#813502] font-semibold mt-0.5">
+                      {t(
+                        'শিক্ষার্থীরা রেজিস্ট্রেশন ফর্ম পূরণ করার পর তাদের সকল তথ্য ও পেমেন্ট/প্রমো কোড এখানে জমা হয়',
+                        'Real-time student applications from course registration forms, including TrxID and Promo codes'
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetchStudentEnrollments().then((list) => setStudentEnrollments(list));
+                    }}
+                    className="min-h-[40px] px-4 py-2 rounded-[50px] bg-[#171412] text-white hover:bg-[#ff7722] hover:text-[#171412] font-bold text-[13px] transition-colors self-start sm:self-auto cursor-pointer"
+                  >
+                    🔄 {t('রিফ্রেশ করুন', 'Refresh List')}
+                  </button>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-white rounded-xl border border-[#171412]/20">
+                  <div className="flex-1 max-w-md">
+                    <input
+                      type="search"
+                      value={enrollmentSearch}
+                      onChange={(e) => setEnrollmentSearch(e.target.value)}
+                      placeholder={t('শিক্ষার্থীর নাম, মোবাইল, TrxID বা কোর্স...', 'Search name, phone, TrxID or course...')}
+                      className="w-full px-3.5 py-2 text-sm rounded-lg bg-[#fbf9ef] border border-[#171412]/30 focus:border-[#ff7722] outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto">
+                    {(['all', 'pending', 'approved', 'rejected'] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setEnrollmentStatusFilter(st)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${
+                          enrollmentStatusFilter === st
+                            ? 'bg-[#171412] text-white border-[#171412]'
+                            : 'bg-[#fbf9ef] text-[#171412] border-[#171412]/20 hover:border-[#ff7722]'
+                        }`}
+                      >
+                        {st === 'all'
+                          ? `সব (${studentEnrollments.length})`
+                          : st === 'pending'
+                          ? `পেন্ডিং (${studentEnrollments.filter((e) => e.status === 'pending').length})`
+                          : st === 'approved'
+                          ? `অনুমোদিত (${studentEnrollments.filter((e) => e.status === 'approved').length})`
+                          : `বাতিল (${studentEnrollments.filter((e) => e.status === 'rejected').length})`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Enrollments List Cards */}
+                {studentEnrollments.length === 0 ? (
+                  <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-[#171412]/30 text-sm text-[#171412]/60">
+                    বর্তমানে কোনো ভর্তি আবেদন জমা হয়নি। ওয়েবসাইটে গিয়ে "রেজিস্ট্রেশন করুন" বাটনে ক্লিক করে প্রথম আবেদন করুন!
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {studentEnrollments
+                      .filter((item) => {
+                        if (enrollmentStatusFilter !== 'all' && item.status !== enrollmentStatusFilter) {
+                          return false;
+                        }
+                        if (enrollmentSearch.trim()) {
+                          const q = enrollmentSearch.toLowerCase();
+                          const matchName = item.studentName.toLowerCase().includes(q);
+                          const matchPhone = item.studentPhone.includes(q);
+                          const matchCourse = item.courseTitle.toLowerCase().includes(q);
+                          const matchTrx = item.trxId?.toLowerCase().includes(q);
+                          const matchPromo = item.promoCodeUsed?.toLowerCase().includes(q);
+                          return matchName || matchPhone || matchCourse || matchTrx || matchPromo;
+                        }
+                        return true;
+                      })
+                      .map((enr) => (
+                        <div
+                          key={enr.id}
+                          className="p-5 rounded-2xl bg-white border-2 border-[#171412] shadow-sm flex flex-col justify-between gap-4"
+                        >
+                          <div>
+                            {/* Card Header: Course & Status */}
+                            <div className="flex items-start justify-between gap-2 mb-2 pb-2 border-b border-[#171412]/15">
+                              <div>
+                                <span className="text-[10px] font-bold text-[#813502] uppercase tracking-wider bg-[#fef9c3] px-2 py-0.5 rounded border border-[#ca8a04]/40">
+                                  {enr.courseCategory}
+                                </span>
+                                <h4 className="text-base font-bold text-[#171412] font-display mt-1">
+                                  {enr.courseTitle}
+                                </h4>
+                              </div>
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 ${
+                                  enr.status === 'approved'
+                                    ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]'
+                                    : enr.status === 'rejected'
+                                    ? 'bg-[#fee2e2] text-[#991b1b] border-[#ef4444]'
+                                    : 'bg-[#fef9c3] text-[#854d0e] border-[#ca8a04]'
+                                }`}
+                              >
+                                {enr.status === 'approved'
+                                  ? '✓ অনুমোদিত'
+                                  : enr.status === 'rejected'
+                                  ? '✕ বাতিল'
+                                  : '⏳ পেন্ডিং'}
+                              </span>
+                            </div>
+
+                            {/* Student Information Details */}
+                            <div className="space-y-1.5 text-xs text-[#171412]/80">
+                              <div className="flex items-baseline justify-between">
+                                <span className="font-bold text-[#171412] text-sm">
+                                  👤 {enr.studentName}
+                                </span>
+                                <span className="text-[11px] text-[#171412]/60">
+                                  {new Date(enr.createdAt).toLocaleDateString('bn-BD', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-[#171412]">📱 ফোন:</span>
+                                <a
+                                  href={`tel:${enr.studentPhone}`}
+                                  className="font-mono font-bold text-[#ff7722] hover:underline"
+                                >
+                                  {enr.studentPhone}
+                                </a>
+                              </div>
+
+                              {enr.studentEmail && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-[#171412]">✉️ ইমেইল:</span>
+                                  <span>{enr.studentEmail}</span>
+                                </div>
+                              )}
+
+                              {enr.district && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-[#171412]">📍 জেলা/ঠিকানা:</span>
+                                  <span>{enr.district}</span>
+                                </div>
+                              )}
+
+                              {/* Enrollment Validation Details */}
+                              <div className="mt-3 p-2.5 rounded-xl bg-[#fbf9ef] border border-[#171412]/20 font-mono text-xs">
+                                {enr.promoCodeUsed ? (
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-sans font-bold text-[#15803d]">🏷️ প্রমো কোড এন্ট্রি:</span>
+                                    <span className="font-bold text-[#15803d] bg-white px-2 py-0.5 rounded border border-[#15803d]/30">
+                                      {enr.promoCodeUsed}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between font-sans">
+                                      <span className="font-bold text-[#171412]">পেমেন্ট মাধ্যম:</span>
+                                      <span className="font-bold text-[#ff7722]">{enr.paymentMethod}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-sans text-[#171412]/70">টাকা পাঠানো নম্বর:</span>
+                                      <span className="font-bold">{enr.senderPhone || '-'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-sans text-[#171412]/70">Transaction ID:</span>
+                                      <span className="font-bold text-[#171412] bg-white px-1.5 py-0.2 rounded border">
+                                        {enr.trxId || '-'}
+                                      </span>
+                                    </div>
+                                    {enr.amountPaid !== undefined && (
+                                      <div className="flex justify-between font-sans border-t pt-1">
+                                        <span className="text-[#171412]/70">পরিশোধিত ফি:</span>
+                                        <span className="font-bold">৳{enr.amountPaid}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="pt-3 border-t border-[#171412]/15 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              {enr.status !== 'approved' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveEnrollment(enr.id)}
+                                  className="px-3 py-1.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold text-xs rounded-lg transition"
+                                >
+                                  ✓ অনুমোদন
+                                </button>
+                              )}
+                              {enr.status !== 'rejected' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectEnrollment(enr.id)}
+                                  className="px-3 py-1.5 bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold text-xs rounded-lg transition"
+                                >
+                                  ✕ বাতিল
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteEnrollment(enr.id)}
+                                className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-[#171412] font-bold text-xs rounded-lg transition"
+                                title="মুছে ফেলুন"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+
+                            <a
+                              href={`https://wa.me/88${enr.studentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                                `আসসালামু আলাইকুম ${enr.studentName}, ড্রপশিপিং একাডেমি বাংলাদেশ থেকে আপনার "${enr.courseTitle}" কোর্সের রেজিস্ট্রেশন সংক্রান্ত তথ্য জানাতে যোগাযোগ করছি।`
+                              )}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-1.5 bg-[#25D366] hover:bg-[#1ebc59] text-white font-bold text-xs rounded-lg flex items-center gap-1.5 transition"
+                            >
+                              <span>💬 হোয়াটসঅ্যাপ</span>
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -3622,12 +3968,12 @@ export const AdminCheckPage: React.FC = () => {
                     required
                     value={courseForm.category}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, category: e.target.value }))}
-                    placeholder="যেমন: ড্রপশিপিং রিসেলিং / মার্কেটিং কিভাবে করবেন / কোর্স শিখুন"
+                    placeholder="যেমন: ড্রপশিপিং ই-কমার্স ব্যবসা / ড্রপশিপিং রিসেলার ব্যবসা / ডিজিটাল মার্কেটিং"
                     className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                   />
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px]">
                     <span className="font-bold text-[#813502]">দ্রুত সিলেক্ট:</span>
-                    {(['ড্রপশিপিং রিসেলিং', 'মার্কেটিং কিভাবে করবেন', 'কোর্স শিখুন', 'শপিফাই ড্রপশিপিং'] as const).map((cat) => (
+                    {(['ড্রপশিপিং রিসেলিং', 'গ্লোবাল ড্রপশিপিং'] as const).map((cat) => (
                       <button
                         key={cat}
                         type="button"
@@ -3638,6 +3984,101 @@ export const AdminCheckPage: React.FC = () => {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Thumbnail Image URL & Preset Thumbnails */}
+                <div className="p-3.5 bg-[#fbf9ef] rounded-[12px] border border-[#171412]/20 space-y-2">
+                  <label htmlFor="course-thumbnail-input" className="block text-[13px] font-bold text-[#171412]">
+                    কোর্সের থাম্বনেইল ছবি (Course Thumbnail) *
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-3 items-center">
+                    {courseForm.thumbnailUrl && (
+                      <img
+                        src={courseForm.thumbnailUrl}
+                        alt="Thumbnail preview"
+                        className="w-24 h-16 object-cover rounded-lg border-2 border-[#171412] shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 w-full">
+                      <input
+                        id="course-thumbnail-input"
+                        type="text"
+                        required
+                        value={courseForm.thumbnailUrl}
+                        onChange={(e) => setCourseForm((prev) => ({ ...prev, thumbnailUrl: e.target.value }))}
+                        placeholder="/images/course_... অথবা https://..."
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-[#171412]/30 text-xs font-mono"
+                      />
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        <span className="text-[10px] font-bold text-[#813502] mr-1">রেডি থাম্বনেইল:</span>
+                        {[
+                          { label: 'ই-কমার্স', url: '/images/course_shopify_ecommerce_1791567740931.jpg' },
+                          { label: 'রিসেলার', url: '/images/course_dropshipping_basic_1791567728755.jpg' },
+                          { label: 'মার্কেটিং', url: '/images/course_digital_marketing_1791567751610.jpg' },
+                          { label: 'ল্যাপটপ স্টোর', url: '/images/hero_laptop_business_1791567717121.jpg' },
+                        ].map((item) => (
+                          <button
+                            key={item.url}
+                            type="button"
+                            onClick={() => setCourseForm((prev) => ({ ...prev, thumbnailUrl: item.url }))}
+                            className={`px-2 py-0.5 text-[10px] rounded border font-semibold ${
+                              courseForm.thumbnailUrl === item.url
+                                ? 'bg-[#ff7722] text-[#171412] border-[#171412]'
+                                : 'bg-white text-[#171412] border-[#171412]/20'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enrollment Type & Promo Code Requirements */}
+                <div className="p-3.5 bg-[#fef9c3] rounded-[12px] border-2 border-[#ca8a04] space-y-2.5">
+                  <label className="block text-[13px] font-bold text-[#854d0e]">
+                    ভর্তি মাধ্যম নির্ধারণ (Enrollment Method):
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { type: 'payment', label: '💳 টাকা দিয়ে ভর্তি (পেইড)' },
+                      { type: 'promo_only', label: '🏷️ শুধুমাত্র প্রমো কোড' },
+                      { type: 'both', label: '🔄 উভয় মাধ্যম (টাকা/কোড)' },
+                    ].map((mode) => (
+                      <button
+                        key={mode.type}
+                        type="button"
+                        onClick={() => setCourseForm((prev) => ({ ...prev, enrollmentType: mode.type as any }))}
+                        className={`p-2 rounded-lg border-2 text-xs font-bold text-center transition ${
+                          courseForm.enrollmentType === mode.type
+                            ? 'bg-[#171412] text-white border-[#171412]'
+                            : 'bg-white text-[#171412] border-[#ca8a04]/40 hover:border-[#ca8a04]'
+                        }`}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {courseForm.enrollmentType === 'promo_only' && (
+                    <div className="mt-2 pt-2 border-t border-[#ca8a04]/30">
+                      <label htmlFor="course-req-promo" className="block text-xs font-bold text-[#854d0e] mb-1">
+                        এই কোর্সের জন্য নির্দিষ্ট প্রমো কোড (বা খালি রাখুন):
+                      </label>
+                      <input
+                        id="course-req-promo"
+                        type="text"
+                        placeholder="যেমন: RESELLER500 বা FREEPASS"
+                        value={courseForm.requiredPromoCode}
+                        onChange={(e) => setCourseForm((prev) => ({ ...prev, requiredPromoCode: e.target.value }))}
+                        className="w-full px-3 py-1.5 uppercase font-mono text-xs bg-white rounded border border-[#ca8a04] outline-none"
+                      />
+                      <span className="text-[10px] text-[#854d0e] block mt-0.5">
+                        শিক্ষার্থীরা এই কোর্সে ভর্তি হওয়ার সময় শুধুমাত্র এই প্রমো কোড (বা অ্যাডমিনের সক্রিয় কোড) দিয়ে জয়েন করতে পারবে।
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Subtitle */}

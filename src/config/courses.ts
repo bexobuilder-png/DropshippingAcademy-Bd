@@ -15,6 +15,9 @@ export interface CourseItem {
   isRunning?: boolean;
   batchName?: string;
   isVisible?: boolean;
+  thumbnailUrl?: string;
+  enrollmentType?: 'payment' | 'promo_only' | 'both';
+  requiredPromoCode?: string;
 }
 
 export interface PromoCodeItem {
@@ -25,73 +28,55 @@ export interface PromoCodeItem {
   description: string;
   isActive: boolean;
   minPrice?: number;
+  applicableCourseId?: string; // If restricted to specific course, or empty for all
 }
 
 export const DEFAULT_COURSES: CourseItem[] = [
   {
-    id: 'course-sakku-batch-1',
-    title: 'Sakku Batch 1 - ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস',
-    batchName: 'Sakku Batch 1',
+    id: 'dropshipping-reselling',
+    title: 'ড্রপশিপিং রিসেলিং',
     category: 'ড্রপশিপিং রিসেলিং',
-    subtitle: 'পণ্য না কিনেই শূন্য ইনভেস্টমেন্টে রিসেলিং ও ড্রপশিপিংয়ের মাধ্যমে নিয়মিত আয়',
-    description: 'দেশীয় ও আন্তর্জাতিক সাপ্লায়ারদের সাথে সংযোগ, পণ্যের লাভজনক মার্জিন নির্ধারণ, অটোমেটেড অর্ডার ডেলিভারি এবং ক্যাশ-অন-ডেলিভারি হ্যান্ডলিংয়ের সম্পূর্ণ গাইডলাইন।',
+    subtitle: 'বিনা পুঁজিতে পণ্য স্টক না রেখে পাইকারি সাপ্লায়ারদের মাধ্যমে ব্যবসা শুরু করুন।',
+    description: 'সরাসরি ভেরিফাইড পাইকারি সাপ্লায়ারদের থেকে পণ্য নিয়ে সোশ্যাল মিডিয়া ও রিসেলিং প্ল্যাটফর্মে বিক্রি করুন। কোনো নিজস্ব ইনভেস্টমেন্ট ছাড়াই নিয়মিত লাভ নিশ্চিত।',
     price: 1000,
-    discountPrice: 1000,
+    discountPrice: 500,
     promoCodeEligible: true,
-    duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
+    enrollmentType: 'payment',
+    thumbnailUrl: '/src/assets/images/dropshipping_reselling_thumbnail_1792734250256.jpg',
+    duration: '৪ সপ্তাহ · প্র্যাকটিক্যাল গাইডলাইন',
     highlights: [
-      'জিরো ইনভেন্টরি রিসেলিং মেথডোলজি',
-      'ভেরিফাইড লোকাল ও গ্লোবাল হোলসেল সাপ্লায়ার তালিকা',
-      'প্রতি অর্ডারে ৩০০–১,৫০০ টাকা নিশ্চিত নিট মার্জিন',
-      'ক্যাশ-অন-ডেলিভারি রিটার্ন কমানোর গোপন টেকনিক',
+      'জিরো ইনভেস্টমেন্ট রিসেলিং মেথড',
+      'ভেরিফাইড হোলসেল সাপ্লায়ার ডিরেক্টরি',
+      'প্রতি অর্ডারে নিশ্চিত প্রফিট মার্জিন',
     ],
-    badge: 'চলতি ব্যাচ',
     isActive: true,
-    isRunning: true,
     isVisible: true,
     sortOrder: 1,
   },
   {
-    id: 'course-marketing-growth',
-    title: 'ডিজিটাল মার্কেটিং ও সেলস গ্রোথ (মার্কেটিং কিভাবে করবেন)',
-    category: 'মার্কেটিং কিভাবে করবেন',
-    subtitle: 'ফেসবুক, টিকটক ও সোশ্যাল মিডিয়ায় কার্যকর বিজ্ঞাপন দিয়ে কাস্টমার পাওয়ার কৌশল',
-    description: 'অল্প বাজেটে মেটা ও সোশ্যাল মিডিয়া বিজ্ঞাপন রান করা, হাই-কনভার্টিং ভিডিও অ্যাড তৈরি, কাস্টমার ফানেল ও বিক্রয় বৃদ্ধির প্রমাণিত কৌশল।',
-    price: 1000,
-    discountPrice: 1000,
+    id: 'dropshipping-international',
+    title: 'গ্লোবাল ড্রপশিপিং',
+    category: 'গ্লোবাল ড্রপশিপিং',
+    subtitle: 'আন্তর্জাতিক বাজারে শপিফাই ও ফুল-স্ট্যাক ড্রপশিপিং একাডেমি।',
+    description: 'আন্তর্জাতিক মানের শপিফাই ড্রপশিপিং স্টোর বিল্ড করা, ইন্টারন্যাশনাল পেমেন্ট গেটওয়ে সেটআপ এবং ফুলফিলমেন্ট অটোমেশনের এ টু জেড।',
+    price: 5000,
+    discountPrice: 2500,
     promoCodeEligible: true,
-    duration: '৬ সপ্তাহ · প্র্যাকটিক্যাল ক্যাম্পেইন ট্রেনিং',
+    enrollmentType: 'promo_only',
+    requiredPromoCode: 'INTL100',
+    thumbnailUrl: '/src/assets/images/dropshipping_international_thumbnail_1792734264813.jpg',
+    duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
     highlights: [
-      'মেটা (ফেসবুক ও ইনস্টাগ্রাম) হাই-কনভার্সন বিজ্ঞাপন',
-      'সেলস ফানেল, অ্যাড কপিরাইটিং ও স্ক্রিপ্ট রাইটিং',
-      'কম খরচে বেশি কাস্টমার অর্ডার নিয়ে আসার কৌশল',
-      'রিটার্ন অন অ্যাড স্পেন্ড (ROAS) অপ্টিমাইজেশন',
+      'গ্লোবাল মার্কেটপ্লেস এনালাইসিস',
+      'শপিফাই স্টোর ডিজাইন ও অটোমেশন',
+      'ইন্টারন্যাশনাল পেমেন্ট গেটওয়ে সেটআপ',
     ],
-    badge: 'নতুন ব্যাচ',
     isActive: true,
+    isVisible: true,
     sortOrder: 2,
   },
-  {
-    id: 'course-ecommerce-shopify',
-    title: 'শপিফাই ও কমপ্লিট ই-কমার্স একাডেমি (কোর্স শিখুন)',
-    category: 'কোর্স শিখুন',
-    subtitle: 'আন্তর্জাতিক ও দেশীয় বাজারে বিশ্বমানের অনলাইন শপ তৈরি ও স্কেলিং',
-    description: 'আন্তর্জাতিক মানের শপিফাই ড্রপশিপিং স্টোর বিল্ড করা, ইন্টারন্যাশনাল পেমেন্ট গেটওয়ে সেটআপ এবং ফুলফিলমেন্ট অটোমেশনের এ টু জেড।',
-    price: 1000,
-    discountPrice: 1000,
-    promoCodeEligible: true,
-    duration: '১০ সপ্তাহ · প্রজেক্ট ও সার্টিফিকেট',
-    highlights: [
-      'প্রফেশনাল শপিফাই ড্রপশিপিং স্টোর আর্কিটেকচার',
-      'আন্তর্জাতিক পেমেন্ট গেটওয়ে ও কারেন্সি রূপান্তর',
-      'প্রাইভেট সোর্সিং এজেন্ট ও দ্রুত এয়ার শিপিং',
-      '১-অন-১ মেন্টর সাপোর্ট ও লাইফটাইম এক্সেস',
-    ],
-    badge: 'ফুল-স্ট্যাক একাডেমি',
-    isActive: true,
-    sortOrder: 3,
-  },
 ];
+
 
 export const DEFAULT_PROMO_CODES: PromoCodeItem[] = [
   {

@@ -45,6 +45,9 @@ const AlreadyRegisteredPage = React.lazy(() =>
 const WelcomeCelebrationPage = React.lazy(() =>
   import('./pages/WelcomeCelebrationPage').then((m) => ({ default: m.WelcomeCelebrationPage }))
 );
+const RegistrationPage = React.lazy(() =>
+  import('./pages/RegistrationPage').then((m) => ({ default: m.RegistrationPage }))
+);
 
 const ANIM_WORDS: Record<
   'bn' | 'en',
@@ -145,10 +148,9 @@ function AppShell() {
   const { lang } = useLanguage();
   const activeKind: AnimKind = anim ?? 'intro';
 
-  const triggerRegisterIntro = useCallback(() => {
-    setAnimRunKey((k) => k + 1);
-    setAnim('intro');
-  }, []);
+  const triggerRegister = useCallback(() => {
+    navigate('/registration');
+  }, [navigate]);
 
   return (
     <>
@@ -161,7 +163,7 @@ function AppShell() {
       </a>
 
       <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412] pb-16 sm:pb-0 selection:bg-[#ff7722] selection:text-[#171412]">
-        <Navigation setAnim={setAnim} onRegisterClick={triggerRegisterIntro} />
+        <Navigation setAnim={setAnim} onRegisterClick={triggerRegister} />
         <div className="flex-1">
           <Suspense
             fallback={
@@ -182,11 +184,28 @@ function AppShell() {
                   <LoggedInGuard>
                     <HomePage
                       setAnim={setAnim}
-                      onRegisterClick={triggerRegisterIntro}
+                      onRegisterClick={triggerRegister}
                     />
                   </LoggedInGuard>
                 }
               />
+              <Route
+                path="/courses"
+                element={
+                  <LoggedInGuard>
+                    <RegistrationPage />
+                  </LoggedInGuard>
+                }
+              />
+              <Route
+                path="/registration"
+                element={
+                  <LoggedInGuard>
+                    <RegistrationPage />
+                  </LoggedInGuard>
+                }
+              />
+              <Route path="/admin" element={<Navigate to="/check" replace />} />
               <Route
                 path="/join"
                 element={
@@ -207,15 +226,7 @@ function AppShell() {
                 path="/register"
                 element={
                   <LoggedInGuard>
-                    <JoinWaitlistPage
-                      key={`reg-${joinResetKey}`}
-                      setAnim={setAnim}
-                      onVerifiedSuccess={(alreadyExists) => {
-                        setAlreadyOnWaitlist(alreadyExists);
-                        setAnimRunKey((k) => k + 1);
-                        setAnim('success');
-                      }}
-                    />
+                    <RegistrationPage />
                   </LoggedInGuard>
                 }
               />
@@ -267,7 +278,7 @@ function AppShell() {
               <Route path="/check" element={<AdminCheckPage />} />
               <Route
                 path="*"
-                element={<NotFoundPage onRegisterClick={triggerRegisterIntro} />}
+                element={<NotFoundPage onRegisterClick={triggerRegister} />}
               />
             </Routes>
           </Suspense>
@@ -297,6 +308,7 @@ function AppShell() {
           }
         }}
       />
+
     </>
   );
 }

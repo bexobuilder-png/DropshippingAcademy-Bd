@@ -122,7 +122,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
             )}
 
             {/* Giant Title */}
-            <h1 className="font-display text-[32px] sm:text-[46px] lg:text-[56px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em] mb-5">
+            <h1 className="font-display text-[28px] sm:text-[46px] lg:text-[56px] font-extrabold text-[#171412] leading-[1.08] tracking-[-0.03em] mb-5">
               {currentSlide.titlePrefix}{' '}
               <span className="text-[#ff7722] block sm:inline">
                 {currentSlide.titleHighlight}
