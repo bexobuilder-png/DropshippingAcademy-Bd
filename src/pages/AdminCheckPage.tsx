@@ -720,7 +720,7 @@ export const AdminCheckPage: React.FC = () => {
             ...c,
             title: courseForm.title.trim(),
             batchName: courseForm.batchName.trim() || undefined,
-            category: courseForm.category.trim() || 'ড্রপশিপিং ই-কমার্স ব্যবসা',
+            category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
             subtitle: courseForm.subtitle.trim(),
             description: courseForm.description.trim(),
             price: Number(courseForm.price) || 1000,
@@ -732,7 +732,7 @@ export const AdminCheckPage: React.FC = () => {
             isRunning: courseForm.isRunning,
             isVisible: courseForm.isVisible,
             thumbnailUrl: courseForm.thumbnailUrl.trim() || undefined,
-            enrollmentType: courseForm.enrollmentType,
+            enrollmentType: courseForm.enrollmentType as 'payment' | 'promo_only',
             requiredPromoCode: courseForm.requiredPromoCode.trim() || undefined,
           };
         }
@@ -747,7 +747,7 @@ export const AdminCheckPage: React.FC = () => {
         id: `course-${Date.now()}`,
         title: courseForm.title.trim(),
         batchName: courseForm.batchName.trim() || undefined,
-        category: courseForm.category.trim() || 'ড্রপশিপিং ই-কমার্স ব্যবসা',
+        category: courseForm.category.trim() || 'ড্রপশিপিং রিসেলিং',
         subtitle: courseForm.subtitle.trim(),
         description: courseForm.description.trim(),
         price: Number(courseForm.price) || 1000,
@@ -3978,7 +3978,11 @@ export const AdminCheckPage: React.FC = () => {
                         key={cat}
                         type="button"
                         onClick={() => setCourseForm((prev) => ({ ...prev, category: cat }))}
-                        className="px-2 py-0.5 rounded-[50px] bg-[#f2f0e7] hover:bg-[#ffc765] border border-[#171412]/20 font-semibold cursor-pointer"
+                        className={`px-2 py-0.5 rounded-[50px] border font-semibold cursor-pointer ${
+                          courseForm.category === cat
+                            ? 'bg-[#171412] text-white border-[#171412]'
+                            : 'bg-[#f2f0e7] hover:bg-[#ffc765] border-[#171412]/20'
+                        }`}
                       >
                         {cat}
                       </button>
@@ -4044,7 +4048,6 @@ export const AdminCheckPage: React.FC = () => {
                     {[
                       { type: 'payment', label: '💳 টাকা দিয়ে ভর্তি (পেইড)' },
                       { type: 'promo_only', label: '🏷️ শুধুমাত্র প্রমো কোড' },
-                      { type: 'both', label: '🔄 উভয় মাধ্যম (টাকা/কোড)' },
                     ].map((mode) => (
                       <button
                         key={mode.type}

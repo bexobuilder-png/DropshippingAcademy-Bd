@@ -149,8 +149,8 @@ function AppShell() {
   const activeKind: AnimKind = anim ?? 'intro';
 
   const triggerRegister = useCallback(() => {
-    navigate('/registration');
-  }, [navigate]);
+    setAnim('intro');
+  }, [setAnim]);
 
   return (
     <>
@@ -193,7 +193,7 @@ function AppShell() {
                 path="/courses"
                 element={
                   <LoggedInGuard>
-                    <RegistrationPage />
+                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
                   </LoggedInGuard>
                 }
               />
@@ -201,7 +201,7 @@ function AppShell() {
                 path="/registration"
                 element={
                   <LoggedInGuard>
-                    <RegistrationPage />
+                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
                   </LoggedInGuard>
                 }
               />
@@ -226,7 +226,7 @@ function AppShell() {
                 path="/register"
                 element={
                   <LoggedInGuard>
-                    <RegistrationPage />
+                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
                   </LoggedInGuard>
                 }
               />
@@ -298,13 +298,14 @@ function AppShell() {
           setAnim(null);
           if (finished === 'intro') {
             setJoinResetKey((k) => k + 1);
-            navigate('/join');
+            // If we are not already on registration or courses page, go there
+            if (!window.location.pathname.includes('/registration') && !window.location.pathname.includes('/courses')) {
+              navigate('/registration');
+            }
             window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
           } else if (finished === 'success') {
-            navigate('/welcome', {
-              replace: true,
-            });
-            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+            // Success animation can lead to welcome or dashboard
+            // But usually the page handles its own state change after animation
           }
         }}
       />

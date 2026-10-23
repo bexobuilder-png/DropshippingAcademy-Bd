@@ -37,7 +37,9 @@ export const Navigation: React.FC<NavigationProps> = ({
       navigate('/dashboard');
       return;
     }
-    navigate('/registration');
+    
+    // Play intro animation then go to registration
+    setAnim('intro');
   };
 
   const { progress, isScrollable, hasScrolled, activeSectionId } =

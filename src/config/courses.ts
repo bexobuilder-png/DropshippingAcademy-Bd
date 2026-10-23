@@ -42,7 +42,7 @@ export const DEFAULT_COURSES: CourseItem[] = [
     discountPrice: 500,
     promoCodeEligible: true,
     enrollmentType: 'payment',
-    thumbnailUrl: '/src/assets/images/dropshipping_reselling_thumbnail_1792734250256.jpg',
+    thumbnailUrl: '/images/course_dropshipping_basic_1791567728755.jpg',
     duration: '৪ সপ্তাহ · প্র্যাকটিক্যাল গাইডলাইন',
     highlights: [
       'জিরো ইনভেস্টমেন্ট রিসেলিং মেথড',
@@ -64,7 +64,7 @@ export const DEFAULT_COURSES: CourseItem[] = [
     promoCodeEligible: true,
     enrollmentType: 'promo_only',
     requiredPromoCode: 'INTL100',
-    thumbnailUrl: '/src/assets/images/dropshipping_international_thumbnail_1792734264813.jpg',
+    thumbnailUrl: '/images/course_dropshipping_basic_1791567728755.jpg',
     duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
     highlights: [
       'গ্লোবাল মার্কেটপ্লেস এনালাইসিস',
