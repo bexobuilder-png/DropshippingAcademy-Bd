@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { CourseItem, PromoCodeItem } from '../config/courses';
-import { fetchCoursesList, fetchPromoCodesList } from '../services/courses';
-import { StudentEnrollment, verifyEmailOtpAndEnroll } from '../services/enrollments';
+import { fetchCoursesList, fetchPromoCodesList, evaluatePromoCode, incrementPromoUsage, PromoValidationResult } from '../services/courses';
+import { StudentEnrollment, verifyEmailOtpAndEnroll, submitStudentEnrollment } from '../services/enrollments';
 import { sendEmailVerificationOtp, maskEmailAddress } from '../services/waitlist';
 import { OtpInput } from '../components/OtpInput';
 import { Button } from '../components/Button';
@@ -41,8 +41,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [district, setDistrict] = useState('ঢাকা');
+
+  // Promo state (moves to Payment page)
   const [promoCode, setPromoCode] = useState('');
-  const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const [promoError, setPromoError] = useState('');
   const [promoCodesList, setPromoCodesList] = useState<PromoCodeItem[]>([]);
 
@@ -84,6 +86,20 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     }
   }, [resendCooldown]);
 
+  // Re-validate applied promo code if user changes course selection
+  useEffect(() => {
+    if (selectedCourse && appliedPromo) {
+      const result = evaluatePromoCode(appliedPromo.code || promoCode, selectedCourse, promoCodesList);
+      if (result.isValid) {
+        setAppliedPromo(result);
+        setPromoError('');
+      } else {
+        setAppliedPromo(null);
+        setPromoError(result.message || 'নতুন কোর্সের জন্য এই প্রোমো কোডটি কার্যকর নয়।');
+      }
+    }
+  }, [selectedCourse]);
+
   const filteredCourses = useMemo(() => {
     return courses.filter(c => c.category === activeCategory);
   }, [courses, activeCategory]);
@@ -94,31 +110,30 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleValidatePromo = () => {
+  const handleApplyPromo = () => {
     setPromoError('');
-    const cleaned = promoCode.trim().toUpperCase();
-    if (!cleaned) {
-      setPromoError('প্রমো কোড দিন');
+    if (!selectedCourse) return;
+    const clean = promoCode.trim().toUpperCase();
+    if (!clean) {
+      setPromoError('প্রোমো কোড প্রদান করুন।');
+      setAppliedPromo(null);
       return;
     }
 
-    if (selectedCourse?.requiredPromoCode && cleaned !== selectedCourse.requiredPromoCode.toUpperCase()) {
-      setPromoError('এই কোর্সের জন্য প্রমো কোডটি সঠিক নয়');
-      setPromoDiscount(null);
-      return;
+    const res = evaluatePromoCode(clean, selectedCourse, promoCodesList);
+    if (res.isValid) {
+      setAppliedPromo(res);
+      setPromoError('');
+    } else {
+      setAppliedPromo(null);
+      setPromoError(res.message);
     }
+  };
 
-    const match = promoCodesList.find((p) => p.code.toUpperCase() === cleaned && p.isActive);
-    if (!match) {
-      setPromoError('অকার্যকর প্রমো কোড');
-      setPromoDiscount(null);
-      return;
-    }
-    const basePrice = selectedCourse!.discountPrice ?? selectedCourse!.price;
-    const discount = match.discountType === 'percentage' 
-      ? Math.round((basePrice * match.discountValue) / 100) 
-      : match.discountValue;
-    setPromoDiscount(discount);
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    setPromoError('');
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -135,23 +150,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
       return;
     }
 
-    const isPromoOnlyCourse = selectedCourse?.enrollmentType === 'promo_only';
-    if (isPromoOnlyCourse && !promoDiscount && !selectedCourse?.requiredPromoCode) {
-      // If it's promo only and they haven't validated a code, they can still proceed if they enter it later?
-      // No, let's enforce validation here if it's promo only.
-      if (!promoCode.trim()) {
-        setFormError('এই কোর্সে ভর্তি হতে প্রমো কোড বাধ্যতামূলক।');
-        return;
-      }
-    }
-
     setIsSendingOtp(true);
-    if (setAnim) setAnim('submit');
+    if (setAnim) {
+      if (setAnimRunKey) setAnimRunKey(k => k + 1);
+      setAnim('submit');
+    }
     
     const res = await sendEmailVerificationOtp(email);
     
-    // Maintain animation timing
-    await new Promise(resolve => setTimeout(resolve, 3500));
+    // Minimum wait for animation visibility
+    await new Promise(resolve => setTimeout(resolve, 3600));
     
     setIsSendingOtp(false);
     if (setAnim) setAnim(null);
@@ -172,73 +180,25 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     setIsVerifying(true);
     setOtpError('');
 
-    // Verification check only (not final enrollment yet if it's paid)
-    // Actually, we can enroll them and then mark as "Waiting for Payment" or just wait until payment step.
-    // The user wants: Info -> OTP -> Payment -> Success.
-    
-    const isPromoOnly = selectedCourse!.enrollmentType === 'promo_only' || (selectedCourse!.discountPrice ?? selectedCourse!.price) - (promoDiscount ?? 0) <= 0;
+    const res = await verifyEmailOtpAndEnroll(otpToken, email, {
+      courseId: selectedCourse!.id,
+      courseTitle: selectedCourse!.title,
+      courseCategory: selectedCourse!.category,
+      studentName: name.trim(),
+      studentPhone: phone.trim(),
+      studentEmail: email.trim(),
+      district: district.trim(),
+      enrollmentType: 'payment',
+      amountPaid: selectedCourse!.discountPrice ?? selectedCourse!.price,
+    });
 
-    if (isPromoOnly) {
-      // Complete enrollment now
-      const res = await verifyEmailOtpAndEnroll(otpToken, email, {
-        courseId: selectedCourse!.id,
-        courseTitle: selectedCourse!.title,
-        courseCategory: selectedCourse!.category,
-        studentName: name.trim(),
-        studentPhone: phone.trim(),
-        studentEmail: email.trim(),
-        district: district.trim(),
-        enrollmentType: 'promo_only',
-        promoCodeUsed: promoDiscount !== null ? promoCode.trim().toUpperCase() : undefined,
-        amountPaid: 0,
-      });
-
-      setIsVerifying(false);
-      if (res.success && res.enrollment) {
-        if (setAnim) {
-          setAnim('success');
-          await new Promise(resolve => setTimeout(resolve, 3800));
-          setAnim(null);
-        }
-        setSubmittedData(res.enrollment);
-        setStep('SUCCESS');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setOtpError(res.error || 'ভেরিফিকেশন ব্যর্থ হয়েছে।');
-      }
+    setIsVerifying(false);
+    if (res.success && res.enrollment) {
+      setSubmittedData(res.enrollment);
+      setStep('PAYMENT');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Proceed to Payment step
-      // We still need to verify the OTP though.
-      // Let's assume verifyEmailOtpAndEnroll can just verify if we don't pass enrollment data? 
-      // Or we can verify first then show payment.
-      // For now, let's just proceed to PAYMENT step if OTP is "valid" (mock/service check).
-      
-      // In this app, verifyEmailOtpAndEnroll also creates the record. 
-      // We'll create it as 'pending' and then update with payment info in next step?
-      // Or just wait until payment is done.
-      
-      // Let's verify the OTP first.
-      const res = await verifyEmailOtpAndEnroll(otpToken, email, {
-        courseId: selectedCourse!.id,
-        courseTitle: selectedCourse!.title,
-        courseCategory: selectedCourse!.category,
-        studentName: name.trim(),
-        studentPhone: phone.trim(),
-        studentEmail: email.trim(),
-        district: district.trim(),
-        enrollmentType: 'payment',
-        promoCodeUsed: promoDiscount !== null ? promoCode.trim().toUpperCase() : undefined,
-        amountPaid: (selectedCourse!.discountPrice ?? selectedCourse!.price) - (promoDiscount ?? 0),
-      });
-
-      setIsVerifying(false);
-      if (res.success && res.enrollment) {
-        setSubmittedData(res.enrollment);
-        setStep('PAYMENT');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setOtpError(res.error || 'ভেরিফিকেশন ব্যর্থ হয়েছে।');
-      }
+      setOtpError(res.error || 'ভেরিফিকেশন ব্যর্থ হয়েছে। সঠিক কোড দিন।');
     }
   };
 
@@ -250,16 +210,58 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     }
 
     setIsVerifying(true);
-    // Update the enrollment with payment info
-    // (Assuming verifyEmailOtpAndEnroll or a similar service can update)
-    // For now we just simulate success.
-    
+    setFormError('');
+
+    // If promo code applied, increment usage atomically
+    if (appliedPromo?.code) {
+      await incrementPromoUsage(appliedPromo.code);
+    }
+
+    const originalFee = selectedCourse!.discountPrice ?? selectedCourse!.price;
+    const finalFee = appliedPromo ? appliedPromo.finalPrice : originalFee;
+
+    const finalPayload: StudentEnrollment = {
+      id: submittedData?.id || `enr-${Date.now()}`,
+      courseId: selectedCourse!.id,
+      courseTitle: selectedCourse!.title,
+      courseCategory: selectedCourse!.category,
+      studentName: name.trim(),
+      studentPhone: phone.trim(),
+      studentEmail: email.trim(),
+      district: district.trim(),
+      enrollmentType: finalFee === 0 ? 'promo_only' : 'payment',
+      promoCodeUsed: appliedPromo ? appliedPromo.code : undefined,
+      paymentMethod: paymentMethod,
+      senderPhone: senderPhone.trim(),
+      trxId: trxId.trim().toUpperCase(),
+      amountPaid: finalFee,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    await submitStudentEnrollment(finalPayload);
+
+    // Persist session for ProfilePage
+    const { setCurrentUserSession } = await import('../services/auth');
+    setCurrentUserSession({
+      id: finalPayload.id,
+      firstName: name.split(' ')[0] || name,
+      lastName: name.split(' ').slice(1).join(' ') || '',
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      district: district.trim(),
+      status: 'pending',
+      registeredAt: finalPayload.createdAt,
+    });
+
     if (setAnim) {
+      if (setAnimRunKey) setAnimRunKey(k => k + 1);
       setAnim('success');
       await new Promise(resolve => setTimeout(resolve, 3800));
       setAnim(null);
     }
-    
+
+    setSubmittedData(finalPayload);
     setStep('SUCCESS');
     setIsVerifying(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -273,17 +275,22 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     setResendCooldown(60);
   };
 
+  const originalPrice = selectedCourse ? (selectedCourse.discountPrice ?? selectedCourse.price) : 0;
+  const currentFinalPrice = appliedPromo ? appliedPromo.finalPrice : originalPrice;
+
   return (
     <main id="main-content" className="min-h-screen bg-[#fbf9ef] text-[#171412] pb-20">
-      {/* Header matched to screenshot */}
+      {/* Header */}
       <div className="bg-[#0b1712] text-white py-12 md:py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
         <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-6xl font-black font-display mb-4 tracking-tight">
-            Select Your Course
+            {step === 'CATALOG' ? 'Select Your Course' : t('নিবন্ধন সম্পন্ন করুন', 'Complete Registration')}
           </h1>
           <p className="text-[#22c55e] font-bold text-lg md:text-xl">
-            আপনার পছন্দের ক্যাটাগরি নির্বাচন করুন এবং কোর্স শুরু করুন
+            {step === 'CATALOG' 
+              ? 'আপনার পছন্দের ক্যাটাগরি নির্বাচন করুন এবং কোর্স শুরু করুন'
+              : t('আপনার সঠিক তথ্য দিয়ে ফরমটি পূরণ করুন', 'Fill the form with your correct information')}
           </p>
         </div>
       </div>
@@ -362,7 +369,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                         />
                         <div className="absolute top-4 left-4">
                           <span className="px-3 py-1 bg-[#059669] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">
-                            {c.badge || (c.enrollmentType === 'promo_only' ? 'Scholarship' : 'Beginner')}
+                            {c.badge || 'New'}
                           </span>
                         </div>
                       </div>
@@ -393,7 +400,6 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                 </div>
               )}
 
-              {/* Bottom Help Matched to Screenshot */}
               <div className="bg-[#f0fdf4] border border-[#059669]/10 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[#059669] rounded-full flex items-center justify-center text-white">
@@ -423,7 +429,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
             >
               <div className="p-6 bg-[#fbf9ef] border-b-2 border-[#171412] flex items-center justify-between">
                 <button onClick={() => setStep('CATALOG')} className="text-xs font-bold text-[#171412]/60 hover:text-[#059669]">← কোর্স পরিবর্তন</button>
-                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">ভর্তি ফরম</span>
+                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">১ম ধাপ: ভর্তি ফরম</span>
               </div>
               
               <form onSubmit={handleFormSubmit} className="p-6 md:p-10 space-y-8">
@@ -455,32 +461,6 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                     </div>
                   </div>
                 </div>
-
-                {/* Promo Code - Shown if applicable or required */}
-                {(selectedCourse.enrollmentType === 'promo_only' || selectedCourse.promoCodeEligible) && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-black uppercase tracking-wider text-[#171412]/40 border-b border-[#171412]/5 pb-2">প্রমো কোড</h4>
-                    <div className="p-5 bg-[#f0fdf4] rounded-2xl border-2 border-[#059669]/10 space-y-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <label className="text-xs font-bold">
-                          {selectedCourse.enrollmentType === 'promo_only' ? 'ভর্তি হতে প্রমো কোড দিন *' : 'প্রমো কোড আছে কি? (ঐচ্ছিক ছাড়)'}
-                        </label>
-                        {promoDiscount !== null && <span className="text-xs font-bold text-[#15803d]">✓ কোড সফল! {promoDiscount > 0 ? `(৳${promoDiscount} ছাড়)` : ''}</span>}
-                      </div>
-                      <div className="flex gap-2">
-                        <input 
-                          value={promoCode} 
-                          onChange={(e) => setPromoCode(e.target.value)} 
-                          type="text" 
-                          placeholder={selectedCourse.requiredPromoCode || "PROMO1000"} 
-                          className="flex-1 px-4 py-2.5 rounded-xl border-2 border-[#171412]/10 focus:border-[#059669] outline-none uppercase font-mono text-sm" 
-                        />
-                        <button type="button" onClick={handleValidatePromo} className="px-4 py-2.5 bg-[#171412] text-white font-bold text-xs rounded-xl hover:bg-[#059669] transition-all">যাচাই</button>
-                      </div>
-                      {promoError && <p className="text-[10px] font-bold text-red-500">{promoError}</p>}
-                    </div>
-                  </div>
-                )}
 
                 <div className="pt-6">
                   <button 
@@ -521,7 +501,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                     disabled={isVerifying || otpToken.length !== 6}
                     className="w-full py-3.5 bg-[#171412] hover:bg-[#2b2724] disabled:opacity-50 text-white font-black text-sm rounded-xl transition-all shadow-lg"
                   >
-                    {isVerifying ? 'যাচাই করা হচ্ছে...' : 'ভেরিফাই ও পরবর্তী ধাপ'}
+                    {isVerifying ? 'যাচাই করা হচ্ছে...' : 'ভেরিফাই ও পেমেন্ট ধাপে যান →'}
                   </button>
                   
                   <button 
@@ -550,16 +530,110 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               className="max-w-2xl mx-auto bg-white rounded-3xl border-2 border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden"
             >
               <div className="p-6 bg-[#f0fdf4] border-b-2 border-[#171412] flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">পেমেন্ট সম্পন্ন করুন</span>
+                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">৩য় ধাপ: পেমেন্ট ও প্রমো কোড</span>
                 <span className="text-xs font-bold text-[#171412]/60">কোর্স: {selectedCourse.title}</span>
               </div>
               
               <form onSubmit={handlePaymentSubmit} className="p-6 md:p-10 space-y-8">
+                {formError && (
+                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-700 text-sm font-bold flex items-center gap-3">
+                    <AlertCircleSvgIcon className="w-5 h-5 shrink-0" />
+                    {formError}
+                  </div>
+                )}
+
+                {/* 1. Course Summary & Original Price */}
+                <div className="p-6 bg-[#fbf9ef] rounded-2xl border-2 border-[#171412]/10 space-y-4">
+                  <div className="flex items-start justify-between flex-wrap gap-2">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#059669] bg-[#f0fdf4] px-2.5 py-1 rounded-md border border-[#059669]/20">
+                        {selectedCourse.category}
+                      </span>
+                      <h3 className="text-xl font-black text-[#171412] mt-2">{selectedCourse.title}</h3>
+                      <p className="text-xs text-[#171412]/60">{selectedCourse.duration}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-[#171412]/50 block">মূল কোর্স ফি</span>
+                      {appliedPromo ? (
+                        <div className="space-y-0.5">
+                          <span className="line-through text-sm font-bold text-[#171412]/40 mr-2">৳{originalPrice.toLocaleString()}</span>
+                          <span className="text-2xl sm:text-3xl font-black text-[#059669]">৳{currentFinalPrice.toLocaleString()}</span>
+                        </div>
+                      ) : (
+                        <span className="text-2xl font-black text-[#171412]">৳{originalPrice.toLocaleString()}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* PROMO CODE SECTION */}
+                  <div className="pt-4 border-t-2 border-dashed border-[#171412]/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#171412] flex items-center gap-1.5">
+                        <span>🎟️ প্রমো কোড আছে? (Promotional Discount)</span>
+                      </label>
+                      {appliedPromo && (
+                        <span className="text-xs font-bold text-[#059669] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#059669]/20 animate-pulse">
+                          ✓ {appliedPromo.percentage}% OFF Applied
+                        </span>
+                      )}
+                    </div>
+
+                    {appliedPromo ? (
+                      <div className="p-4 bg-[#f0fdf4] border-2 border-[#059669] rounded-xl flex items-center justify-between gap-4 animate-fade-in">
+                        <div className="space-y-1">
+                          <p className="font-mono font-black text-sm text-[#059669] uppercase tracking-wider">
+                            {appliedPromo.code}
+                          </p>
+                          <p className="text-xs font-bold text-[#059669]">
+                            {appliedPromo.message}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromo}
+                          className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 font-bold text-xs rounded-lg transition-all border border-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input 
+                          value={promoCode} 
+                          onChange={(e) => {
+                            setPromoCode(e.target.value.toUpperCase());
+                            setPromoError('');
+                          }} 
+                          type="text" 
+                          placeholder="e.g. EARLY20" 
+                          className="flex-1 px-4 py-2.5 rounded-xl border-2 border-[#171412]/15 focus:border-[#059669] outline-none uppercase font-mono text-sm font-bold bg-white" 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={handleApplyPromo} 
+                          className="px-5 py-2.5 bg-[#171412] text-white font-bold text-xs rounded-xl hover:bg-[#059669] transition-all shrink-0"
+                        >
+                          Apply Code
+                        </button>
+                      </div>
+                    )}
+
+                    {promoError && (
+                      <p className="text-xs font-bold text-red-600 flex items-center gap-1.5 animate-shake">
+                        <AlertCircleSvgIcon className="w-4 h-4 shrink-0" />
+                        <span>{promoError}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Payment Method Selection */}
                 <div className="p-5 bg-white rounded-2xl border-2 border-[#171412]/10 space-y-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold">পেমেন্ট মেথড:</span>
+                    <span className="text-sm font-bold">পেমেন্ট মেথড নির্বাচন করুন:</span>
                     <span className="text-sm font-black text-[#059669]">
-                      পরিশোধযোগ্য: ৳{Math.max(0, (selectedCourse.discountPrice ?? selectedCourse.price) - (promoDiscount ?? 0))}
+                      সর্বমোট পরিশোধযোগ্য: ৳{currentFinalPrice.toLocaleString()}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -590,13 +664,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-2">
                   <button 
                     type="submit" 
                     disabled={isVerifying}
                     className="w-full py-4 bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-black text-lg rounded-2xl border-2 border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3"
                   >
-                    {isVerifying ? 'প্রসেসিং হচ্ছে...' : 'পেমেন্ট ভেরিফাই ও ভর্তি নিশ্চিত করুন'}
+                    {isVerifying ? 'প্রসেসিং হচ্ছে...' : `৳${currentFinalPrice.toLocaleString()} পেমেন্ট ভেরিফাই ও ভর্তি নিশ্চিত করুন →`}
                   </button>
                 </div>
               </form>
@@ -627,6 +701,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                 <div className="flex justify-between border-b border-[#171412]/5 pb-2">
                   <span className="text-[#171412]/50 font-sans">ট্র্যাকিং আইডি:</span>
                   <span className="font-bold">{submittedData.id}</span>
+                </div>
+                {submittedData.promoCodeUsed && (
+                  <div className="flex justify-between border-b border-[#171412]/5 pb-2">
+                    <span className="text-[#171412]/50 font-sans">প্রোমো কোড:</span>
+                    <span className="font-black text-[#059669]">{submittedData.promoCodeUsed}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-b border-[#171412]/5 pb-2">
+                  <span className="text-[#171412]/50 font-sans">পরিশোধিত ফি:</span>
+                  <span className="font-bold">৳{submittedData.amountPaid?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#171412]/5 pb-2">
                   <span className="text-[#171412]/50 font-sans">পেমেন্ট স্ট্যাটাস:</span>

@@ -237,18 +237,54 @@ create policy "Only admins can view and manage contact messages"
   using (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'))
   with check (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'));
 
+-- ============================================================================
+-- TABLE 6: public.promo_codes (Managed from Admin Control Center)
+-- ============================================================================
+create table if not exists public.promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text unique not null,
+  applicable_course_id text default null, -- null means all courses
+  percentage integer not null check (percentage >= 1 and percentage <= 50),
+  max_percentage integer not null default 50 check (max_percentage <= 50),
+  usage_limit integer not null default 100 check (usage_limit >= 1),
+  used_count integer not null default 0 check (used_count >= 0),
+  expires_at timestamptz default null,
+  is_active boolean not null default true,
+  description text default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.promo_codes enable row level security;
+
+grant select on table public.promo_codes to anon, authenticated;
+grant insert, update, delete on table public.promo_codes to authenticated;
+
+drop policy if exists "Public can view promo codes" on public.promo_codes;
+create policy "Public can view promo codes"
+  on public.promo_codes
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "Authorized admins can manage promo codes" on public.promo_codes;
+create policy "Authorized admins can manage promo codes"
+  on public.promo_codes
+  for all
+  to authenticated
+  using (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'))
+  with check (lower(coalesce(auth.jwt() ->> 'email', '')) in ('bexobuilder@gmail.com', 'rohit007jsr@gmail.com'));
+
 -- Add to Realtime Publication
 do $$
 begin
-  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'contact_settings') then
-    alter publication supabase_realtime add table public.contact_settings;
-  end if;
-  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'contact_messages') then
-    alter publication supabase_realtime add table public.contact_messages;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'promo_codes') then
+    alter publication supabase_realtime add table public.promo_codes;
   end if;
 exception
   when undefined_object then
     null;
 end $$;
+
 
 

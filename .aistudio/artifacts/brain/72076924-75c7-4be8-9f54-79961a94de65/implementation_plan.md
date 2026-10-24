@@ -1,112 +1,155 @@
-# Course Catalog, Registration System & Admin Management Architecture
+# Move Promo Codes to Payment Step & Admin Promo Code Management
 
-## Title & Summary
-Transform the registration flow into a comprehensive Course Catalog & Enrollment system where clicking "রেজিস্ট্রেশন করুন" presents categorized courses with rich thumbnails, detailed descriptions, pricing, and enrollment buttons. Incorporate flexible enrollment models (promo-code exclusive vs. paid via bKash/Nagad TrxID), student registration forms, and an integrated Admin Panel to manage courses, promo codes, and student enrollment submissions.
+This feature relocates promo code entry from the initial registration form to the top of the Payment Page, implements real-time price updates with bilingual discount callouts, and provides full Admin controls to manage promo code caps, course restrictions, expiration dates, and usage limits.
 
 ## User Review & Critical Decisions
+
 > [!IMPORTANT]
-> The clarifying questions were skipped; the following battle-tested defaults have been adopted to fulfill all requirements smoothly:
-- **Registration Action Flow**: Clicking "রেজিস্ট্রেশন করুন" opens a dedicated Course Catalog & Enrollment view with category filter tabs (ড্রপশিপিং ই-কমার্স, ড্রপশিপিং রিসেলার, ডিজিটাল মার্কেটিং, ইত্যাদি), rich thumbnails, and enrollment triggers.
-- **Dual Enrollment Modes**: Admins can set courses as either **পেইড কোর্স (টাকা দিয়ে ভর্তি)** or **প্রমো কোড অনলি (শুধুমাত্র অ্যাডমিনের সেট করা প্রমো কোড দিয়ে জয়েন)**. If set to promo code, students must provide a valid active promo code to complete registration. If set to paid, students provide their bKash/Nagad sender number and TrxID.
-- **Admin Panel Submissions**: Every student registration directly streams into the Admin Panel with student contact details, selected course, enrollment mode, promo code or TrxID, and one-click WhatsApp contact / approval actions.
-- **Admin Authentication**: Accessible via the Navbar "অ্যাডমিন প্যানেল" button or discrete admin entrance protected by a secure PIN (`1234` by default with password option).
+> The following key decisions were confirmed by the user in Phase 1:
+
+- **Confirmed Decision 1 (Admin Discount Cap)**: Maximum discount percentage is strictly capped at 50%. The Admin Promo Code form enforces max 50% via client-side validation and server-side constraints.
+- **Confirmed Decision 2 (Course Re-validation)**: If a student changes their course selection during checkout, the applied promo code automatically re-validates against the new course and clears with an inline message if non-applicable.
+- **Confirmed Decision 3 (Payment Page Promo Display)**: Display live percentage discount badges ("20% OFF applied, you save ৳XXX") and discount details without crowding the payment UI with remaining limit counts.
 
 ---
 
 ## 1. Overview & Core Concept
+
 - **What It Does**:
-  1. Visitors clicking "রেজিস্ট্রেশন করুন" in the Hero, Navbar, or Home sections see a categorized Course Catalog modal/view showcasing course cards with image thumbnails, category tags, batch labels, pricing, and an enrollment button.
-  2. Clicking "ভর্তি হন / রেজিস্ট্রেশন করুন" on any course opens a streamlined student application form collecting Full Name, WhatsApp Number, Email, and District.
-  3. Form adapts dynamically:
-     - For **পেইড কোর্স**: Displays bKash/Nagad merchant instructions and accepts Sender Phone + TrxID.
-     - For **প্রমো কোড অনলি কোর্স**: Accepts promo code, validates in real-time against active promo codes in the system, and allows admission only upon code match.
-  4. Submitted registrations are saved to local persistent storage (and synced to database if connected) and immediately appear in the Admin Panel's "কোর্স রেজিস্ট্রেশন ও ভর্তি আবেদন" dashboard.
-  5. In Admin Panel, admins can create new courses with custom thumbnails, set categories, configure pricing or toggle "শুধুমাত্র প্রমো কোড", create & distribute promo codes, and review student applications.
+  1. **Clean Registration Flow**: Simplifies the registration form (Name, Phone, Email, District) without distraction.
+  2. **Payment Page Promo UI**: Relocates promo input to the top of the payment screen. Students enter a code, click "Apply", and instantly see strikethrough original pricing, large highlighted final prices, and a green savings badge.
+  3. **Admin Promo Code Manager**: Enables admins to create custom promo codes (e.g. `EARLY20`), link them to specific courses or "All courses", set percentage discounts (up to 50%), define redemption caps (e.g. 50 uses), set expiry dates, toggle active/inactive status, and track redemption counters (`used_count / usage_limit`).
+  4. **Server-Side Validation & Persistence**: Validates code rules server-side before payment and atomically increments redemption counts upon payment confirmation.
+
+- **Target Audience**:
+  - **Students**: Enrolling in Dropshipping Academy courses with a seamless 3-step checkout (Form → Email OTP → Payment).
+  - **Admins & Founders**: Managing promotional campaigns, tracking redemption limits, and auditing student enrollments.
 
 ---
 
 ## 2. User Experience & Visual Design
-- **Aesthetic Direction**: Clean Bengali EdTech theme matching the warm golden-orange (`#ff7722`) and ivory (`#fbf9ef`) palette, crisp borders, dark text (`#171412`), and retro ink badges.
-- **Course Catalog View**:
-  - Category Pills / Filter bar: "সব কোর্স", "ড্রপশিপিং ই-কমার্স ব্যবসা", "ড্রপশিপিং রিসেলার ব্যবসা", "ডিজিটাল মার্কেটিং".
-  - Course Cards: High-res visual thumbnails (16:9 ratio), category indicator, title, batch badge, highlights list, pricing tag (e.g. `৳১,০০০` or `প্রমো কোড প্রয়োজন`), and high-contrast "ভর্তি হন" CTA.
-- **Student Registration Modal**:
-  - Modal overlay with course summary on top (thumbnail snippet + title + cost).
-  - Clear input fields with error validation and Bangla labels.
-  - Interactive Promo Code validator with instant feedback ("প্রোমো কোড সঠিক হয়েছে! 🎉" or "অকার্যকর কোড").
-  - bKash/Nagad copy-number helper buttons with instant copied toast.
-- **Admin Dashboard Tabs**:
-  - **কোর্স ম্যানেজমেন্ট**: Add/Edit/Delete courses, upload thumbnail, toggle `isPromoOnly` vs `price`.
-  - **প্রমো কোড ম্যানেজার**: Create promo codes, assign to courses or global, set discounts/free passes.
-  - **শিক্ষার্থী রেজিস্ট্রেশন তালিকা**: Filter by course, status badges (পেন্ডিং, অনুমোদিত, বাতিল), view TrxID / promo code, and WhatsApp direct chat.
+
+### Registration Flow & Payment Checkout
+1. **Step 1: Course Catalog & Registration Form**
+   - Clean, focused form asking for Name, Phone, Email, District.
+   - Removed promo code field from this step entirely.
+   - Submitting triggers a 6-digit email OTP verification.
+2. **Step 2: Email Verification (OTP)**
+   - Minimalist OTP input screen.
+   - Upon successful verification, user advances directly to Step 3 (Payment).
+3. **Step 3: Payment Page (Promo-First Design)**
+   - Top section displays Course Title & Original Price (`৳2,500`).
+   - Clean Promo Input field with "Apply" button directly above payment methods (bKash / Nagad / Rocket).
+   - **Applied Promo State**:
+     - Original price shown with strikethrough (`৳2,500`).
+     - Discounted price highlighted in large bold green (`৳2,000`).
+     - Green Badge: `20% OFF applied · You save ৳500`.
+     - Smooth "Remove Code" button to reset.
+   - **Invalid/Expired Promo State**: Friendly red error message (`"Invalid or expired promo code" / "অকার্যকর বা মেয়াদোত্তীর্ণ প্রোমো কোড"`).
+
+### Admin Panel: Promo Code Manager (`/check` route)
+- Integrated into the existing Admin Control Center (`/check`).
+- **Filter & Search Toolbar**: Search by promo code text, filter by course, and filter by status (Active / Inactive / Expired).
+- **Promo Table**:
+  - Code (e.g., `EARLY20` in monospace bold).
+  - Applicable Course (Course name or "All Courses").
+  - Discount % (e.g. `20% OFF` with max 50% badge).
+  - Usage Counter (e.g. `12 / 50 uses`).
+  - Expiry Date or "No Expiry".
+  - Status Toggle (Active / Inactive pill button).
+  - Actions: Edit & Delete buttons.
+- **Create/Edit Promo Modal**:
+  - Upper-cased Code input.
+  - Course Selector (Specific course dropdown or "All Courses").
+  - Discount Percentage slider/input (0–50% enforced).
+  - Max Usage Limit input (e.g. 50).
+  - Expiry Date Picker (Optional).
+  - Active toggle switch.
 
 ---
 
 ## 3. Key Product Decisions & Trade-Offs
-- **Decision 1: Course Catalog as Modal + Dedicated Route**:
-  - *Chosen Approach*: Implement `CourseCatalogModal` that can be triggered from any "রেজিস্ট্রেশন করুন" button across the app, while also syncing with `/courses` route for direct sharing.
-  - *Why*: Allows instant enrollment without page unmount while maintaining deep linkability.
-- **Decision 2: Dual Course Admission Model (Price vs. Promo-Code-Only)**:
-  - *Chosen Approach*: Add `enrollmentType: 'payment' | 'promo_only' | 'both'` to `CourseItem`.
-  - *Why*: Directly satisfies user requirement: "যেটাই প্রমো কোড দিব ওটাই শুধু প্রমো কোড দিয়ে জয়েন করতে পারবে। আর যেটা টাকা দেবো সেটাই টাকা দিয়ে জয়েন করতে পারবে।"
-- **Decision 3: Persistent Registration Submissions**:
-  - *Chosen Approach*: Create `src/services/enrollments.ts` backed by localStorage with instant reactivity and Supabase fallback.
-  - *Why*: Ensures zero-latency registrations and immediate visibility in the Admin Panel without requiring external database provisioning.
+
+- **Decision 1: Moving Promo Code Input to Payment Step**
+  - *Chosen Approach*: Put promo input at the top of the Payment Page above payment methods.
+  - *Why*: Reduces friction on the initial registration form while placing promo incentives right when the student is making their payment decision.
+- **Decision 2: Strict 50% Cap on Admin Promo Percentage**
+  - *Chosen Approach*: Validate max percentage <= 50% both in the admin form UI and server-side/service layer.
+  - *Why*: Prevents accidental business loss from erroneous admin entries.
+- **Decision 3: Atomic Usage Counter Increment**
+  - *Chosen Approach*: Increment `used_count` in `promo_codes` table only after payment confirmation.
+  - *Why*: Prevents usage limits from being consumed by uncompleted or abandoned payment steps.
 
 ---
 
 ## 4. Technical Architecture & Data Strategy
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       User Interface                        │
-│                                                             │
-│   Hero / Navbar / HomeSections                              │
-│       │                                                     │
-│       ▼ (Click 'রেজিস্ট্রেশন করুন')                          │
-│   CourseCatalogModal                                        │
-│   ├── Category Tabs (ই-কমার্স / রিসেলার / মার্কেটিং)           │
-│   ├── Course Cards (Thumbnails, Pricing, Details)           │
-│   └── 'ভর্তি হন' CTA Button                                 │
-│       │                                                     │
-│       ▼                                                     │
-│   CourseRegistrationModal                                   │
-│   ├── Student Contact Info (Name, Phone, Email, District)   │
-│   ├── Dynamic Admission Branch:                             │
-│   │   ├── If 'promo_only': Promo Code input & validation    │
-│   │   └── If 'payment': bKash/Nagad Info + TrxID            │
-│   └── Submit Application                                    │
-│       │                                                     │
-│       ▼                                                     │
-│   Enrollment Service (Local Storage + Reactive State)       │
-│       │                                                     │
-│       ▼                                                     │
-│   Admin Panel (AdminCheckPage)                              │
-│   ├── Tab 1: Course Management (Thumbnails, Price, Promo)   │
-│   ├── Tab 2: Promo Code Manager                             │
-│   └── Tab 3: Student Enrollments List & Status Actions      │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             Student Checkout Flow                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+  1. Registration Form ──► 2. Email OTP Verify ──► 3. Payment Page
+                                                         │
+                                                         ▼
+                                               ┌──────────────────┐
+                                               │ Apply Promo Code │
+                                               └─────────┬────────┘
+                                                         │
+                                                         ▼
+                                               ┌──────────────────┐
+                                               │ Server Validation│
+                                               │  (evaluatePromo) │
+                                               └─────────┬────────┘
+                                                         │
+                                               ┌─────────┴────────┐
+                                               ▼                  ▼
+                                        [ Valid Code ]     [ Invalid Code ]
+                                               │                  │
+                                        Live Price Update   Inline Error
+                                        Strikethrough Old   Message
+                                        Highlight Final
+                                               │
+                                               ▼
+                                        Submit Payment (trxId, senderPhone)
+                                               │
+                                               ▼
+                                   Atomic used_count++ Increment
+                                   & Store Enrollment Record
 ```
 
-### Data Schema Additions
-1. **CourseItem**:
-   - `thumbnailUrl?: string` (Preset or custom image URL)
-   - `enrollmentType: 'payment' | 'promo_only' | 'both'`
-   - `requiredPromoCode?: string`
-2. **StudentEnrollment**:
-   - `id: string`
-   - `courseId: string`
-   - `courseTitle: string`
-   - `courseCategory: string`
-   - `studentName: string`
-   - `studentPhone: string`
-   - `studentEmail: string`
-   - `district: string`
-   - `enrollmentType: 'payment' | 'promo_only'`
-   - `promoCodeUsed?: string`
-   - `paymentMethod?: 'bKash' | 'Nagad' | 'Rocket'`
-   - `senderPhone?: string`
-   - `trxId?: string`
-   - `amountPaid?: number`
-   - `status: 'pending' | 'approved' | 'rejected'`
-   - `createdAt: string`
+### Data Schema (`supabase/schema.sql` & TypeScript models)
+
+```sql
+-- public.promo_codes table
+create table if not exists public.promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text unique not null,
+  applicable_course_id text default null, -- NULL means applicable to all courses
+  percentage integer not null check (percentage >= 1 and percentage <= 50),
+  max_percentage integer not null default 50,
+  usage_limit integer not null default 100 check (usage_limit >= 1),
+  used_count integer not null default 0 check (used_count >= 0),
+  expires_at timestamptz default null,
+  is_active boolean not null default true,
+  description text default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+---
+
+## 5. Implementation Steps
+
+1. **Database Schema & Services**:
+   - Update `supabase/schema.sql` with `public.promo_codes` table and initial seed data.
+   - Update `PromoCodeItem` interface in `src/config/courses.ts` to include `percentage`, `usageLimit`, `usedCount`, `expiresAt`, `applicableCourseId`.
+   - Update `src/services/courses.ts` with server-side validation functions (`evaluatePromoCodeServerSide`) and atomic increment logic (`incrementPromoUsage`).
+2. **Registration & Checkout Flow (`src/pages/RegistrationPage.tsx`)**:
+   - Remove promo field from initial registration form.
+   - Render promo input section at top of payment step with real-time recalculation, discount badge, strikethrough price, and bilingual messaging.
+   - Pass applied promo code and final calculated price to enrollment submission and trigger usage increment.
+3. **Admin Promo Manager (`src/pages/AdminCheckPage.tsx`)**:
+   - Upgrade Admin Promos sub-tab to include search, course filters, status filter, usage limit counter, expiry dates, and strict 50% discount cap validation.
+4. **Verification & Testing**:
+   - Run `compile_applet` to verify no TypeScript or lint errors exist.

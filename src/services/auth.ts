@@ -12,6 +12,7 @@ export interface UserSession {
   email: string;
   phone: string;
   whatsapp: string;
+  district?: string;
   status: 'pending' | 'approved' | 'rejected' | 'contacted';
   registeredAt: string;
 }

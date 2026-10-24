@@ -149,8 +149,9 @@ function AppShell() {
   const activeKind: AnimKind = anim ?? 'intro';
 
   const triggerRegister = useCallback(() => {
+    setAnimRunKey((k) => k + 1);
     setAnim('intro');
-  }, [setAnim]);
+  }, [setAnim, setAnimRunKey]);
 
   return (
     <>

@@ -23,12 +23,17 @@ export interface CourseItem {
 export interface PromoCodeItem {
   id: string;
   code: string;
-  discountType: 'fixed' | 'percentage';
-  discountValue: number;
+  discountType?: 'percentage' | 'fixed';
+  percentage: number; // Percentage discount (1 to 50%)
+  maxPercentage?: number; // Default capped at 50%
+  usageLimit: number; // Max redemptions allowed
+  usedCount: number; // Current redemptions
+  expiresAt?: string; // Optional expiry date ISO or YYYY-MM-DD
   description: string;
   isActive: boolean;
+  applicableCourseId?: string; // Specific course ID or empty/all
   minPrice?: number;
-  applicableCourseId?: string; // If restricted to specific course, or empty for all
+  discountValue?: number; // Fallback for fixed discount calculation
 }
 
 export const DEFAULT_COURSES: CourseItem[] = [
@@ -62,7 +67,7 @@ export const DEFAULT_COURSES: CourseItem[] = [
     price: 5000,
     discountPrice: 2500,
     promoCodeEligible: true,
-    enrollmentType: 'promo_only',
+    enrollmentType: 'payment',
     requiredPromoCode: 'INTL100',
     thumbnailUrl: '/images/course_dropshipping_basic_1791567728755.jpg',
     duration: '৮ সপ্তাহ · লাইভ ক্লাস ও প্রজেক্ট',
@@ -81,58 +86,60 @@ export const DEFAULT_COURSES: CourseItem[] = [
 export const DEFAULT_PROMO_CODES: PromoCodeItem[] = [
   {
     id: 'promo-1',
-    code: 'PROMO1000',
-    discountType: 'fixed',
-    discountValue: 300,
-    description: 'স্পেশাল ১,০০০ টাকা প্রোমো কোড (৳৩০০ ছাড়)',
+    code: 'EARLY20',
+    discountType: 'percentage',
+    percentage: 20,
+    maxPercentage: 50,
+    usageLimit: 50,
+    usedCount: 12,
+    description: 'আর্লি বার্ড স্পেশাল ২০% ছাড়',
     isActive: true,
   },
   {
     id: 'promo-2',
-    code: 'RESELLER500',
-    discountType: 'fixed',
-    discountValue: 500,
-    description: 'রিসেলার বিশেষ ছাড় (৳৫০০ সরাসরি ছাড়)',
+    code: 'RESELLER50',
+    discountType: 'percentage',
+    percentage: 50,
+    maxPercentage: 50,
+    usageLimit: 100,
+    usedCount: 34,
+    description: 'রিসেলার বিশেষ ৫০% চূড়ান্ত ছাড় (সর্বোচ্চ ক্যাপ)',
     isActive: true,
+    applicableCourseId: 'dropshipping-reselling',
   },
   {
     id: 'promo-3',
-    code: 'WELCOME50',
+    code: 'WELCOME30',
     discountType: 'percentage',
-    discountValue: 50,
-    description: 'নতুন শিক্ষার্থীদের ৫০% ওয়েলকাম ছাড় (৳৫০০ ছাড়)',
+    percentage: 30,
+    maxPercentage: 50,
+    usageLimit: 30,
+    usedCount: 8,
+    description: 'নতুন শিক্ষার্থীদের ৩০% ওয়েলকাম ছাড়',
     isActive: true,
   },
   {
     id: 'promo-4',
-    code: 'DISCOUNT200',
-    discountType: 'fixed',
-    discountValue: 200,
-    description: 'স্টুডেন্ট স্পেশাল ছাড় (৳২০০ অফ)',
+    code: 'GLOBAL25',
+    discountType: 'percentage',
+    percentage: 25,
+    maxPercentage: 50,
+    usageLimit: 40,
+    usedCount: 5,
+    description: 'গ্লোবাল ড্রপশিপিং কোর্সে ২৫% ছাড়',
     isActive: true,
+    applicableCourseId: 'dropshipping-international',
   },
   {
     id: 'promo-5',
-    code: 'FREE1000',
-    discountType: 'fixed',
-    discountValue: 1000,
-    description: '১০০% ফ্রি স্কলারশিপ কোড (৳১,০০০ সম্পূর্ণ ফ্রি)',
-    isActive: true,
-  },
-  {
-    id: 'promo-6',
-    code: 'DROP1000',
-    discountType: 'fixed',
-    discountValue: 1000,
-    description: 'ড্রপশিপিং স্পেশাল ১০০০ টাকা ছাড় (৳১,০০০ অফ)',
-    isActive: true,
-  },
-  {
-    id: 'promo-7',
-    code: 'BD1000',
-    discountType: 'fixed',
-    discountValue: 1000,
-    description: 'বাংলাদেশ একাডেমি ১০০০ টাকা স্কলারশিপ',
+    code: 'SPECIAL15',
+    discountType: 'percentage',
+    percentage: 15,
+    maxPercentage: 50,
+    usageLimit: 20,
+    usedCount: 20, // Expired by limit
+    description: 'লিমিটেড অফার ১৫% ছাড়',
     isActive: true,
   },
 ];
+

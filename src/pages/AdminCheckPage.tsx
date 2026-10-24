@@ -199,16 +199,23 @@ export const AdminCheckPage: React.FC = () => {
 
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null);
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [promoSearchQuery, setPromoSearchQuery] = useState<string>('');
+  const [promoCourseFilter, setPromoCourseFilter] = useState<string>('ALL');
+  const [promoStatusFilter, setPromoStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [promoForm, setPromoForm] = useState<{
     code: string;
-    discountType: 'fixed' | 'percentage';
-    discountValue: number;
+    applicableCourseId: string;
+    percentage: number;
+    usageLimit: number;
+    expiresAt: string;
     description: string;
     isActive: boolean;
   }>({
     code: '',
-    discountType: 'fixed',
-    discountValue: 300,
+    applicableCourseId: 'ALL',
+    percentage: 20,
+    usageLimit: 50,
+    expiresAt: '',
     description: '',
     isActive: true,
   });
@@ -855,8 +862,10 @@ export const AdminCheckPage: React.FC = () => {
     setEditingPromoId(null);
     setPromoForm({
       code: '',
-      discountType: 'fixed',
-      discountValue: 300,
+      applicableCourseId: 'ALL',
+      percentage: 20,
+      usageLimit: 50,
+      expiresAt: '',
       description: '',
       isActive: true,
     });
@@ -867,9 +876,11 @@ export const AdminCheckPage: React.FC = () => {
     setEditingPromoId(promo.id);
     setPromoForm({
       code: promo.code,
-      discountType: promo.discountType,
-      discountValue: promo.discountValue,
-      description: promo.description,
+      applicableCourseId: promo.applicableCourseId || 'ALL',
+      percentage: Math.min(50, promo.percentage || 20),
+      usageLimit: promo.usageLimit || 50,
+      expiresAt: promo.expiresAt || '',
+      description: promo.description || '',
       isActive: promo.isActive,
     });
     setIsPromoModalOpen(true);
@@ -883,6 +894,8 @@ export const AdminCheckPage: React.FC = () => {
     }
 
     const cleanCode = promoForm.code.trim().toUpperCase();
+    const cleanPercentage = Math.min(50, Math.max(0, Number(promoForm.percentage) || 0));
+
     let updatedPromos: PromoCodeItem[];
 
     if (editingPromoId) {
@@ -891,8 +904,13 @@ export const AdminCheckPage: React.FC = () => {
           ? {
               ...p,
               code: cleanCode,
-              discountType: promoForm.discountType,
-              discountValue: Number(promoForm.discountValue) || 100,
+              discountType: 'percentage' as const,
+              discountValue: cleanPercentage,
+              percentage: cleanPercentage,
+              maxPercentage: 50,
+              usageLimit: Number(promoForm.usageLimit) || 50,
+              applicableCourseId: promoForm.applicableCourseId || 'ALL',
+              expiresAt: promoForm.expiresAt.trim() || undefined,
               description: promoForm.description.trim(),
               isActive: promoForm.isActive,
             }
@@ -902,8 +920,14 @@ export const AdminCheckPage: React.FC = () => {
       const newPromo: PromoCodeItem = {
         id: `promo-${Date.now()}`,
         code: cleanCode,
-        discountType: promoForm.discountType,
-        discountValue: Number(promoForm.discountValue) || 100,
+        discountType: 'percentage',
+        discountValue: cleanPercentage,
+        percentage: cleanPercentage,
+        maxPercentage: 50,
+        usageLimit: Number(promoForm.usageLimit) || 50,
+        usedCount: 0,
+        applicableCourseId: promoForm.applicableCourseId || 'ALL',
+        expiresAt: promoForm.expiresAt.trim() || undefined,
         description: promoForm.description.trim(),
         isActive: promoForm.isActive,
       };
@@ -913,7 +937,7 @@ export const AdminCheckPage: React.FC = () => {
     setAdminPromoCodes(updatedPromos);
     await savePromoCodesList(updatedPromos);
     setIsPromoModalOpen(false);
-    setCourseFeedback(`প্রোমো কোড "${cleanCode}" সফলভাবে সংরক্ষিত হয়েছে!`);
+    setCourseFeedback(`প্রোমো কোড "${cleanCode}" (${cleanPercentage}% discount) সফলভাবে সংরক্ষিত হয়েছে!`);
     setTimeout(() => setCourseFeedback(''), 5000);
   };
 
@@ -3298,101 +3322,198 @@ export const AdminCheckPage: React.FC = () => {
             -------------------------------------------------------------- */}
             {coursesSubTab === 'promos' && (
               <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="font-display text-[20px] font-extrabold text-[#171412]">
-                      {t('উপলব্ধ প্রোমো কোড ও ছাড় কনফিগারেশন', 'Promo Codes & Discounts')}
+                      {t('উপলব্ধ প্রোমো কোড ও ছাড় কনফিগারেশন (Promo Code Manager)', 'Promo Code Manager & Discount Config')}
                     </h3>
                     <p className="text-[13px] text-[#813502] font-semibold mt-0.5">
                       {t(
-                        'শিক্ষার্থীরা কোর্স বাছাই করার সময় এই কোডগুলো দিয়ে ছাড় বা ফ্রি এক্সেস পাবে',
-                        'Students can enter these codes during enrollment for instant fee discount or free access'
+                        'শিক্ষার্থীরা পেমেন্ট পেজে এই কোডগুলো প্রদান করে ছাড় উপভোগ করতে পারবে। সর্বোচ্চ ৫০% ছাড় সমর্থিত।',
+                        'Students enter these codes on the payment page for percentage discounts (max 50% enforced).'
                       )}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={openNewPromoModal}
-                    className="min-h-[40px] px-4 py-2 rounded-[50px] bg-[#ff7722] text-[#171412] font-bold text-[13px] border border-[#171412] hover:bg-[#ff8f44] cursor-pointer"
+                    className="min-h-[40px] px-5 py-2 rounded-[50px] bg-[#059669] text-white font-bold text-[13px] border-2 border-[#171412] hover:bg-[#047857] shadow-[2px_2px_0px_#171412] cursor-pointer shrink-0"
                   >
-                    + {t('নতুন কোড তৈরি', 'Add Code')}
+                    + {t('নতুন প্রোমো কোড তৈরি', 'Create Promo Code')}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {adminPromoCodes.map((promo) => (
-                    <div
-                      key={promo.id}
-                      className={`p-5 rounded-[16px] border-2 flex flex-col justify-between transition-all ${
-                        promo.isActive
-                          ? 'bg-[#ffffff] border-[#171412] shadow-sm'
-                          : 'bg-[#f8f6f0] border-[#171412]/30 opacity-70'
-                      }`}
+                {/* Filters and Search Bar */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 bg-white rounded-2xl border-2 border-[#171412]">
+                  {/* Search input */}
+                  <div className="flex-1 min-w-[200px]">
+                    <input
+                      type="search"
+                      value={promoSearchQuery}
+                      onChange={(e) => setPromoSearchQuery(e.target.value)}
+                      placeholder={t('প্রোমো কোড দিয়ে খুঁজুন (e.g. EARLY20)...', 'Search promo code...')}
+                      className="w-full px-3.5 py-2 text-xs font-mono font-bold uppercase rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none"
+                    />
+                  </div>
+
+                  {/* Course Filter Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-[#171412] shrink-0">কোর্স ফিল্টার:</label>
+                    <select
+                      value={promoCourseFilter}
+                      onChange={(e) => setPromoCourseFilter(e.target.value)}
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-3">
-                          <span className="font-mono font-extrabold text-[16px] text-[#813502] bg-[#f2f0e7] px-2.5 py-1 rounded-[6px] border border-[#171412]/20">
-                            {promo.code}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-[50px] text-[10px] font-extrabold border ${
-                              promo.isActive
-                                ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30'
-                                : 'bg-[#f3f4f6] text-[#6b7280] border-[#9ca3af]/40'
-                            }`}
-                          >
-                            {promo.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
-                          </span>
-                        </div>
+                      <option value="ALL">🌟 All Courses (সকল কোর্স)</option>
+                      {adminCourses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          📚 {c.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                        <div className="text-[18px] font-display font-extrabold text-[#171412] mb-1">
-                          {promo.discountType === 'percentage'
-                            ? `${promo.discountValue}% ছাড় (Discount)`
-                            : `৳${promo.discountValue} নগদ ছাড়`}
-                        </div>
+                  {/* Status Filter Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-[#171412] shrink-0">স্ট্যাটাস:</label>
+                    <select
+                      value={promoStatusFilter}
+                      onChange={(e) => setPromoStatusFilter(e.target.value as any)}
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
+                    >
+                      <option value="all">সব (All)</option>
+                      <option value="active">সক্রিয় (Active)</option>
+                      <option value="inactive">নিষ্ক্রিয় (Inactive)</option>
+                    </select>
+                  </div>
+                </div>
 
-                        <p className="text-[12px] text-[#171412]/75 leading-relaxed mb-4">
-                          {promo.description || t('সাধারণ ছাড় প্রোমো কোড', 'Standard discount promo code')}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 border-t border-[#171412]/15 flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditPromoModal(promo)}
-                          className="text-[12px] font-bold text-[#813502] hover:underline cursor-pointer"
-                        >
-                          ✏️ {t('সম্পাদনা', 'Edit')}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = adminPromoCodes.map((p) =>
-                              p.id === promo.id ? { ...p, isActive: !p.isActive } : p
-                            );
-                            setAdminPromoCodes(updated);
-                            savePromoCodesList(updated);
-                          }}
-                          className="text-[12px] font-semibold text-[#171412] hover:underline cursor-pointer"
-                        >
-                          {promo.isActive ? t('নিষ্ক্রিয় করুন', 'Deactivate') : t('সক্রিয় করুন', 'Activate')}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`প্রোমো কোড "${promo.code}" মুছে ফেলতে চান?`)) {
-                              handleDeletePromo(promo.id);
+                {/* Promo Code Table */}
+                <div className="bg-white rounded-2xl border-2 border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-[#f2f0e7] border-b-2 border-[#171412] text-[11px] font-black uppercase text-[#171412]">
+                          <th className="p-3.5 pl-5">প্রোমো কোড (Code)</th>
+                          <th className="p-3.5">প্রযোজ্য কোর্স (Course)</th>
+                          <th className="p-3.5 text-center">ছাড় (%)</th>
+                          <th className="p-3.5 text-center">ব্যবহার সংখ্যা (Used / Limit)</th>
+                          <th className="p-3.5 text-center">মেয়াদ শেষের তারিখ</th>
+                          <th className="p-3.5 text-center">স্ট্যাটাস</th>
+                          <th className="p-3.5 pr-5 text-right">অ্যাকশন</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#171412]/10 text-xs">
+                        {adminPromoCodes
+                          .filter((p) => {
+                            if (promoStatusFilter === 'active' && !p.isActive) return false;
+                            if (promoStatusFilter === 'inactive' && p.isActive) return false;
+                            if (promoCourseFilter !== 'ALL' && p.applicableCourseId !== 'ALL' && p.applicableCourseId !== promoCourseFilter) return false;
+                            if (promoSearchQuery.trim()) {
+                              const q = promoSearchQuery.trim().toUpperCase();
+                              const matchCode = p.code.toUpperCase().includes(q);
+                              const matchDesc = p.description?.toUpperCase().includes(q);
+                              return matchCode || matchDesc;
                             }
-                          }}
-                          className="text-[12px] font-bold text-[#ff3c34] hover:underline cursor-pointer"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                            return true;
+                          })
+                          .map((promo) => {
+                            const applicableCourse = adminCourses.find((c) => c.id === promo.applicableCourseId);
+                            const used = promo.usedCount || 0;
+                            const limit = promo.usageLimit || 50;
+                            const isLimitReached = used >= limit;
+
+                            return (
+                              <tr key={promo.id} className="hover:bg-[#fbf9ef]/60 transition-colors">
+                                <td className="p-3.5 pl-5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-black text-sm text-[#059669] bg-[#f0fdf4] px-2.5 py-1 rounded-lg border border-[#059669]/30">
+                                      {promo.code}
+                                    </span>
+                                  </div>
+                                  {promo.description && (
+                                    <p className="text-[10px] text-[#171412]/60 mt-0.5">{promo.description}</p>
+                                  )}
+                                </td>
+                                <td className="p-3.5 font-bold text-[#171412]">
+                                  {promo.applicableCourseId === 'ALL' ? (
+                                    <span className="text-[#059669] bg-[#f0fdf4] px-2 py-0.5 rounded border border-[#059669]/20">
+                                      🌟 All Courses
+                                    </span>
+                                  ) : (
+                                    <span>📚 {applicableCourse?.title || promo.applicableCourseId}</span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 text-center font-black text-sm text-[#059669]">
+                                  {promo.percentage}% OFF
+                                </td>
+                                <td className="p-3.5 text-center">
+                                  <span className={`font-mono font-bold px-2 py-1 rounded-md border text-xs ${
+                                    isLimitReached 
+                                      ? 'bg-red-50 text-red-700 border-red-200' 
+                                      : 'bg-[#fbf9ef] text-[#171412] border-[#171412]/20'
+                                  }`}>
+                                    {used} / {limit}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 text-center font-medium text-[#171412]/70">
+                                  {promo.expiresAt ? promo.expiresAt : 'মেয়াদহীন (Never)'}
+                                </td>
+                                <td className="p-3.5 text-center">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                                    promo.isActive && !isLimitReached
+                                      ? 'bg-[#e8f5e9] text-[#1b5e20] border-[#2e7d32]/30'
+                                      : 'bg-red-50 text-red-700 border-red-200'
+                                  }`}>
+                                    {!promo.isActive ? 'নিষ্ক্রিয়' : isLimitReached ? 'লিমিট শেষ' : 'সক্রিয়'}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 pr-5 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditPromoModal(promo)}
+                                      className="px-2.5 py-1 bg-[#f2f0e7] hover:bg-[#ebe9df] text-[#171412] font-bold text-xs rounded-lg border border-[#171412]/20 cursor-pointer"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = adminPromoCodes.map((p) =>
+                                          p.id === promo.id ? { ...p, isActive: !p.isActive } : p
+                                        );
+                                        setAdminPromoCodes(updated);
+                                        savePromoCodesList(updated);
+                                      }}
+                                      className={`px-2.5 py-1 text-xs font-bold rounded-lg border cursor-pointer ${
+                                        promo.isActive
+                                          ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                          : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                      }`}
+                                    >
+                                      {promo.isActive ? 'Disable' : 'Enable'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (window.confirm(`প্রোমো কোড "${promo.code}" মুছে ফেলতে চান?`)) {
+                                          handleDeletePromo(promo.id);
+                                        }
+                                      }}
+                                      className="px-2 py-1 text-red-600 hover:bg-red-50 font-bold text-xs rounded-lg cursor-pointer"
+                                      title="Delete"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -4279,10 +4400,10 @@ export const AdminCheckPage: React.FC = () => {
               </div>
 
               <form onSubmit={handleSavePromo} className="flex flex-col gap-4 text-left">
-                {/* Promo Code Input */}
+                {/* Promo Code Text Input */}
                 <div>
                   <label htmlFor="promo-code-input" className="block text-[13px] font-bold text-[#171412] mb-1">
-                    প্রোমো কোড (Promo Code) *
+                    প্রোমো কোড (Promo Code Text) *
                   </label>
                   <input
                     id="promo-code-input"
@@ -4290,45 +4411,99 @@ export const AdminCheckPage: React.FC = () => {
                     required
                     value={promoForm.code}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    placeholder="যেমন: PROMO1000 / RESELLER500 / WELCOME50 / FREE1000"
+                    placeholder="যেমন: EARLY20 / SCHOLARSHIP50 / PROMO1000"
                     className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[15px] font-mono font-bold text-[#171412] uppercase focus:border-[#ff7722] focus:outline-none"
                   />
+                  <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
+                    যেকোনো কাস্টম টেক্সট প্রবেশ করান (স্বয়ংক্রিয়ভাবে বড় হাতের অক্ষরে সংরক্ষিত হবে)।
+                  </span>
                 </div>
 
-                {/* Discount Type & Value */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Applicable Course Dropdown */}
+                <div>
+                  <label htmlFor="promo-course-select" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    প্রযোজ্য কোর্স (Applicable Course) *
+                  </label>
+                  <select
+                    id="promo-course-select"
+                    value={promoForm.applicableCourseId}
+                    onChange={(e) => setPromoForm((prev) => ({ ...prev, applicableCourseId: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
+                  >
+                    <option value="ALL">🌟 All Courses (সকল কোর্সে প্রযোজ্য)</option>
+                    {adminCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        📚 {c.title} ({c.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Discount Percentage (Strict max cap 50%) & Usage Limit */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="promo-type-select" className="block text-[13px] font-bold text-[#171412] mb-1">
-                      ছাড়ের ধরন (Discount Type) *
+                    <label htmlFor="promo-pct-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      ছাড়ের পার্সেন্টেজ (%) * (সর্বোচ্চ ৫০%)
                     </label>
-                    <select
-                      id="promo-type-select"
-                      value={promoForm.discountType}
-                      onChange={(e) => setPromoForm((prev) => ({ ...prev, discountType: e.target.value as any }))}
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
-                    >
-                      <option value="fixed">নির্দিষ্ট টাকা ছাড় (Fixed BDT)</option>
-                      <option value="percentage">শতকরা ছাড় (Percentage %)</option>
-                    </select>
+                    <div className="relative flex items-center">
+                      <input
+                        id="promo-pct-input"
+                        type="number"
+                        required
+                        min={1}
+                        max={50}
+                        value={promoForm.percentage}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setPromoForm((prev) => ({
+                            ...prev,
+                            percentage: val > 50 ? 50 : val,
+                          }));
+                        }}
+                        className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#059669] focus:border-[#059669]"
+                      />
+                      <span className="absolute right-3 font-bold text-sm text-[#059669]">% OFF</span>
+                    </div>
+                    <span className="text-[10px] text-[#059669] font-bold mt-0.5 block">
+                      সিস্টেম সিকিউরিটি অনুযায়ী সর্বোচ্চ ৫০% ছাড়ের ক্যাপ প্রযোজ্য।
+                    </span>
                   </div>
 
                   <div>
-                    <label htmlFor="promo-val-input" className="block text-[13px] font-bold text-[#171412] mb-1">
-                      ছাড়ের পরিমাণ (Value) *
+                    <label htmlFor="promo-limit-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                      সর্বমোট ব্যবহার সীমা (Usage Limit) *
                     </label>
                     <input
-                      id="promo-val-input"
+                      id="promo-limit-input"
                       type="number"
                       required
                       min={1}
-                      value={promoForm.discountValue}
-                      onChange={(e) => setPromoForm((prev) => ({ ...prev, discountValue: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                      value={promoForm.usageLimit}
+                      onChange={(e) => setPromoForm((prev) => ({ ...prev, usageLimit: Number(e.target.value) }))}
+                      placeholder="যেমন: 50"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
                     />
-                    <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">
-                      {promoForm.discountType === 'percentage' ? 'যেমন: ৫০ মানে ৫০% ছাড়' : 'যেমন: ৩০০ বা ১০০০ টাকা ছাড়'}
+                    <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
+                      সর্বমোট কতজন শিক্ষার্থী এটি ব্যবহার করতে পারবে (যেমন: ৫০ জন)।
                     </span>
                   </div>
+                </div>
+
+                {/* Expiry Date (Optional) */}
+                <div>
+                  <label htmlFor="promo-expiry-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    মেয়াদ শেষের তারিখ (Expiry Date) - optional
+                  </label>
+                  <input
+                    id="promo-expiry-input"
+                    type="date"
+                    value={promoForm.expiresAt}
+                    onChange={(e) => setPromoForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                  />
+                  <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
+                    খালি রাখলে মেয়াদ থাকবে না (অনির্দিষ্টকালের জন্য কার্যকর)।
+                  </span>
                 </div>
 
                 {/* Description */}
@@ -4341,7 +4516,7 @@ export const AdminCheckPage: React.FC = () => {
                     type="text"
                     value={promoForm.description}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, description: e.target.value }))}
-                    placeholder="যেমন: স্পেশাল ১,০০০ টাকা প্রোমো কোড (৳৩০০ ছাড়)"
+                    placeholder="যেমন: আর্লি বার্ড কোহর্ট স্পেশাল ২০% ছাড় প্রোমো কোড"
                     className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
                   />
                 </div>
@@ -4355,7 +4530,7 @@ export const AdminCheckPage: React.FC = () => {
                     className="w-4 h-4 rounded text-[#ff7722] focus:ring-0 cursor-pointer"
                   />
                   <span className="text-[13px] font-bold text-[#171412]">
-                    প্রোমো কোডটি সক্রিয় রাখুন
+                    প্রোমো কোডটি সক্রিয় রাখুন (Enable Promo Code)
                   </span>
                 </label>
 

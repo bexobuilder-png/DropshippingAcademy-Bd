@@ -244,6 +244,40 @@ export async function restoreDefaultCourses(): Promise<CourseItem[]> {
 }
 
 export async function fetchPromoCodesList(): Promise<PromoCodeItem[]> {
+  // 1. Try Supabase if configured
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const mapped: PromoCodeItem[] = data.map((d) => ({
+          id: d.id,
+          code: d.code,
+          discountType: 'percentage',
+          percentage: d.percentage,
+          maxPercentage: d.max_percentage || 50,
+          usageLimit: d.usage_limit || 100,
+          usedCount: d.used_count || 0,
+          expiresAt: d.expires_at || undefined,
+          isActive: d.is_active !== false,
+          description: d.description || '',
+          applicableCourseId: d.applicable_course_id || undefined,
+        }));
+        try {
+          localStorage.setItem(PROMO_CODES_STORAGE_KEY, JSON.stringify(mapped));
+        } catch {
+          // Ignore
+        }
+        return mapped;
+      }
+    } catch {
+      // Fall through to site content / local
+    }
+  }
+
   try {
     const data = await fetchSiteSectionContent<PromoCodeItem[]>(
       'promo_codes_list',
@@ -281,6 +315,28 @@ export async function savePromoCodesList(
     // Ignore
   }
 
+  if (isSupabaseConfigured) {
+    try {
+      const rows = promoCodes.map((p) => ({
+        id: p.id.startsWith('promo-') ? undefined : p.id,
+        code: p.code.trim().toUpperCase(),
+        applicable_course_id: p.applicableCourseId || null,
+        percentage: Math.min(50, Math.max(1, p.percentage || p.discountValue || 10)),
+        max_percentage: 50,
+        usage_limit: p.usageLimit || 100,
+        used_count: p.usedCount || 0,
+        expires_at: p.expiresAt || null,
+        is_active: p.isActive !== false,
+        description: p.description || '',
+        updated_at: new Date().toISOString(),
+      }));
+
+      await supabase.from('promo_codes').upsert(rows, { onConflict: 'code' });
+    } catch {
+      // Ignore
+    }
+  }
+
   return await saveSiteSectionContent<PromoCodeItem[]>('promo_codes_list', promoCodes);
 }
 
@@ -292,10 +348,10 @@ export async function restoreDefaultPromoCodes(): Promise<PromoCodeItem[]> {
 export interface PromoValidationResult {
   isValid: boolean;
   code?: string;
-  discountType?: 'percentage' | 'fixed';
-  discountValue?: number;
+  percentage?: number;
   discountAmount: number;
   finalPrice: number;
+  originalPrice: number;
   message: string;
 }
 
@@ -311,44 +367,128 @@ export function evaluatePromoCode(
     return {
       isValid: false,
       discountAmount: 0,
+      originalPrice: basePrice,
       finalPrice: basePrice,
-      message: 'প্রোমো কোড লিখুন',
+      message: 'প্রোমো কোড প্রদান করুন।',
     };
   }
 
   const found = promoCodesList.find(
-    (p) => p.code.trim().toUpperCase() === clean && p.isActive !== false
+    (p) => p.code.trim().toUpperCase() === clean
   );
 
   if (!found) {
     return {
       isValid: false,
       discountAmount: 0,
+      originalPrice: basePrice,
       finalPrice: basePrice,
-      message: 'প্রদত্ত প্রোমো কোডটি সঠিক নয় বা মেয়াদ উত্তীর্ণ হয়েছে।',
+      message: 'প্রদত্ত প্রোমো কোডটি অকার্যকর বা সঠিক নয়।',
     };
   }
 
-  let discount = 0;
-  if (found.discountType === 'percentage') {
-    discount = Math.round((basePrice * found.discountValue) / 100);
-  } else {
-    discount = found.discountValue;
+  if (!found.isActive) {
+    return {
+      isValid: false,
+      discountAmount: 0,
+      originalPrice: basePrice,
+      finalPrice: basePrice,
+      message: 'এই প্রোমো কোডটি নিষ্ক্রিয় করা হয়েছে।',
+    };
   }
 
-  discount = Math.min(discount, basePrice);
-  const finalPrice = Math.max(0, basePrice - discount);
+  // Check expiration date
+  if (found.expiresAt) {
+    const expDate = new Date(found.expiresAt);
+    if (!isNaN(expDate.getTime()) && expDate < new Date()) {
+      return {
+        isValid: false,
+        discountAmount: 0,
+        originalPrice: basePrice,
+        finalPrice: basePrice,
+        message: 'এই প্রোমো কোডটির মেয়াদ শেষ হয়ে গেছে।',
+      };
+    }
+  }
+
+  // Check usage limit
+  if (typeof found.usageLimit === 'number' && typeof found.usedCount === 'number') {
+    if (found.usedCount >= found.usageLimit) {
+      return {
+        isValid: false,
+        discountAmount: 0,
+        originalPrice: basePrice,
+        finalPrice: basePrice,
+        message: 'এই প্রোমো কোডটির ব্যবহারের সীমা (Usage Limit) পূর্ণ হয়েছে।',
+      };
+    }
+  }
+
+  // Check applicable course restriction
+  if (found.applicableCourseId && found.applicableCourseId.trim() !== '') {
+    if (found.applicableCourseId !== course.id) {
+      return {
+        isValid: false,
+        discountAmount: 0,
+        originalPrice: basePrice,
+        finalPrice: basePrice,
+        message: 'এই প্রোমো কোডটি নির্বাচিত কোর্সের জন্য প্রযোজ্য নয়।',
+      };
+    }
+  }
+
+  // Formula: final_price = original_price - (original_price * percentage / 100)
+  const effectivePercentage = Math.min(50, found.percentage || 10);
+  const discountAmount = Math.round((basePrice * effectivePercentage) / 100);
+  const finalPrice = Math.max(0, basePrice - discountAmount);
 
   return {
     isValid: true,
     code: found.code,
-    discountType: found.discountType,
-    discountValue: found.discountValue,
-    discountAmount: discount,
+    percentage: effectivePercentage,
+    discountAmount,
+    originalPrice: basePrice,
     finalPrice,
-    message: `প্রোমো কোড "${found.code}" কার্যকর হয়েছে! ${discount}৳ ছাড় দেওয়া হয়েছে।`,
+    message: `${effectivePercentage}% ছাড় প্রয়োগ করা হয়েছে! আপনার ৳${discountAmount.toLocaleString()} সাশ্রয় হয়েছে।`,
   };
 }
+
+/**
+ * Atomically increments the redemption counter (usedCount) for a promo code after successful payment confirmation.
+ */
+export async function incrementPromoUsage(code: string): Promise<boolean> {
+  const clean = code.trim().toUpperCase();
+  if (!clean) return false;
+
+  try {
+    const currentList = await fetchPromoCodesList();
+    const targetIndex = currentList.findIndex((p) => p.code.trim().toUpperCase() === clean);
+    if (targetIndex >= 0) {
+      currentList[targetIndex].usedCount = (currentList[targetIndex].usedCount || 0) + 1;
+      await savePromoCodesList(currentList);
+    }
+  } catch {
+    // Ignore local error
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      // RPC or direct row increment
+      const { data } = await supabase.from('promo_codes').select('used_count').eq('code', clean).single();
+      if (data) {
+        await supabase
+          .from('promo_codes')
+          .update({ used_count: (data.used_count || 0) + 1 })
+          .eq('code', clean);
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  return true;
+}
+
 
 export async function enrollStudentInCourse(
   email: string,
