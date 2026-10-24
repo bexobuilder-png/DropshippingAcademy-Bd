@@ -42,7 +42,7 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
   return (
     <div className="w-full">
       {/* Main Warm Stone Card */}
-      <div className="rounded-[24px] bg-[#f2f0e7] text-[#171412] p-6 sm:p-8 lg:p-12 border-2 border-[#171412] shadow-md">
+      <div className="rounded-[24px] bg-[#f2f0e7] text-[#171412] p-6 sm:p-8 lg:p-12 border border-[#171412] shadow-md">
         {/* Accessible Tablist */}
         <div
           role="tablist"
@@ -121,7 +121,7 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
           {/* Right Column: 3 Metric Cards (Black, Orange, Yellow matching original design) */}
           <div className="lg:col-span-5 flex flex-col gap-4 justify-center py-2">
             {/* Tile 1: Black */}
-            <div className="rounded-[16px] bg-[#171412] text-[#fbf9ef] border-2 border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
+            <div className="rounded-[16px] bg-[#171412] text-[#fbf9ef] border border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
               <div>
                 <div className="text-[12px] font-semibold text-[#fbc59d]">
                   {activeItem.tiles.blackTitle}
@@ -136,7 +136,7 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
             </div>
 
             {/* Tile 2: Orange */}
-            <div className="rounded-[16px] bg-[#ff7722] text-[#171412] border-2 border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
+            <div className="rounded-[16px] bg-[#ff7722] text-[#171412] border border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
               <div>
                 <div className="text-[12px] font-bold text-[#171412]/80">
                   {activeItem.tiles.orangeTitle}
@@ -151,7 +151,7 @@ export const Tabs: React.FC<TabsProps> = ({ items }) => {
             </div>
 
             {/* Tile 3: Yellow */}
-            <div className="rounded-[16px] bg-[#ffc765] text-[#171412] border-2 border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
+            <div className="rounded-[16px] bg-[#ffc765] text-[#171412] border border-[#171412] p-5 flex items-center justify-between gap-4 transition-all shadow-sm group">
               <div>
                 <div className="text-[12px] font-bold text-[#813502]">
                   {activeItem.tiles.yellowTitle}

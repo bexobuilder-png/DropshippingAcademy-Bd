@@ -90,7 +90,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
     return (
       <main id="main-content" className="py-20 bg-[#fbf9ef] text-[#171412] text-center">
         <div className="specimen-container max-w-lg">
-          <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] p-8 sm:p-10 shadow-md">
+          <div className="rounded-[24px] bg-[#f2f0e7] border border-[#171412] p-8 sm:p-10 shadow-md">
             <span className="text-[44px] block mb-3">🎓</span>
             <h1 className="font-display text-[26px] sm:text-[32px] font-extrabold text-[#171412] mb-3">
               {t('কোর্সে ভর্তি সংক্রান্ত তথ্য', 'Course Enrollment')}
@@ -201,7 +201,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
     <main id="main-content" className="py-10 md:py-16 lg:py-24 bg-[#fbf9ef] text-[#171412]">
       <div className="specimen-container max-w-4xl">
         {/* Main Enrollment Card */}
-        <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] shadow-md p-6 sm:p-10 md:p-12 text-[#171412]">
+        <div className="rounded-[24px] bg-[#f2f0e7] border border-[#171412] shadow-md p-6 sm:p-10 md:p-12 text-[#171412]">
           
           {/* Header Illustration & Welcome */}
           <div className="text-center mb-8">
@@ -242,7 +242,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
             <div
               role="status"
               aria-live="polite"
-              className="mb-8 p-4 rounded-[16px] bg-[#e8f5e9] border-2 border-[#2e7d32] text-[#1b5e20] text-[14px] font-bold flex items-center gap-3 animate-fadeIn"
+              className="mb-8 p-4 rounded-[16px] bg-[#e8f5e9] border border-[#2e7d32] text-[#1b5e20] text-[14px] font-bold flex items-center gap-3 animate-fadeIn"
             >
               <CheckSvgIcon className="w-5 h-5 text-[#2e7d32] shrink-0" />
               <span>{enrollmentSuccessMessage}</span>
@@ -253,7 +253,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
               STATE A: COURSE ALREADY ENROLLED — SHOW ADMISSION BADGE & RECEIPT
           ========================================================================= */}
           {isEnrolled && currentCourse ? (
-            <div className="rounded-[20px] bg-[#fbf9ef] border-2 border-[#171412] p-6 sm:p-8 mb-8 text-left shadow-sm">
+            <div className="rounded-[20px] bg-[#fbf9ef] border border-[#171412] p-6 sm:p-8 mb-8 text-left shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#171412]/15 mb-6">
                 <div>
                   <div className="text-[12px] font-extrabold text-[#813502] uppercase tracking-wider flex items-center gap-2">
@@ -408,7 +408,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                               setPromoResult(reEval.isValid ? reEval : null);
                             }
                           }}
-                          className={`rounded-[18px] p-5 border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                          className={`rounded-[18px] p-5 border transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
                               ? 'bg-[#fbf9ef] border-[#171412] shadow-md ring-2 ring-[#ff7722]/50 scale-[1.01]'
                               : 'bg-[#fbf9ef]/70 border-[#171412]/25 hover:border-[#171412] hover:bg-[#fff]'
@@ -428,7 +428,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                                   </span>
                                 )}
                                 <div
-                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                  className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                                     isSelected
                                       ? 'border-[#171412] bg-[#171412] text-[#fbf9ef]'
                                       : 'border-[#171412]/40 bg-[#fff]'
@@ -492,7 +492,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                   </div>
 
                   {/* Promo Code & Fee Calculation Box */}
-                  <div className="rounded-[18px] bg-[#fbf9ef] border-2 border-[#171412] p-5 sm:p-6 mb-8">
+                  <div className="rounded-[18px] bg-[#fbf9ef] border border-[#171412] p-5 sm:p-6 mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-4">
                       <div>
                         <div className="font-display text-[16px] font-extrabold text-[#171412]">
@@ -522,7 +522,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                             }
                           }}
                           placeholder={t('প্রোমো কোড লিখুন...', 'e.g. PROMO1000')}
-                          className="flex-1 min-h-[44px] px-3.5 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412] uppercase placeholder:normal-case placeholder:font-normal placeholder:text-[#171412]/40 focus:border-[#ff7722] focus:outline-none"
+                          className="flex-1 min-h-[44px] px-3.5 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412] uppercase placeholder:normal-case placeholder:font-normal placeholder:text-[#171412]/40 focus:border-[#ff7722] focus:outline-none"
                         />
                         <Button
                           variant="primary"
@@ -647,7 +647,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="p-4 rounded-[14px] bg-[#fbf9ef] hover:bg-[#fff] border-2 border-[#171412] transition-all hover:shadow-md cursor-pointer group"
+                className="p-4 rounded-[14px] bg-[#fbf9ef] hover:bg-[#fff] border border-[#171412] transition-all hover:shadow-md cursor-pointer group"
               >
                 <div className="flex items-center gap-2 font-display text-[16px] font-bold text-[#171412]">
                   <span>🏠</span>
@@ -666,7 +666,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/profile')}
-                className="p-4 rounded-[14px] bg-[#ffc765]/35 hover:bg-[#ffc765]/60 border-2 border-[#171412] transition-all hover:shadow-md cursor-pointer group"
+                className="p-4 rounded-[14px] bg-[#ffc765]/35 hover:bg-[#ffc765]/60 border border-[#171412] transition-all hover:shadow-md cursor-pointer group"
               >
                 <div className="flex items-center gap-2 font-display text-[16px] font-bold text-[#171412]">
                   <span>👤</span>
@@ -691,11 +691,11 @@ export const WaitlistConfirmedPage: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171412]/70 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/70 backdrop-blur-sm animate-fadeIn"
           onClick={() => setShowNavOptions(false)}
         >
           <div
-            className="w-full max-w-lg rounded-[24px] bg-[#fbf9ef] border-3 border-[#171412] p-6 sm:p-8 shadow-2xl text-left"
+            className="w-full h-full sm:h-auto sm:max-w-lg rounded-none sm:rounded-[24px] bg-[#fbf9ef] border-b-0 sm:border border-[#171412] p-6 sm:p-8 shadow-2xl text-left overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#171412]/15 mb-5">
@@ -725,7 +725,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                   setShowNavOptions(false);
                   navigate('/');
                 }}
-                className="w-full p-4 rounded-[16px] bg-[#f2f0e7] hover:bg-[#ffc765]/40 border-2 border-[#171412] flex items-center justify-between gap-4 transition-all hover:scale-[1.01] cursor-pointer text-left"
+                className="w-full p-4 rounded-[16px] bg-[#f2f0e7] hover:bg-[#ffc765]/40 border border-[#171412] flex items-center justify-between gap-4 transition-all hover:scale-[1.01] cursor-pointer text-left"
               >
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-xl bg-[#ff7722] border border-[#171412] flex items-center justify-center text-[22px] shrink-0">
@@ -752,7 +752,7 @@ export const WaitlistConfirmedPage: React.FC = () => {
                   setShowNavOptions(false);
                   navigate('/profile');
                 }}
-                className="w-full p-4 rounded-[16px] bg-[#ff7722]/15 hover:bg-[#ff7722]/30 border-2 border-[#171412] flex items-center justify-between gap-4 transition-all hover:scale-[1.01] cursor-pointer text-left"
+                className="w-full p-4 rounded-[16px] bg-[#ff7722]/15 hover:bg-[#ff7722]/30 border border-[#171412] flex items-center justify-between gap-4 transition-all hover:scale-[1.01] cursor-pointer text-left"
               >
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-xl bg-[#813502] text-[#fbf9ef] border border-[#171412] flex items-center justify-center text-[22px] shrink-0">

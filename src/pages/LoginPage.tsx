@@ -141,7 +141,7 @@ export const LoginPage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-8 shadow-[4px_4px_0px_#171412]">
+        <div className="rounded-[24px] bg-[#f2f0e7] border border-[#171412] p-6 sm:p-8 shadow-[4px_4px_0px_#171412]">
           
           <div className="text-center mb-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-[#ff7722]/20 text-[#813502] border border-[#ff7722]/40 mb-3">
@@ -158,7 +158,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {errorMsg && (
-            <div className="mb-5 p-3.5 rounded-[14px] bg-rose-50 border-2 border-rose-300 text-rose-800 text-[13px] font-bold text-center">
+            <div className="mb-5 p-3.5 rounded-[14px] bg-rose-50 border border-rose-300 text-rose-800 text-[13px] font-bold text-center">
               {errorMsg}
             </div>
           )}
@@ -181,7 +181,7 @@ export const LoginPage: React.FC = () => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="name@example.com বা 017XXXXXXXX"
-                  className="w-full h-12 px-4 rounded-[14px] bg-[#fbf9ef] border-2 border-[#171412]/25 text-[14px] font-semibold text-[#171412] placeholder-[#171412]/40 focus:outline-none focus:border-[#ff7722]"
+                  className="w-full h-12 px-4 rounded-[14px] bg-[#fbf9ef] border border-[#171412]/25 text-[14px] font-semibold text-[#171412] placeholder-[#171412]/40 focus:outline-none focus:border-[#ff7722]"
                   required
                 />
               </div>
@@ -216,7 +216,7 @@ export const LoginPage: React.FC = () => {
                       value={digit}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="w-11 h-12 sm:w-12 sm:h-14 text-center font-display text-[20px] sm:text-[24px] font-black rounded-[12px] bg-[#fbf9ef] border-2 border-[#171412]/30 focus:border-[#ff7722] focus:bg-[#ffffff] focus:outline-none"
+                      className="w-11 h-12 sm:w-12 sm:h-14 text-center font-display text-[20px] sm:text-[24px] font-black rounded-[12px] bg-[#fbf9ef] border border-[#171412]/30 focus:border-[#ff7722] focus:bg-[#ffffff] focus:outline-none"
                     />
                   ))}
                 </div>

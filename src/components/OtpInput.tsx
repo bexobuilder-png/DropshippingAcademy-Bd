@@ -121,7 +121,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({
             onKeyDown={(e) => handleKeyDown(idx, e)}
             onPaste={handlePaste}
             onFocus={(e) => e.target.select()}
-            className={`w-full h-14 sm:h-16 text-center font-display text-[24px] sm:text-[28px] font-extrabold tabular-nums rounded-[12px] bg-[#fff] text-[#171412] border-2 transition-colors ${
+            className={`w-full h-14 sm:h-16 text-center font-display text-[24px] sm:text-[28px] font-extrabold tabular-nums rounded-[12px] bg-[#fff] text-[#171412] border transition-colors ${
               error
                 ? 'border-[#ff3c34] bg-[#fff8f8]'
                 : digit

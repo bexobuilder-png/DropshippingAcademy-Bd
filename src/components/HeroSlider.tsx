@@ -99,7 +99,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full rounded-[20px] sm:rounded-[28px] bg-[#f2f0e7] border-2 border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden focus:outline-none"
+      className="relative w-full rounded-[20px] sm:rounded-[28px] bg-[#f2f0e7] border border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden focus:outline-none"
     >
       {/* Background Warm Ambient Glow */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#ff7722]/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -178,7 +178,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
                   e.stopPropagation();
                   onCtaClick?.();
                 }}
-                className="px-8 py-4 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-display text-[15px] sm:text-[16px] font-extrabold shadow-[4px_4px_0px_#171412] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#171412] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer inline-flex items-center gap-2.5 select-none"
+                className="px-8 py-4 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-display text-[15px] sm:text-[16px] font-extrabold shadow-[4px_4px_0px_#171412] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#171412] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer inline-flex items-center gap-2.5 select-none"
               >
                 <span>{currentSlide.ctaText || t('কোর্স দেখুন ও রেজিস্ট্রেশন করুন', 'Explore Course & Register')}</span>
                 <ArrowRightSvgIcon className="w-4 h-4 shrink-0 text-[#171412]" />
@@ -194,7 +194,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides, onCtaClick }) =>
 
           {/* Right Column: Visual Media Showcase with Floating Cursive Script */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-[20px] overflow-hidden border-2 border-[#171412] shadow-lg bg-[#171412] group">
+            <div className="relative rounded-[20px] overflow-hidden border border-[#171412] shadow-lg bg-[#171412] group">
               <div className="relative aspect-[4/3] sm:aspect-[16/11] w-full overflow-hidden">
                 <img
                   src={currentSlide.image}

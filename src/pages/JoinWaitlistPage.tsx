@@ -429,7 +429,7 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
         </div>
 
         {/* Main Card */}
-        <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] shadow-md p-6 sm:p-10 text-[#171412]">
+        <div className="rounded-[24px] bg-[#f2f0e7] border border-[#171412] shadow-md p-6 sm:p-10 text-[#171412]">
           {step === 1 ? (
             <div>
               <h1 className="font-display text-[32px] sm:text-[44px] font-extrabold text-[#171412] leading-[1.05] tracking-[-0.03em] mb-3">
@@ -446,7 +446,7 @@ export const JoinWaitlistPage: React.FC<JoinWaitlistPageProps> = ({
                   <div
                     role="alert"
                     aria-live="assertive"
-                    className="mb-6 p-4 rounded-[12px] bg-[#fff8f8] border-2 border-[#ff3c34] text-[#ff3c34] text-[14px] font-semibold flex items-start gap-2.5"
+                    className="mb-6 p-4 rounded-[12px] bg-[#fff8f8] border border-[#ff3c34] text-[#ff3c34] text-[14px] font-semibold flex items-start gap-2.5"
                   >
                     <AlertCircleSvgIcon className="w-5 h-5 shrink-0 mt-0.5" />
                     <span>{step1GlobalError}</span>

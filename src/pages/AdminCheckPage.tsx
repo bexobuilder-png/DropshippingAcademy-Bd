@@ -43,6 +43,12 @@ import {
   StudentEnrollment,
 } from '../services/enrollments';
 import {
+  fetchAllCertificates,
+  issueCertificate,
+  deleteCertificate,
+  Certificate,
+} from '../services/certificates';
+import {
   CourseItem,
   PromoCodeItem,
   DEFAULT_COURSES,
@@ -139,11 +145,18 @@ export const AdminCheckPage: React.FC = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Control Center active tab
-  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content' | 'courses' | 'contact'>('waitlist');
+  const [activeTab, setActiveTab] = useState<'waitlist' | 'founders' | 'content' | 'courses' | 'certificates' | 'contact' | 'settings'>('waitlist');
   const [contentLang, setContentLang] = useState<'bn' | 'en'>('bn');
   const [contentSubTab, setContentSubTab] = useState<
     'slider' | 'why-choose' | 'bento' | 'curriculum' | 'testimonials' | 'faq' | 'tools'
   >('slider');
+
+  // Payment Settings State
+  const [paymentSettings, setPaymentSettings] = useState<{ bKash: string; Nagad: string }>({
+    bKash: '01886-234567',
+    Nagad: '01712-345678',
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Courses & Promo Codes Management State
   const [adminCourses, setAdminCourses] = useState<CourseItem[]>(DEFAULT_COURSES);
@@ -160,6 +173,18 @@ export const AdminCheckPage: React.FC = () => {
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [enrollmentSearch, setEnrollmentSearch] = useState('');
   const [enrollmentStatusFilter, setEnrollmentStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
+  // Certificates State
+  const [adminCertificates, setAdminCertificates] = useState<Certificate[]>([]);
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
+  const [certForm, setCertForm] = useState({
+    studentEmail: '',
+    studentName: '',
+    courseId: '',
+    courseTitle: '',
+    certificateId: '',
+    issueDate: new Date().toISOString().split('T')[0],
+  });
 
   const [courseForm, setCourseForm] = useState<{
     title: string;
@@ -181,7 +206,7 @@ export const AdminCheckPage: React.FC = () => {
   }>({
     title: '',
     batchName: '',
-    category: 'ড্রপশিপিং রিসেলিং',
+    category: 'ড্রপশিপিং অ্যান্ড রিসেলিং',
     subtitle: '',
     description: '',
     price: 1000,
@@ -278,6 +303,19 @@ export const AdminCheckPage: React.FC = () => {
     }
   };
 
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    const res = await saveSiteSectionContent('payment_settings', paymentSettings);
+    setIsSavingSettings(false);
+    if (res.success) {
+      setCourseFeedback('পেমেন্ট সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে!');
+      setTimeout(() => setCourseFeedback(''), 4500);
+    } else {
+      alert('Failed to save settings: ' + res.error);
+    }
+  };
+
   // Waitlist Data State
   const [waitlistRows, setWaitlistRows] = useState<WaitlistDbRow[]>([]);
   const [loadingWaitlist, setLoadingWaitlist] = useState(false);
@@ -360,12 +398,14 @@ export const AdminCheckPage: React.FC = () => {
   const loadDashboardData = async () => {
     setLoadingWaitlist(true);
     setWaitlistError('');
-    const [waitlistRes, foundersRes, coursesRes, promoRes, enrollmentsRes] = await Promise.all([
+    const [waitlistRes, foundersRes, coursesRes, promoRes, enrollmentsRes, certsRes, paymentData] = await Promise.all([
       fetchAllWaitlistUsers(),
       fetchFoundersList(),
       fetchCoursesList(),
       fetchPromoCodesList(),
       fetchStudentEnrollments(),
+      fetchAllCertificates(),
+      fetchSiteSectionContent('payment_settings', paymentSettings),
     ]);
     setWaitlistRows(waitlistRes.rows);
     if (waitlistRes.error) {
@@ -375,6 +415,10 @@ export const AdminCheckPage: React.FC = () => {
     setAdminCourses(coursesRes);
     setAdminPromoCodes(promoRes);
     setStudentEnrollments(enrollmentsRes);
+    setAdminCertificates(certsRes);
+    if (paymentData && (paymentData.bKash || paymentData.Nagad)) {
+      setPaymentSettings(paymentData);
+    }
     setLoadingWaitlist(false);
   };
 
@@ -956,6 +1000,27 @@ export const AdminCheckPage: React.FC = () => {
     setTimeout(() => setCourseFeedback(''), 4000);
   };
 
+  const handleSaveCertificate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await issueCertificate(certForm);
+    if (res.success) {
+      const updated = await fetchAllCertificates();
+      setAdminCertificates(updated);
+      setIsCertificateModalOpen(false);
+      setCourseFeedback(`সার্টিফিকেট "${certForm.certificateId}" সফলভাবে ইস্যু করা হয়েছে!`);
+    } else {
+      alert(`সার্টিফিকেট ইস্যু করতে ত্রুটি: ${res.error}`);
+    }
+  };
+
+  const handleDeleteCert = async (id: string) => {
+    if (window.confirm('সার্টিফিকেটটি মুছে ফেলতে চান?')) {
+      await deleteCertificate(id);
+      const updated = await fetchAllCertificates();
+      setAdminCertificates(updated);
+    }
+  };
+
   // Direct Assign Course to Applicant
   const handleAssignUserCourseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1161,7 +1226,7 @@ export const AdminCheckPage: React.FC = () => {
     return (
       <main id="main-content" className="py-12 md:py-20">
         <div className="specimen-container max-w-xl">
-          <div className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-10">
+          <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 sm:p-10">
             <div className="flex items-center justify-between gap-2 text-[12px] font-bold text-[#813502] mb-3">
               <span>{t('সংরক্ষিত অ্যাক্সেস · /check', 'Restricted Access · /check')}</span>
               <span className="tabular-nums">
@@ -1204,7 +1269,7 @@ export const AdminCheckPage: React.FC = () => {
               <div
                 role="alert"
                 aria-live="assertive"
-                className="mb-6 p-4 rounded-[10px] bg-[#fff8f8] border-2 border-[#ff3c34] text-[#ff3c34] text-[13px] font-semibold flex items-start gap-2"
+                className="mb-6 p-4 rounded-[10px] bg-[#fff8f8] border border-[#ff3c34] text-[#ff3c34] text-[13px] font-semibold flex items-start gap-2"
               >
                 <AlertCircleSvgIcon className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{authError}</span>
@@ -1215,7 +1280,7 @@ export const AdminCheckPage: React.FC = () => {
               <div
                 role="status"
                 aria-live="polite"
-                className="mb-6 p-4 rounded-[10px] bg-[#fbf9ef] border-2 border-[#171412] text-[#171412] text-[13px] font-bold flex items-center gap-2"
+                className="mb-6 p-4 rounded-[10px] bg-[#fbf9ef] border border-[#171412] text-[#171412] text-[13px] font-bold flex items-center gap-2"
               >
                 <CheckSvgIcon className="w-4 h-4 text-[#813502] shrink-0" />
                 <span>{authNotice}</span>
@@ -1401,7 +1466,7 @@ export const AdminCheckPage: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className={`mb-6 p-4 rounded-[12px] border-2 text-[14px] font-bold flex items-center justify-between gap-3 ${
+            className={`mb-6 p-4 rounded-[12px] border text-[14px] font-bold flex items-center justify-between gap-3 ${
               emailStatusFeedback.type === 'success'
                 ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#1b5e20]'
                 : 'bg-[#fff8f8] border-[#ff3c34] text-[#ff3c34]'
@@ -1429,7 +1494,7 @@ export const AdminCheckPage: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="mb-6 p-4 rounded-[12px] bg-[#ffc765]/45 border-2 border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between gap-3"
+            className="mb-6 p-4 rounded-[12px] bg-[#ffc765]/45 border border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2.5">
               <CheckSvgIcon className="w-5 h-5 text-[#813502] shrink-0" />
@@ -1515,6 +1580,23 @@ export const AdminCheckPage: React.FC = () => {
               `Courses & Promos (${adminCourses.length})`
             )}
           </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'certificates'}
+            onClick={() => setActiveTab('certificates')}
+            className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+              activeTab === 'certificates'
+                ? 'bg-[#171412] text-[#fbf9ef]'
+                : 'text-[#171412] hover:bg-[#ebe9df]'
+            }`}
+          >
+            {t(
+              `সার্টিফিকেট ব্যবস্থাপনা (${adminCertificates.length})`,
+              `Certificates (${adminCertificates.length})`
+            )}
+          </button>
           <button
             type="button"
             role="tab"
@@ -1527,6 +1609,19 @@ export const AdminCheckPage: React.FC = () => {
             }`}
           >
             {t('যোগাযোগ ও সাপোর্ট', 'Contact & Support')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'settings'}
+            onClick={() => setActiveTab('settings')}
+            className={`min-h-[42px] px-6 py-2 rounded-[50px] text-[13px] font-bold transition-colors cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-[#171412] text-[#fbf9ef]'
+                : 'text-[#171412] hover:bg-[#ebe9df]'
+            }`}
+          >
+            {t('সেটিংস (Settings)', 'Settings')}
           </button>
         </div>
 
@@ -1697,7 +1792,7 @@ export const AdminCheckPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="rounded-[12px] bg-[#fff] border-2 border-[#171412] overflow-hidden max-w-full">
+              <div className="rounded-[12px] bg-[#fff] border border-[#171412] overflow-hidden max-w-full">
                 <div className="overflow-x-auto w-full -webkit-overflow-scrolling-touch">
                   <table id="content-table" className="w-full text-left border-collapse min-w-[840px]">
                     <thead>
@@ -1965,7 +2060,7 @@ export const AdminCheckPage: React.FC = () => {
         {activeTab === 'founders' && (
           <section aria-label="Founders control center" className="flex flex-col gap-12">
             {/* Top Bar for Founders List + Delete All / Restore */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border border-[#171412]">
               <div>
                 <h2 className="specimen-h3 text-[#171412]">
                   Active Homepage Founders ({founders.length})
@@ -1992,7 +2087,7 @@ export const AdminCheckPage: React.FC = () => {
                 )}
 
                 {confirmDeleteAllFounders && (
-                  <div className="flex items-center gap-2 p-1.5 rounded-[50px] bg-[#fff8f8] border-2 border-[#ff3c34]">
+                  <div className="flex items-center gap-2 p-1.5 rounded-[50px] bg-[#fff8f8] border border-[#ff3c34]">
                     <button
                       type="button"
                       onClick={handleDeleteAllFounders}
@@ -2016,7 +2111,7 @@ export const AdminCheckPage: React.FC = () => {
               <div
                 role="status"
                 aria-live="polite"
-                className="p-4 rounded-[12px] bg-[#ffc765]/40 border-2 border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between"
+                className="p-4 rounded-[12px] bg-[#ffc765]/40 border border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between"
               >
                 <span>{founderFeedback}</span>
                 <button
@@ -2031,7 +2126,7 @@ export const AdminCheckPage: React.FC = () => {
 
             {/* Current Founders Cards Grid */}
             {founders.length === 0 ? (
-              <div className="rounded-[12px] bg-[#fff] border-2 border-dashed border-[#171412]/40 p-10 text-center">
+              <div className="rounded-[12px] bg-[#fff] border border-dashed border-[#171412]/40 p-10 text-center">
                 <h3 className="specimen-h3 mb-2">All founders have been deleted</h3>
                 <p className="text-[15px] text-[#171412]/75 max-w-md mx-auto">
                   The homepage founders photo row is currently empty. Use the form below
@@ -2044,12 +2139,12 @@ export const AdminCheckPage: React.FC = () => {
                 {founders.map((founder) => (
                   <article
                     key={founder.id}
-                    className="rounded-[12px] bg-[#fff] border-2 border-[#171412] p-5 flex flex-col justify-between gap-5"
+                    className="rounded-[12px] bg-[#fff] border border-[#171412] p-5 flex flex-col justify-between gap-5"
                   >
                     <div>
                       <div
                         style={{ backgroundColor: founder.backdropColor }}
-                        className="w-full p-2.5 rounded-[10px] border-2 border-[#171412] mb-4"
+                        className="w-full p-2.5 rounded-[10px] border border-[#171412] mb-4"
                       >
                         <div className="aspect-[3/4] w-full rounded-[6px] overflow-hidden bg-[#171412]">
                           <img
@@ -2098,7 +2193,7 @@ export const AdminCheckPage: React.FC = () => {
             {/* Add / Edit Founder Form */}
             <div
               ref={founderEditorRef}
-              className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-10"
+              className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 sm:p-10"
             >
               <div className="flex items-center justify-between gap-4 mb-6">
                 <div>
@@ -2120,7 +2215,7 @@ export const AdminCheckPage: React.FC = () => {
               {founderFormError && (
                 <div
                   role="alert"
-                  className="mb-6 p-4 rounded-[10px] bg-[#fff8f8] border-2 border-[#ff3c34] text-[#ff3c34] text-[13px] font-semibold flex items-center gap-2"
+                  className="mb-6 p-4 rounded-[10px] bg-[#fff8f8] border border-[#ff3c34] text-[#ff3c34] text-[13px] font-semibold flex items-center gap-2"
                 >
                   <AlertCircleSvgIcon className="w-4 h-4 shrink-0" />
                   <span>{founderFormError}</span>
@@ -2293,7 +2388,7 @@ export const AdminCheckPage: React.FC = () => {
                   <div className="flex flex-col items-center pt-2">
                     <div
                       style={{ backgroundColor: founderForm.backdropColor }}
-                      className="w-48 p-2.5 rounded-[12px] border-2 border-[#171412]"
+                      className="w-48 p-2.5 rounded-[12px] border border-[#171412]"
                     >
                       <div className="aspect-[3/4] w-full rounded-[8px] overflow-hidden bg-[#171412] flex items-center justify-center">
                         {founderForm.photo ? (
@@ -2328,7 +2423,7 @@ export const AdminCheckPage: React.FC = () => {
             </div>
 
             {/* Founder Section Story Headline & Copy Editor */}
-            <div className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-10">
+            <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 sm:p-10">
               <div className="text-[12px] font-bold text-[#813502] mb-1">
                 Homepage Section Copy
               </div>
@@ -2402,11 +2497,89 @@ export const AdminCheckPage: React.FC = () => {
         )}
 
         {/* =====================================================================
+            TAB: CERTIFICATES MANAGEMENT
+        ===================================================================== */}
+        {activeTab === 'certificates' && (
+          <section aria-label="Certificates management">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border border-[#171412] mb-8">
+              <div>
+                <h2 className="specimen-h3 text-[#171412]">
+                  Manage Certificates ({adminCertificates.length})
+                </h2>
+                <p className="text-[14px] text-[#171412]/80 mt-1">
+                  Issue completion certificates to students. They will see them in their "Certificates" tab.
+                </p>
+              </div>
+              <Button 
+                variant="primary" 
+                onClick={() => {
+                  setCertForm({
+                    studentEmail: '',
+                    studentName: '',
+                    courseId: adminCourses[0]?.id || '',
+                    courseTitle: adminCourses[0]?.title || '',
+                    certificateId: `DA-${Date.now().toString().slice(-6)}`,
+                    issueDate: new Date().toISOString().split('T')[0],
+                  });
+                  setIsCertificateModalOpen(true);
+                }}
+              >
+                Issue New Certificate
+              </Button>
+            </div>
+
+            <div className="bg-white rounded-[12px] border border-[#171412] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#171412] text-white text-[12px] font-bold uppercase tracking-wider">
+                      <th className="py-3 px-4">Student</th>
+                      <th className="py-3 px-4">Course</th>
+                      <th className="py-3 px-4">Cert ID</th>
+                      <th className="py-3 px-4">Issue Date</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#171412]/10">
+                    {adminCertificates.map((cert) => (
+                      <tr key={cert.id} className="hover:bg-[#fbf9ef] transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-[#171412]">{cert.studentName}</div>
+                          <div className="text-[11px] text-[#171412]/60">{cert.studentEmail}</div>
+                        </td>
+                        <td className="py-3 px-4 text-[13px] font-medium">{cert.courseTitle}</td>
+                        <td className="py-3 px-4 font-mono text-[12px] font-bold text-[#813502] uppercase">{cert.certificateId}</td>
+                        <td className="py-3 px-4 text-[13px]">{cert.issueDate}</td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => handleDeleteCert(cert.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {adminCertificates.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-[#171412]/50 italic font-medium">
+                          No certificates issued yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================================
             TAB 3: SITE CONTENT EDITOR (Bento, Curriculum, Testimonials, FAQs)
         ===================================================================== */}
         {activeTab === 'content' && (
           <section aria-label="Site content editor" className="flex flex-col gap-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[12px] bg-[#f2f0e7] border border-[#171412]">
               <div>
                 <h2 className="specimen-h3 text-[#171412]">
                   {t('ওয়েবসাইট কন্টেন্ট এডিটর', 'Website Content Editor')}
@@ -2451,7 +2624,7 @@ export const AdminCheckPage: React.FC = () => {
               <div
                 role="status"
                 aria-live="polite"
-                className="p-4 rounded-[12px] bg-[#ffc765]/40 border-2 border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between"
+                className="p-4 rounded-[12px] bg-[#ffc765]/40 border border-[#171412] text-[14px] font-bold text-[#171412] flex items-center justify-between"
               >
                 <span>{siteContentNotice}</span>
                 <button
@@ -2517,7 +2690,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminHeroSlides.map((slide, index) => (
                     <div
                       key={slide.id || `slide-${index}`}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
                         <span>Slide #{index + 1} ({slide.id})</span>
@@ -2651,7 +2824,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminWhyChoose.map((item, index) => (
                     <div
                       key={item.id || `why-${index}`}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
                         <span>Pillar #{index + 1} ({item.id})</span>
@@ -2708,7 +2881,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminBento.map((item, index) => (
                     <div
                       key={item.id}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
                         <span>Card #{index + 1} ({item.id})</span>
@@ -2790,7 +2963,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminCurriculum.map((tab, index) => (
                     <div
                       key={tab.id}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <div className="flex items-center justify-between text-[12px] font-bold text-[#813502]">
                         <span>Module Step {tab.stepNumber} ({tab.id})</span>
@@ -2860,7 +3033,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminTestimonials.map((item, index) => (
                     <div
                       key={item.id}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <Input
@@ -2938,7 +3111,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminFaqs.map((faq, index) => (
                     <div
                       key={faq.id}
-                      className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-6 flex flex-col gap-4"
+                      className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-6 flex flex-col gap-4"
                     >
                       <Input
                         id={`faq-q-${index}`}
@@ -2979,7 +3152,7 @@ export const AdminCheckPage: React.FC = () => {
         {activeTab === 'courses' && (
           <section aria-label="Course and promo code management" className="flex flex-col gap-6">
             {/* Header Card */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-[16px] bg-[#f2f0e7] border-2 border-[#171412]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-[16px] bg-[#f2f0e7] border border-[#171412]">
               <div>
                 <span className="text-[12px] font-extrabold text-[#813502] uppercase tracking-wider block mb-1">
                   {t('লাইভ কোর্স ও ছাড় কন্ট্রোল প্যানেল', 'Live Course & Discount Control Panel')}
@@ -3002,7 +3175,7 @@ export const AdminCheckPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={openNewCourseModal}
-                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border-2 border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
                     >
                       <span>+ {t('নতুন কোর্স যোগ করুন', 'Add New Course')}</span>
                     </button>
@@ -3019,7 +3192,7 @@ export const AdminCheckPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={openNewPromoModal}
-                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border-2 border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
+                      className="min-h-[44px] px-5 py-2 rounded-[50px] bg-[#ff7722] hover:bg-[#ff8f44] text-[#171412] font-display text-[14px] font-extrabold border border-[#171412] shadow-sm inline-flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
                     >
                       <span>+ {t('নতুন প্রোমো কোড তৈরি করুন', 'Create Promo Code')}</span>
                     </button>
@@ -3040,7 +3213,7 @@ export const AdminCheckPage: React.FC = () => {
               <div
                 role="status"
                 aria-live="polite"
-                className="p-4 rounded-[12px] bg-[#e8f5e9] border-2 border-[#2e7d32] text-[#1b5e20] text-[14px] font-bold flex items-center justify-between animate-fadeIn"
+                className="p-4 rounded-[12px] bg-[#e8f5e9] border border-[#2e7d32] text-[#1b5e20] text-[14px] font-bold flex items-center justify-between animate-fadeIn"
               >
                 <div className="flex items-center gap-2.5">
                   <CheckSvgIcon className="w-5 h-5 text-[#2e7d32] shrink-0" />
@@ -3133,7 +3306,7 @@ export const AdminCheckPage: React.FC = () => {
                   {adminCourses.map((course, idx) => (
                     <div
                       key={course.id}
-                      className={`rounded-[18px] border-2 p-6 flex flex-col justify-between transition-all ${
+                      className={`rounded-[18px] border p-6 flex flex-col justify-between transition-all ${
                         course.isActive
                           ? 'bg-[#ffffff] border-[#171412] shadow-sm'
                           : 'bg-[#f8f6f0] border-[#171412]/30 opacity-75'
@@ -3337,14 +3510,14 @@ export const AdminCheckPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={openNewPromoModal}
-                    className="min-h-[40px] px-5 py-2 rounded-[50px] bg-[#059669] text-white font-bold text-[13px] border-2 border-[#171412] hover:bg-[#047857] shadow-[2px_2px_0px_#171412] cursor-pointer shrink-0"
+                    className="min-h-[40px] px-5 py-2 rounded-[50px] bg-[#059669] text-white font-bold text-[13px] border border-[#171412] hover:bg-[#047857] shadow-[2px_2px_0px_#171412] cursor-pointer shrink-0"
                   >
                     + {t('নতুন প্রোমো কোড তৈরি', 'Create Promo Code')}
                   </button>
                 </div>
 
                 {/* Filters and Search Bar */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 bg-white rounded-2xl border-2 border-[#171412]">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-[#171412]">
                   {/* Search input */}
                   <div className="flex-1 min-w-[200px]">
                     <input
@@ -3352,7 +3525,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={promoSearchQuery}
                       onChange={(e) => setPromoSearchQuery(e.target.value)}
                       placeholder={t('প্রোমো কোড দিয়ে খুঁজুন (e.g. EARLY20)...', 'Search promo code...')}
-                      className="w-full px-3.5 py-2 text-xs font-mono font-bold uppercase rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none"
+                      className="w-full px-3.5 py-2 text-xs font-mono font-bold uppercase rounded-xl bg-[#fbf9ef] border border-[#171412]/15 focus:border-[#059669] outline-none"
                     />
                   </div>
 
@@ -3362,7 +3535,7 @@ export const AdminCheckPage: React.FC = () => {
                     <select
                       value={promoCourseFilter}
                       onChange={(e) => setPromoCourseFilter(e.target.value)}
-                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
                     >
                       <option value="ALL">🌟 All Courses (সকল কোর্স)</option>
                       {adminCourses.map((c) => (
@@ -3379,7 +3552,7 @@ export const AdminCheckPage: React.FC = () => {
                     <select
                       value={promoStatusFilter}
                       onChange={(e) => setPromoStatusFilter(e.target.value as any)}
-                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border-2 border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
+                      className="px-3 py-2 text-xs font-bold rounded-xl bg-[#fbf9ef] border border-[#171412]/15 focus:border-[#059669] outline-none cursor-pointer"
                     >
                       <option value="all">সব (All)</option>
                       <option value="active">সক্রিয় (Active)</option>
@@ -3389,7 +3562,7 @@ export const AdminCheckPage: React.FC = () => {
                 </div>
 
                 {/* Promo Code Table */}
-                <div className="bg-white rounded-2xl border-2 border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden">
+                <div className="bg-white rounded-2xl border border-[#171412] shadow-[6px_6px_0px_#171412] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -3584,7 +3757,7 @@ export const AdminCheckPage: React.FC = () => {
 
                 {/* Enrollments List Cards */}
                 {studentEnrollments.length === 0 ? (
-                  <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-[#171412]/30 text-sm text-[#171412]/60">
+                  <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-[#171412]/30 text-sm text-[#171412]/60">
                     বর্তমানে কোনো ভর্তি আবেদন জমা হয়নি। ওয়েবসাইটে গিয়ে "রেজিস্ট্রেশন করুন" বাটনে ক্লিক করে প্রথম আবেদন করুন!
                   </div>
                 ) : (
@@ -3608,7 +3781,7 @@ export const AdminCheckPage: React.FC = () => {
                       .map((enr) => (
                         <div
                           key={enr.id}
-                          className="p-5 rounded-2xl bg-white border-2 border-[#171412] shadow-sm flex flex-col justify-between gap-4"
+                          className="p-5 rounded-2xl bg-white border border-[#171412] shadow-sm flex flex-col justify-between gap-4"
                         >
                           <div>
                             {/* Card Header: Course & Status */}
@@ -3775,9 +3948,9 @@ export const AdminCheckPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="email-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
           >
-            <div className="relative w-full max-w-2xl bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8 max-h-[92vh] overflow-y-auto">
+            <div className="relative w-full h-full sm:h-auto sm:max-w-2xl bg-[#ffffff] border-0 sm:border border-[#171412] rounded-none sm:rounded-[16px] shadow-none sm:shadow-[8px_8px_0px_#171412] p-5 sm:p-7 sm:my-8 overflow-y-auto">
               
               {/* Modal Top Bar */}
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
@@ -3890,7 +4063,7 @@ export const AdminCheckPage: React.FC = () => {
                     type="text"
                     value={emailModalSubject}
                     onChange={(e) => setEmailModalSubject(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                     placeholder="বাংলা ইমেইল সাবজেক্ট লিখুন..."
                   />
                 </div>
@@ -3909,7 +4082,7 @@ export const AdminCheckPage: React.FC = () => {
                     rows={4}
                     value={emailModalCustomMessage}
                     onChange={(e) => setEmailModalCustomMessage(e.target.value)}
-                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
                     placeholder="এখানে আবেদনকারীর জন্য কোনো কাস্টম আপডেট, কারণ, কোহর্ট শুরুর তারিখ বা দিকনির্দেশনা লিখুন..."
                   />
                   <p className="text-[11px] text-[#171412]/65 mt-1">
@@ -3943,7 +4116,7 @@ export const AdminCheckPage: React.FC = () => {
 
                 {/* Email Live Preview Box */}
                 {showEmailPreview && (
-                  <div className="p-4 rounded-[12px] bg-[#fbf9ef] border-2 border-[#171412] text-[13px] leading-relaxed max-h-72 overflow-y-auto">
+                  <div className="p-4 rounded-[12px] bg-[#fbf9ef] border border-[#171412] text-[13px] leading-relaxed max-h-72 overflow-y-auto">
                     <div className="p-3 bg-[#171412] text-[#fbf9ef] rounded-[8px] mb-3 text-center">
                       <div className="font-bold text-[14px]">Dropshipping Academy</div>
                       <div className="text-[11px] opacity-80">
@@ -4015,6 +4188,92 @@ export const AdminCheckPage: React.FC = () => {
         )}
 
         {/* =====================================================================
+            MODAL: ISSUE CERTIFICATE
+        ===================================================================== */}
+        {isCertificateModalOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="relative w-full h-full sm:h-auto sm:max-w-lg bg-white border-0 sm:border border-[#171412] rounded-none sm:rounded-[16px] shadow-none sm:shadow-[8px_8px_0px_#171412] p-6 overflow-y-auto">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#171412]/10">
+                <h2 className="text-xl font-bold text-[#171412]">Issue Student Certificate</h2>
+                <button onClick={() => setIsCertificateModalOpen(false)} className="text-xl">✕</button>
+              </div>
+
+              <form onSubmit={handleSaveCertificate} className="space-y-4">
+                <div>
+                  <label className="block text-[13px] font-bold mb-1">Student Name *</label>
+                  <input
+                    required
+                    type="text"
+                    value={certForm.studentName}
+                    onChange={(e) => setCertForm(prev => ({ ...prev, studentName: e.target.value }))}
+                    placeholder="e.g. Rakibul Hasan"
+                    className="w-full p-2.5 rounded-lg border border-[#171412]/20 focus:border-[#059669] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-bold mb-1">Student Email *</label>
+                  <input
+                    required
+                    type="email"
+                    value={certForm.studentEmail}
+                    onChange={(e) => setCertForm(prev => ({ ...prev, studentEmail: e.target.value }))}
+                    placeholder="student@gmail.com"
+                    className="w-full p-2.5 rounded-lg border border-[#171412]/20 focus:border-[#059669] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-bold mb-1">Select Course *</label>
+                  <select
+                    required
+                    value={certForm.courseId}
+                    onChange={(e) => {
+                      const course = adminCourses.find(c => c.id === e.target.value);
+                      setCertForm(prev => ({ ...prev, courseId: e.target.value, courseTitle: course?.title || '' }));
+                    }}
+                    className="w-full p-2.5 rounded-lg border border-[#171412]/20 focus:border-[#059669] outline-none"
+                  >
+                    <option value="">Choose a course</option>
+                    {adminCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[13px] font-bold mb-1">Certificate ID *</label>
+                    <input
+                      required
+                      type="text"
+                      value={certForm.certificateId}
+                      onChange={(e) => setCertForm(prev => ({ ...prev, certificateId: e.target.value.toUpperCase() }))}
+                      className="w-full p-2.5 rounded-lg border border-[#171412]/20 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[13px] font-bold mb-1">Issue Date *</label>
+                    <input
+                      required
+                      type="date"
+                      value={certForm.issueDate}
+                      onChange={(e) => setCertForm(prev => ({ ...prev, issueDate: e.target.value }))}
+                      className="w-full p-2.5 rounded-lg border border-[#171412]/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button type="submit" variant="primary" className="w-full py-3">
+                    Issue Certificate & Save
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
             MODAL 1: ADD / EDIT COURSE
         ===================================================================== */}
         {isCourseModalOpen && (
@@ -4022,9 +4281,9 @@ export const AdminCheckPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="course-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
           >
-            <div className="relative w-full max-w-2xl bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8 max-h-[92vh] overflow-y-auto">
+            <div className="relative w-full h-full sm:h-auto sm:max-w-2xl bg-[#ffffff] border-0 sm:border border-[#171412] rounded-none sm:rounded-[16px] shadow-none sm:shadow-[8px_8px_0px_#171412] p-5 sm:p-7 sm:my-8 overflow-y-auto">
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
                 <div>
                   <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
@@ -4059,7 +4318,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={courseForm.batchName}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, batchName: e.target.value }))}
                       placeholder="যেমন: Sakku Batch 1 বা সাক্কু ব্যাচ ০১"
-                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -4073,7 +4332,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={courseForm.title}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
                       placeholder="যেমন: ড্রপশিপিং ও রিসেলিং মাস্টারক্লাস"
-                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -4090,11 +4349,11 @@ export const AdminCheckPage: React.FC = () => {
                     value={courseForm.category}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, category: e.target.value }))}
                     placeholder="যেমন: ড্রপশিপিং ই-কমার্স ব্যবসা / ড্রপশিপিং রিসেলার ব্যবসা / ডিজিটাল মার্কেটিং"
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                   />
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px]">
                     <span className="font-bold text-[#813502]">দ্রুত সিলেক্ট:</span>
-                    {(['ড্রপশিপিং রিসেলিং', 'গ্লোবাল ড্রপশিপিং'] as const).map((cat) => (
+                    {(['ড্রপশিপিং অ্যান্ড রিসেলিং', 'গ্লোবাল ড্রপশিপিং'] as const).map((cat) => (
                       <button
                         key={cat}
                         type="button"
@@ -4121,7 +4380,7 @@ export const AdminCheckPage: React.FC = () => {
                       <img
                         src={courseForm.thumbnailUrl}
                         alt="Thumbnail preview"
-                        className="w-24 h-16 object-cover rounded-lg border-2 border-[#171412] shrink-0"
+                        className="w-24 h-16 object-cover rounded-lg border border-[#171412] shrink-0"
                       />
                     )}
                     <div className="flex-1 w-full">
@@ -4161,7 +4420,7 @@ export const AdminCheckPage: React.FC = () => {
                 </div>
 
                 {/* Enrollment Type & Promo Code Requirements */}
-                <div className="p-3.5 bg-[#fef9c3] rounded-[12px] border-2 border-[#ca8a04] space-y-2.5">
+                <div className="p-3.5 bg-[#fef9c3] rounded-[12px] border border-[#ca8a04] space-y-2.5">
                   <label className="block text-[13px] font-bold text-[#854d0e]">
                     ভর্তি মাধ্যম নির্ধারণ (Enrollment Method):
                   </label>
@@ -4174,7 +4433,7 @@ export const AdminCheckPage: React.FC = () => {
                         key={mode.type}
                         type="button"
                         onClick={() => setCourseForm((prev) => ({ ...prev, enrollmentType: mode.type as any }))}
-                        className={`p-2 rounded-lg border-2 text-xs font-bold text-center transition ${
+                        className={`p-2 rounded-lg border text-xs font-bold text-center transition ${
                           courseForm.enrollmentType === mode.type
                             ? 'bg-[#171412] text-white border-[#171412]'
                             : 'bg-white text-[#171412] border-[#ca8a04]/40 hover:border-[#ca8a04]'
@@ -4216,7 +4475,7 @@ export const AdminCheckPage: React.FC = () => {
                     value={courseForm.subtitle}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, subtitle: e.target.value }))}
                     placeholder="যেমন: পণ্য না কিনেই শূন্য ইনভেস্টমেন্টে রিসেলিং ও ড্রপশিপিংয়ের মাধ্যমে নিয়মিত আয়"
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] focus:border-[#ff7722] focus:outline-none"
                   />
                 </div>
 
@@ -4231,7 +4490,7 @@ export const AdminCheckPage: React.FC = () => {
                     value={courseForm.description}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
                     placeholder="কোর্সের পূর্ণাঙ্গ সিলেবাস, সাপ্লায়ার নেটওয়ার্ক ও লাইভ সাপোর্ট সংক্রান্ত তথ্য..."
-                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412] leading-relaxed focus:border-[#ff7722] focus:outline-none"
                   />
                 </div>
 
@@ -4249,7 +4508,7 @@ export const AdminCheckPage: React.FC = () => {
                       step={50}
                       value={courseForm.price}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412]"
                     />
                     <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">যেমন: ১০০০ টাকা</span>
                   </div>
@@ -4265,7 +4524,7 @@ export const AdminCheckPage: React.FC = () => {
                       step={50}
                       value={courseForm.discountPrice}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, discountPrice: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412]"
                     />
                     <span className="text-[10px] text-[#813502] font-semibold mt-0.5 block">যেমন: ১০০০ টাকা</span>
                   </div>
@@ -4280,7 +4539,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={courseForm.duration}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, duration: e.target.value }))}
                       placeholder="যেমন: ৮ সপ্তাহ · লাইভ ক্লাস"
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412]"
                     />
                   </div>
                 </div>
@@ -4299,8 +4558,24 @@ export const AdminCheckPage: React.FC = () => {
                     value={courseForm.highlights}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, highlights: e.target.value }))}
                     placeholder="জিরো ইনভেন্টরি রিসেলিং মেথডোলজি&#10;ভেরিফাইড হোলসেল সাপ্লায়ার তালিকা&#10;প্রতি অর্ডারে ৩০০–১,৫০০ টাকা নিশ্চিত নিট মার্জিন"
-                    className="w-full p-3 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] text-[#171412] font-mono leading-relaxed focus:border-[#ff7722] focus:outline-none"
+                    className="w-full p-3 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[13px] text-[#171412] font-mono leading-relaxed focus:border-[#ff7722] focus:outline-none"
                   />
+                </div>
+
+                {/* Required Promo Code Field */}
+                <div>
+                  <label htmlFor="course-promo-input" className="block text-[13px] font-bold text-[#171412] mb-1">
+                    ভর্তির জন্য প্রোমো কোড (Promo Code Required)
+                  </label>
+                  <input
+                    id="course-promo-input"
+                    type="text"
+                    value={courseForm.requiredPromoCode}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, requiredPromoCode: e.target.value.toUpperCase() }))}
+                    placeholder="যেমন: JOINFREE"
+                    className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[13px] font-mono font-bold uppercase"
+                  />
+                  <span className="text-[10px] text-[#171412]/60 mt-0.5 block">যদি কোর্সটি শুধুমাত্র প্রোমো কোড দিয়ে জয়েন করতে হয় (ঐচ্ছিক)।</span>
                 </div>
 
                 {/* Badge, Running Course & Visibility Checkboxes */}
@@ -4315,7 +4590,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={courseForm.badge}
                       onChange={(e) => setCourseForm((prev) => ({ ...prev, badge: e.target.value }))}
                       placeholder="যেমন: সবচেয়ে জনপ্রিয় / নতুন ব্যাচ"
-                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px]"
+                      className="w-full px-3 py-2 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[13px]"
                     />
                   </div>
 
@@ -4375,9 +4650,9 @@ export const AdminCheckPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="promo-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
           >
-            <div className="relative w-full max-w-lg bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8">
+            <div className="relative w-full h-full sm:h-auto sm:max-w-lg bg-[#ffffff] border-0 sm:border border-[#171412] rounded-none sm:rounded-[16px] shadow-none sm:shadow-[8px_8px_0px_#171412] p-5 sm:p-7 sm:my-8 overflow-y-auto">
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
                 <div>
                   <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
@@ -4412,7 +4687,7 @@ export const AdminCheckPage: React.FC = () => {
                     value={promoForm.code}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))}
                     placeholder="যেমন: EARLY20 / SCHOLARSHIP50 / PROMO1000"
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[15px] font-mono font-bold text-[#171412] uppercase focus:border-[#ff7722] focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[15px] font-mono font-bold text-[#171412] uppercase focus:border-[#ff7722] focus:outline-none"
                   />
                   <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
                     যেকোনো কাস্টম টেক্সট প্রবেশ করান (স্বয়ংক্রিয়ভাবে বড় হাতের অক্ষরে সংরক্ষিত হবে)।
@@ -4428,7 +4703,7 @@ export const AdminCheckPage: React.FC = () => {
                     id="promo-course-select"
                     value={promoForm.applicableCourseId}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, applicableCourseId: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[13px] font-bold text-[#171412] cursor-pointer"
                   >
                     <option value="ALL">🌟 All Courses (সকল কোর্সে প্রযোজ্য)</option>
                     {adminCourses.map((c) => (
@@ -4460,7 +4735,7 @@ export const AdminCheckPage: React.FC = () => {
                             percentage: val > 50 ? 50 : val,
                           }));
                         }}
-                        className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#059669] focus:border-[#059669]"
+                        className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#059669] focus:border-[#059669]"
                       />
                       <span className="absolute right-3 font-bold text-sm text-[#059669]">% OFF</span>
                     </div>
@@ -4481,7 +4756,7 @@ export const AdminCheckPage: React.FC = () => {
                       value={promoForm.usageLimit}
                       onChange={(e) => setPromoForm((prev) => ({ ...prev, usageLimit: Number(e.target.value) }))}
                       placeholder="যেমন: 50"
-                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412]"
                     />
                     <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
                       সর্বমোট কতজন শিক্ষার্থী এটি ব্যবহার করতে পারবে (যেমন: ৫০ জন)।
@@ -4499,7 +4774,7 @@ export const AdminCheckPage: React.FC = () => {
                     type="date"
                     value={promoForm.expiresAt}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412]"
                   />
                   <span className="text-[10px] text-[#171412]/60 mt-0.5 block">
                     খালি রাখলে মেয়াদ থাকবে না (অনির্দিষ্টকালের জন্য কার্যকর)।
@@ -4517,7 +4792,7 @@ export const AdminCheckPage: React.FC = () => {
                     value={promoForm.description}
                     onChange={(e) => setPromoForm((prev) => ({ ...prev, description: e.target.value }))}
                     placeholder="যেমন: আর্লি বার্ড কোহর্ট স্পেশাল ২০% ছাড় প্রোমো কোড"
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] text-[#171412]"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] text-[#171412]"
                   />
                 </div>
 
@@ -4563,9 +4838,9 @@ export const AdminCheckPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="assign-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
           >
-            <div className="relative w-full max-w-lg bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-5 sm:p-7 my-8">
+            <div className="relative w-full h-full sm:h-auto sm:max-w-lg bg-[#ffffff] border-0 sm:border border-[#171412] rounded-none sm:rounded-[16px] shadow-none sm:shadow-[8px_8px_0px_#171412] p-5 sm:p-7 sm:my-8 overflow-y-auto">
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#171412]/15 mb-5">
                 <div>
                   <span className="text-[11px] font-extrabold text-[#813502] uppercase tracking-wider block mb-0.5">
@@ -4612,7 +4887,7 @@ export const AdminCheckPage: React.FC = () => {
                     id="assign-course-select"
                     value={assignCourseId}
                     onChange={(e) => setAssignCourseId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412] cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412] cursor-pointer"
                   >
                     {adminCourses.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -4642,11 +4917,56 @@ export const AdminCheckPage: React.FC = () => {
           </div>
         )}
         {/* =====================================================================
-            TAB 5: CONTACT & SUPPORT CONTROL CENTER
+            TAB 6: SETTINGS (PAYMENT NUMBERS)
         ===================================================================== */}
-        {activeTab === 'contact' && (
-          <section aria-label="Contact and support information management" className="py-6">
-            <AdminContactForm />
+        {activeTab === 'settings' && (
+          <section aria-label="Global application settings" className="py-6 max-w-2xl mx-auto">
+            <div className="bg-white rounded-[24px] border border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden">
+              <div className="p-6 bg-[#fbf9ef] border-b-2 border-[#171412]">
+                <h3 className="text-xl font-black text-[#171412]">পেমেন্ট সেটিংস (Payment Settings)</h3>
+                <p className="text-xs text-[#171412]/60 mt-1">শিক্ষার্থীদের পেমেন্ট করার জন্য বিকাশ ও নগদ নম্বর এখান থেকে সেট করুন</p>
+              </div>
+
+              <form onSubmit={handleSavePaymentSettings} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[13px] font-bold text-[#171412]">বিকাশ (bKash) নম্বর:</label>
+                    <input 
+                      type="text" 
+                      value={paymentSettings.bKash} 
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, bKash: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all font-mono font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[13px] font-bold text-[#171412]">নগদ (Nagad) নম্বর:</label>
+                    <input 
+                      type="text" 
+                      value={paymentSettings.Nagad} 
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, Nagad: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button 
+                    type="submit" 
+                    variant="primary" 
+                    className="w-full"
+                    isLoading={isSavingSettings}
+                  >
+                    সেটিংস সংরক্ষণ করুন
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            {courseFeedback && (
+              <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700 text-sm font-bold text-center">
+                {courseFeedback}
+              </div>
+            )}
           </section>
         )}
 

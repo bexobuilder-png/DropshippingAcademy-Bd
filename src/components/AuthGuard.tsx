@@ -134,10 +134,10 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-guard-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
     >
       <div
-        className="w-full max-w-md rounded-[24px] bg-[#fbf9ef] border-2 border-[#171412] p-6 sm:p-8 shadow-2xl text-[#171412] relative max-h-[90vh] overflow-y-auto"
+        className="w-full h-full sm:h-auto sm:max-w-md rounded-none sm:rounded-[24px] bg-[#fbf9ef] border-b-0 sm:border border-[#171412] p-6 sm:p-8 shadow-2xl text-[#171412] relative overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -153,7 +153,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
         {mode === 'prompt' ? (
           <div className="flex flex-col items-center text-center">
             {/* Lock / Security Icon */}
-            <div className="w-16 h-16 rounded-full bg-[#ff7722]/15 border-2 border-[#ff7722] flex items-center justify-center text-[#813502] mb-4">
+            <div className="w-16 h-16 rounded-full bg-[#ff7722]/15 border border-[#ff7722] flex items-center justify-center text-[#813502] mb-4">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -186,7 +186,7 @@ export const AuthGuardModal: React.FC<AuthGuardModalProps> = ({
             <button
               type="button"
               onClick={handleGoToRegister}
-              className="w-full min-h-[48px] px-6 rounded-full bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-extrabold text-[15px] flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer mb-3"
+              className="w-full min-h-[48px] px-6 rounded-full bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[15px] flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer mb-3"
             >
               <span>{t('রেজিস্ট্রেশন করুন', 'Register Now')}</span>
               <span>→</span>
@@ -372,7 +372,7 @@ export const AuthGuard: React.FC<{
           onAuthenticated={(newSession) => setSession(newSession)}
           message={fallbackMessage}
         />
-        <div className="text-center p-8 rounded-2xl bg-[#f2f0e7] border-2 border-[#171412] max-w-md">
+        <div className="text-center p-8 rounded-2xl bg-[#f2f0e7] border border-[#171412] max-w-md">
           <p className="text-[15px] font-bold text-[#171412] mb-4">
             {fallbackMessage || 'To access this information, you must register first.'}
           </p>

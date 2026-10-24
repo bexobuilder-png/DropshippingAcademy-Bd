@@ -17,7 +17,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({
   return (
     <main id="main-content" className="py-16 md:py-28">
       <div className="specimen-container max-w-2xl text-center">
-        <div className="rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-8 sm:p-12">
+        <div className="rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-8 sm:p-12">
           <div className="flex justify-center mb-6">
             <BrandBadgeMark className="w-16 h-16" decorative={true} />
           </div>

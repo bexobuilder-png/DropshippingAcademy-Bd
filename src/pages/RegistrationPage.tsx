@@ -6,6 +6,7 @@ import { CourseItem, PromoCodeItem } from '../config/courses';
 import { fetchCoursesList, fetchPromoCodesList, evaluatePromoCode, incrementPromoUsage, PromoValidationResult } from '../services/courses';
 import { StudentEnrollment, verifyEmailOtpAndEnroll, submitStudentEnrollment } from '../services/enrollments';
 import { sendEmailVerificationOtp, maskEmailAddress } from '../services/waitlist';
+import { getCurrentUserSession, setCurrentUserSession } from '../services/auth';
 import { OtpInput } from '../components/OtpInput';
 import { Button } from '../components/Button';
 import { ArrowRightSvgIcon, CheckSvgIcon, AlertCircleSvgIcon } from '../components/svg/NavIcons';
@@ -33,7 +34,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
   const [step, setStep] = useState<FlowStep>('CATALOG');
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>('ড্রপশিপিং রিসেলিং');
+  const [activeCategory, setActiveCategory] = useState<string>('ড্রপশিপিং অ্যান্ড রিসেলিং');
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 
   // Form state
@@ -73,18 +74,36 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
 
   useEffect(() => {
     fetchCoursesList().then((list) => {
-      setCourses(list.filter((c) => c.isActive !== false && c.isVisible !== false));
+      const activeCourses = list.filter((c) => c.isActive !== false && c.isVisible !== false);
+      setCourses(activeCourses);
       setLoadingCourses(false);
+
+      // Handle courseId from URL
+      const params = new URLSearchParams(window.location.search);
+      const courseId = params.get('courseId');
+      if (courseId) {
+        const found = activeCourses.find(c => c.id === courseId);
+        if (found) {
+          setSelectedCourse(found);
+          setStep('FORM');
+        }
+      }
     });
     fetchPromoCodesList().then((codes) => setPromoCodesList(codes));
   }, []);
 
+  // Check if user is already logged in
   useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setInterval(() => setResendCooldown((c) => c - 1), 1000);
-      return () => clearInterval(timer);
+    const session = getCurrentUserSession();
+    if (session && step === 'FORM') {
+      setName(`${session.firstName} ${session.lastName}`);
+      setEmail(session.email);
+      setPhone(session.phone || '');
+      setDistrict(session.district || 'ঢাকা');
+      // If logged in, skip info/OTP and go to payment/enrollment
+      setStep('PAYMENT');
     }
-  }, [resendCooldown]);
+  }, [step]);
 
   // Re-validate applied promo code if user changes course selection
   useEffect(() => {
@@ -242,7 +261,6 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
     await submitStudentEnrollment(finalPayload);
 
     // Persist session for ProfilePage
-    const { setCurrentUserSession } = await import('../services/auth');
     setCurrentUserSession({
       id: finalPayload.id,
       firstName: name.split(' ')[0] || name,
@@ -308,13 +326,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               className="space-y-12"
             >
               {/* Category Tabs */}
+
               <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
                 <button
-                  onClick={() => setActiveCategory('ড্রপশিপিং রিসেলিং')}
-                  className={`flex-1 p-6 rounded-2xl border-2 transition-all flex items-center justify-center gap-4 ${
+                  onClick={() => setActiveCategory('ড্রপশিপিং অ্যান্ড রিসেলিং')}
+                  className={`flex-1 p-6 rounded-2xl border transition-all flex items-center justify-center gap-4 ${
                     activeCategory === 'ড্রপশিপিং রিসেলিং'
-                      ? 'bg-[#059669] border-[#064e3b] text-white shadow-[0_8px_20px_rgba(5,150,105,0.3)]'
-                      : 'bg-white border-[#e5e7eb] text-[#171412] hover:border-[#059669]'
+                      ? 'bg-[#059669] border-[#171412] text-white shadow-[6px_6px_0px_#171412]'
+                      : 'bg-white border-[#171412]/10 text-[#171412] hover:border-[#059669]'
                   }`}
                 >
                   <div className={`p-3 rounded-xl ${activeCategory === 'ড্রপশিপিং রিসেলিং' ? 'bg-white/20' : 'bg-[#f0fdf4]'}`}>
@@ -322,16 +341,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   </div>
                   <div className="text-left">
                     <p className="font-black text-lg">Dropshipping & Reselling</p>
-                    <p className="text-xs opacity-70">(ড্রপশিপিং ও রিসেলিং)</p>
+                    <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest">(ড্রপশিপিং অ্যান্ড রিসেলিং)</p>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setActiveCategory('গ্লোবাল ড্রপশিপিং')}
-                  className={`flex-1 p-6 rounded-2xl border-2 transition-all flex items-center justify-center gap-4 ${
+                  className={`flex-1 p-6 rounded-2xl border transition-all flex items-center justify-center gap-4 ${
                     activeCategory === 'গ্লোবাল ড্রপশিপিং'
-                      ? 'bg-[#059669] border-[#064e3b] text-white shadow-[0_8px_20px_rgba(5,150,105,0.3)]'
-                      : 'bg-white border-[#e5e7eb] text-[#171412] hover:border-[#059669]'
+                      ? 'bg-[#059669] border-[#171412] text-white shadow-[6px_6px_0px_#171412]'
+                      : 'bg-white border-[#171412]/10 text-[#171412] hover:border-[#059669]'
                   }`}
                 >
                   <div className={`p-3 rounded-xl ${activeCategory === 'গ্লোবাল ড্রপশিপিং' ? 'bg-white/20' : 'bg-[#f0fdf4]'}`}>
@@ -339,7 +358,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   </div>
                   <div className="text-left">
                     <p className="font-black text-lg">Global Dropshipping</p>
-                    <p className="text-xs opacity-70">(গ্লোবাল ড্রপশিপিং)</p>
+                    <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest">(গ্লোবাল ড্রপশিপিং)</p>
                   </div>
                 </button>
               </div>
@@ -425,7 +444,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               animate="animate"
               exit="exit"
               variants={stepVariants}
-              className="max-w-2xl mx-auto bg-white rounded-3xl border-2 border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden"
+              className="max-w-2xl mx-auto bg-white rounded-3xl border border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden"
             >
               <div className="p-6 bg-[#fbf9ef] border-b-2 border-[#171412] flex items-center justify-between">
                 <button onClick={() => setStep('CATALOG')} className="text-xs font-bold text-[#171412]/60 hover:text-[#059669]">← কোর্স পরিবর্তন</button>
@@ -434,7 +453,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               
               <form onSubmit={handleFormSubmit} className="p-6 md:p-10 space-y-8">
                 {formError && (
-                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-700 text-sm font-bold flex items-center gap-3">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-bold flex items-center gap-3">
                     <AlertCircleSvgIcon className="w-5 h-5 shrink-0" />
                     {formError}
                   </div>
@@ -445,19 +464,19 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-[#171412]">আপনার নাম *</label>
-                      <input required value={name} onChange={(e) => setName(e.target.value)} type="text" placeholder="যেমন: মোঃ সাব্বির" className="w-full px-4 py-3 rounded-xl border-2 border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
+                      <input required value={name} onChange={(e) => setName(e.target.value)} type="text" placeholder="যেমন: মোঃ সাব্বির" className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-[#171412]">মোবাইল নম্বর *</label>
-                      <input required value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="01XXXXXXXXX" className="w-full px-4 py-3 rounded-xl border-2 border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
+                      <input required value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="01XXXXXXXXX" className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-[#171412]">ইমেইল ঠিকানা *</label>
-                      <input required value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="example@gmail.com" className="w-full px-4 py-3 rounded-xl border-2 border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
+                      <input required value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="example@gmail.com" className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-[#171412]">জেলা / ঠিকানা *</label>
-                      <input required value={district} onChange={(e) => setDistrict(e.target.value)} type="text" placeholder="যেমন: ঢাকা" className="w-full px-4 py-3 rounded-xl border-2 border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
+                      <input required value={district} onChange={(e) => setDistrict(e.target.value)} type="text" placeholder="যেমন: ঢাকা" className="w-full px-4 py-3 rounded-xl border border-[#171412]/10 focus:border-[#059669] outline-none transition-all" />
                     </div>
                   </div>
                 </div>
@@ -466,7 +485,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   <button 
                     type="submit" 
                     disabled={isSendingOtp}
-                    className="w-full py-4 bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-black text-lg rounded-2xl border-2 border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3"
+                    className="w-full py-4 bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-black text-lg rounded-2xl border border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3"
                   >
                     {isSendingOtp ? 'কোড পাঠানো হচ্ছে...' : 'ভেরিফিকেশন কোড পাঠান →'}
                   </button>
@@ -484,9 +503,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               animate="animate"
               exit="exit"
               variants={stepVariants}
-              className="max-w-md mx-auto bg-white rounded-3xl border-2 border-[#171412] shadow-[8px_8px_0px_#171412] p-8 md:p-10 space-y-8 text-center"
+              className="max-w-md mx-auto bg-white rounded-3xl border border-[#171412] shadow-[8px_8px_0px_#171412] p-8 md:p-10 space-y-8 text-center"
             >
-              <div className="w-16 h-16 bg-[#059669]/10 text-[#059669] rounded-2xl border-2 border-[#059669] mx-auto flex items-center justify-center text-3xl">📧</div>
+              <div className="w-16 h-16 bg-[#059669]/10 text-[#059669] rounded-2xl border border-[#059669] mx-auto flex items-center justify-center text-3xl">📧</div>
               <div>
                 <h3 className="text-2xl font-black mb-2">ইমেইল যাচাই করুন</h3>
                 <p className="text-sm text-[#171412]/70 leading-relaxed">আমরা একটি ৬-ডিজিটের কোড পাঠিয়েছি <br/><strong className="text-[#171412]">{maskEmailAddress(email)}</strong> ঠিকানায়।</p>
@@ -527,23 +546,25 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               animate="animate"
               exit="exit"
               variants={stepVariants}
-              className="max-w-2xl mx-auto bg-white rounded-3xl border-2 border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden"
+              className="max-w-2xl mx-auto bg-white rounded-3xl border border-[#171412] shadow-[8px_8px_0px_#171412] overflow-hidden"
             >
               <div className="p-6 bg-[#f0fdf4] border-b-2 border-[#171412] flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">৩য় ধাপ: পেমেন্ট ও প্রমো কোড</span>
-                <span className="text-xs font-bold text-[#171412]/60">কোর্স: {selectedCourse.title}</span>
+                <span className="text-xs font-black uppercase tracking-widest bg-[#059669] text-white px-3 py-1 rounded-full">
+                  {selectedCourse.enrollmentType === 'promo_only' ? 'প্রমো কোড ব্যবহার করুন' : '৩য় ধাপ: পেমেন্ট ও প্রমো কোড'}
+                </span>
+                <span className="text-xs font-bold text-[#171412]/60 truncate ml-4">কোর্স: {selectedCourse.title}</span>
               </div>
               
               <form onSubmit={handlePaymentSubmit} className="p-6 md:p-10 space-y-8">
                 {formError && (
-                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-700 text-sm font-bold flex items-center gap-3">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-bold flex items-center gap-3">
                     <AlertCircleSvgIcon className="w-5 h-5 shrink-0" />
                     {formError}
                   </div>
                 )}
 
-                {/* 1. Course Summary & Original Price */}
-                <div className="p-6 bg-[#fbf9ef] rounded-2xl border-2 border-[#171412]/10 space-y-4">
+                {/* 1. Course Summary */}
+                <div className="p-6 bg-[#fbf9ef] rounded-2xl border border-[#171412]/10 space-y-4">
                   <div className="flex items-start justify-between flex-wrap gap-2">
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-[#059669] bg-[#f0fdf4] px-2.5 py-1 rounded-md border border-[#059669]/20">
@@ -553,34 +574,36 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                       <p className="text-xs text-[#171412]/60">{selectedCourse.duration}</p>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-[#171412]/50 block">মূল কোর্স ফি</span>
-                      {appliedPromo ? (
-                        <div className="space-y-0.5">
-                          <span className="line-through text-sm font-bold text-[#171412]/40 mr-2">৳{originalPrice.toLocaleString()}</span>
-                          <span className="text-2xl sm:text-3xl font-black text-[#059669]">৳{currentFinalPrice.toLocaleString()}</span>
-                        </div>
-                      ) : (
-                        <span className="text-2xl font-black text-[#171412]">৳{originalPrice.toLocaleString()}</span>
-                      )}
-                    </div>
+                    {selectedCourse.enrollmentType !== 'promo_only' && (
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-[#171412]/50 block">মূল কোর্স ফি</span>
+                        {appliedPromo ? (
+                          <div className="space-y-0.5">
+                            <span className="line-through text-sm font-bold text-[#171412]/40 mr-2">৳{originalPrice.toLocaleString()}</span>
+                            <span className="text-2xl sm:text-3xl font-black text-[#059669]">৳{currentFinalPrice.toLocaleString()}</span>
+                          </div>
+                        ) : (
+                          <span className="text-2xl font-black text-[#171412]">৳{originalPrice.toLocaleString()}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* PROMO CODE SECTION */}
                   <div className="pt-4 border-t-2 border-dashed border-[#171412]/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-[#171412] flex items-center gap-1.5">
-                        <span>🎟️ প্রমো কোড আছে? (Promotional Discount)</span>
+                        <span>🎟️ {selectedCourse.enrollmentType === 'promo_only' ? 'কোর্সে জয়েন হতে প্রমো কোড দিন *' : 'প্রমো কোড আছে? (Promotional Discount)'}</span>
                       </label>
                       {appliedPromo && (
                         <span className="text-xs font-bold text-[#059669] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#059669]/20 animate-pulse">
-                          ✓ {appliedPromo.percentage}% OFF Applied
+                          ✓ {appliedPromo.percentage === 100 ? 'FREE JOIN' : `${appliedPromo.percentage}% OFF`} Applied
                         </span>
                       )}
                     </div>
 
                     {appliedPromo ? (
-                      <div className="p-4 bg-[#f0fdf4] border-2 border-[#059669] rounded-xl flex items-center justify-between gap-4 animate-fade-in">
+                      <div className="p-4 bg-[#f0fdf4] border border-[#059669] rounded-xl flex items-center justify-between gap-4 animate-fade-in">
                         <div className="space-y-1">
                           <p className="font-mono font-black text-sm text-[#059669] uppercase tracking-wider">
                             {appliedPromo.code}
@@ -606,13 +629,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                             setPromoError('');
                           }} 
                           type="text" 
-                          placeholder="e.g. EARLY20" 
-                          className="flex-1 px-4 py-2.5 rounded-xl border-2 border-[#171412]/15 focus:border-[#059669] outline-none uppercase font-mono text-sm font-bold bg-white" 
+                          placeholder="e.g. JOINFREE" 
+                          className="flex-1 px-4 py-3 rounded-xl border border-[#171412]/15 focus:border-[#059669] outline-none uppercase font-mono text-sm font-bold bg-white" 
                         />
                         <button 
                           type="button" 
                           onClick={handleApplyPromo} 
-                          className="px-5 py-2.5 bg-[#171412] text-white font-bold text-xs rounded-xl hover:bg-[#059669] transition-all shrink-0"
+                          className="px-5 py-3 bg-[#171412] text-white font-bold text-xs rounded-xl hover:bg-[#059669] transition-all shrink-0"
                         >
                           Apply Code
                         </button>
@@ -628,49 +651,69 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   </div>
                 </div>
 
-                {/* 2. Payment Method Selection */}
-                <div className="p-5 bg-white rounded-2xl border-2 border-[#171412]/10 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold">পেমেন্ট মেথড নির্বাচন করুন:</span>
-                    <span className="text-sm font-black text-[#059669]">
-                      সর্বমোট পরিশোধযোগ্য: ৳{currentFinalPrice.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(['bKash', 'Nagad', 'Rocket'] as const).map(m => (
-                      <button key={m} type="button" onClick={() => setPaymentMethod(m)} className={`py-3 rounded-xl border-2 font-black text-xs transition-all ${paymentMethod === m ? 'bg-[#059669] border-[#171412] text-white shadow-[2px_2px_0px_#171412]' : 'bg-white border-[#171412]/5 text-[#171412]/40 hover:border-[#171412]/20'}`}>
-                        {m}
+                {/* 2. Payment Method Selection (Only if NOT promo_only AND finalPrice > 0) */}
+                {selectedCourse.enrollmentType !== 'promo_only' && currentFinalPrice > 0 ? (
+                  <div className="p-5 bg-white rounded-2xl border border-[#171412]/10 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold">পেমেন্ট মেথড নির্বাচন করুন:</span>
+                      <span className="text-sm font-black text-[#059669]">
+                        পরিশোধযোগ্য: ৳{currentFinalPrice.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {(['bKash', 'Nagad', 'Rocket'] as const).map(m => (
+                        <button key={m} type="button" onClick={() => setPaymentMethod(m)} className={`py-3 rounded-xl border font-black text-xs transition-all ${paymentMethod === m ? 'bg-[#059669] border-[#171412] text-white shadow-[2px_2px_0px_#171412]' : 'bg-white border-[#171412]/5 text-[#171412]/40 hover:border-[#171412]/20'}`}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-4 bg-[#fbf9ef] rounded-xl border border-dashed border-[#171412]/20 flex items-center justify-between gap-4">
+                      <div className="min-w-0 text-left">
+                        <span className="text-[10px] font-bold text-[#171412]/50 uppercase">{paymentMethod} Send Money নম্বর:</span>
+                        <p className="font-mono font-black text-[#171412] truncate">{PAYMENT_NUMBERS[paymentMethod]}</p>
+                      </div>
+                      <button type="button" onClick={() => { navigator.clipboard.writeText(PAYMENT_NUMBERS[paymentMethod]); setCopiedNumber(true); setTimeout(() => setCopiedNumber(false), 2000); }} className="shrink-0 px-3 py-1.5 bg-white border border-[#171412] rounded-lg text-[10px] font-bold hover:bg-[#171412] hover:text-white transition-all">
+                        {copiedNumber ? 'কপি হয়েছে!' : 'কপি করুন'}
                       </button>
-                    ))}
-                  </div>
-                  <div className="p-4 bg-[#fbf9ef] rounded-xl border-2 border-dashed border-[#171412]/20 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-bold text-[#171412]/50 uppercase">{paymentMethod} Send Money নম্বর:</span>
-                      <p className="font-mono font-black text-[#171412] truncate">{PAYMENT_NUMBERS[paymentMethod]}</p>
                     </div>
-                    <button type="button" onClick={() => { navigator.clipboard.writeText(PAYMENT_NUMBERS[paymentMethod]); setCopiedNumber(true); setTimeout(() => setCopiedNumber(false), 2000); }} className="shrink-0 px-3 py-1.5 bg-white border-2 border-[#171412] rounded-lg text-[10px] font-bold hover:bg-[#171412] hover:text-white transition-all">
-                      {copiedNumber ? 'কপি হয়েছে!' : 'কপি করুন'}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold">সেন্ডার নম্বর *</label>
-                      <input required value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} type="tel" placeholder="01XXXXXXXXX" className="w-full px-3 py-2.5 rounded-xl border-2 border-[#171412]/10 outline-none focus:border-[#059669]" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold">Transaction ID (TrxID) *</label>
-                      <input required value={trxId} onChange={(e) => setTrxId(e.target.value)} type="text" placeholder="যেমন: 9K8J7H6G5F" className="w-full px-3 py-2.5 rounded-xl border-2 border-[#171412]/10 outline-none focus:border-[#059669] uppercase font-mono" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold">সেন্ডার নম্বর *</label>
+                        <input required value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} type="tel" placeholder="01XXXXXXXXX" className="w-full px-3 py-2.5 rounded-xl border border-[#171412]/10 outline-none focus:border-[#059669]" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold">Transaction ID (TrxID) *</label>
+                        <input required value={trxId} onChange={(e) => setTrxId(e.target.value)} type="text" placeholder="যেমন: 9K8J7H6G5F" className="w-full px-3 py-2.5 rounded-xl border border-[#171412]/10 outline-none focus:border-[#059669] uppercase font-mono" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  selectedCourse.enrollmentType === 'promo_only' && !appliedPromo ? (
+                    <div className="p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center space-y-3">
+                      <div className="text-3xl opacity-50">🎟️</div>
+                      <p className="font-bold text-gray-500">অনুগ্রহ করে ভর্তির জন্য প্রমো কোডটি দিন।</p>
+                      <p className="text-[10px] text-gray-400">এই কোর্সে শুধুমাত্র প্রমো কোড ব্যবহার করেই জয়েন হওয়া সম্ভব।</p>
+                    </div>
+                  ) : (
+                    <div className="p-8 bg-[#f0fdf4] rounded-2xl border border-[#059669] text-center space-y-3 animate-fade-in">
+                      <div className="text-3xl">🎁</div>
+                      <p className="font-black text-[#059669]">সরাসরি জয়েন হওয়ার সুযোগ!</p>
+                      <p className="text-xs font-bold text-[#059669]/60">আপনার জন্য এই কোর্সটি এখন উন্মুক্ত। সরাসরি ভর্তি সম্পন্ন করুন।</p>
+                    </div>
+                  )
+                )}
 
                 <div className="pt-2">
                   <button 
                     type="submit" 
-                    disabled={isVerifying}
-                    className="w-full py-4 bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-black text-lg rounded-2xl border-2 border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3"
+                    disabled={isVerifying || (selectedCourse.enrollmentType === 'promo_only' && !appliedPromo)}
+                    className="w-full py-4 bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-black text-lg rounded-2xl border border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-3"
                   >
-                    {isVerifying ? 'প্রসেসিং হচ্ছে...' : `৳${currentFinalPrice.toLocaleString()} পেমেন্ট ভেরিফাই ও ভর্তি নিশ্চিত করুন →`}
+                    {isVerifying ? 'প্রসেসিং হচ্ছে...' : (
+                      selectedCourse.enrollmentType === 'promo_only' || currentFinalPrice === 0
+                        ? 'সরাসরি ভর্তি সম্পন্ন করুন →'
+                        : 'পেমেন্ট ও ভর্তি নিশ্চিত করুন →'
+                    )}
                   </button>
                 </div>
               </form>
@@ -685,7 +728,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
               animate="animate"
               exit="exit"
               variants={stepVariants}
-              className="max-w-xl mx-auto bg-white rounded-3xl border-2 border-[#171412] shadow-[10px_10px_0px_#22c55e] p-8 md:p-12 text-center space-y-6"
+              className="max-w-xl mx-auto bg-white rounded-3xl border border-[#171412] shadow-[10px_10px_0px_#22c55e] p-8 md:p-12 text-center space-y-6"
             >
               <div className="w-20 h-20 bg-[#22c55e] text-white rounded-full mx-auto flex items-center justify-center text-4xl shadow-xl animate-bounce">✓</div>
               <div>
@@ -693,7 +736,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                 <p className="text-[#171412]/70 font-medium">অভিনন্দন <strong>{submittedData.studentName}</strong>! আপনার ভর্তি আবেদনটি পেন্ডিং হিসেবে জমা হয়েছে।</p>
               </div>
 
-              <div className="p-6 bg-[#fbf9ef] rounded-2xl border-2 border-[#171412] text-left space-y-4 font-mono text-xs">
+              <div className="p-6 bg-[#fbf9ef] rounded-2xl border border-[#171412] text-left space-y-4 font-mono text-xs">
                 <div className="flex justify-between border-b border-[#171412]/5 pb-2">
                   <span className="text-[#171412]/50 font-sans">কোর্স:</span>
                   <span className="font-bold text-right">{submittedData.courseTitle}</span>
@@ -728,10 +771,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ setAnim, set
                   <span>হোয়াটসঅ্যাপে নিশ্চিত করুন</span>
                 </a>
                 <button 
-                  onClick={() => navigate('/dashboard')}
-                  className="w-full py-3 bg-[#171412] text-white font-bold text-sm rounded-xl hover:bg-[#2b2724] transition-all"
+                  onClick={() => navigate('/profile')}
+                  className="w-full py-4 bg-[#171412] text-white font-black text-sm rounded-2xl hover:bg-[#059669] transition-all border border-[#171412] shadow-[6px_6px_0px_#171412] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 >
-                  ড্যাশবোর্ড দেখুন
+                  প্রোফাইল দেখুন
                 </button>
               </div>
             </motion.div>

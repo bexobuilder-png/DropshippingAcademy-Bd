@@ -271,7 +271,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         <div
           role="listbox"
           aria-label="Select country calling code"
-          className="absolute left-0 top-[calc(100%+4px)] z-50 w-full max-w-[340px] rounded-[12px] bg-[#fff] border-2 border-[#171412] shadow-lg overflow-hidden"
+          className="absolute left-0 top-[calc(100%+4px)] z-50 w-full max-w-[340px] rounded-[12px] bg-[#fff] border border-[#171412] shadow-lg overflow-hidden"
         >
           <div className="p-2 border-b border-[#171412]/15 bg-[#fbf9ef]">
             <input

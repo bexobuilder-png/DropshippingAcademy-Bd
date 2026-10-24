@@ -250,7 +250,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           role="dialog"
           aria-modal="false"
           aria-label="Date of birth calendar picker (18+ required)"
-          className="absolute left-0 top-[calc(100%+6px)] z-50 w-full max-w-[330px] rounded-[12px] bg-[#fff] border-2 border-[#171412] p-4 shadow-xl"
+          className="absolute left-0 top-[calc(100%+6px)] z-50 w-full max-w-[330px] rounded-[12px] bg-[#fff] border border-[#171412] p-4 shadow-xl"
         >
           {/* Month & Year Selectors */}
           <div className="flex items-center justify-between gap-2 mb-3">

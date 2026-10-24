@@ -249,7 +249,7 @@ export const AdminContactForm: React.FC = () => {
       {toast && (
         <div
           role="status"
-          className={`p-4 rounded-[12px] border-2 text-[14px] font-bold flex items-center gap-3 ${
+          className={`p-4 rounded-[12px] border text-[14px] font-bold flex items-center gap-3 ${
             toast.type === 'success'
               ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#1b5e20]'
               : 'bg-[#fff8f8] border-[#ff3c34] text-[#ff3c34]'
@@ -280,7 +280,7 @@ export const AdminContactForm: React.FC = () => {
                 return (
                   <div
                     key={item.id}
-                    className={`p-5 rounded-[16px] bg-[#fbf9ef] border-2 transition-all ${
+                    className={`p-5 rounded-[16px] bg-[#fbf9ef] border transition-all ${
                       item.visible ? 'border-[#171412]/25 shadow-sm' : 'border-dashed border-[#171412]/30 opacity-60'
                     }`}
                   >
@@ -418,7 +418,7 @@ export const AdminContactForm: React.FC = () => {
 
           {/* Right Column: Live Preview Panel */}
           <div className="lg:col-span-5">
-            <div className="sticky top-24 rounded-[20px] bg-[#f2f0e7] border-2 border-[#171412] p-6 shadow-md">
+            <div className="sticky top-24 rounded-[20px] bg-[#f2f0e7] border border-[#171412] p-6 shadow-md">
               <div className="flex items-center justify-between pb-3 border-b border-[#171412]/15 mb-4">
                 <span className="text-[12px] font-extrabold text-[#813502] uppercase tracking-wider">
                   {t('লাইভ প্রিভিউ প্যানেল', 'Live Preview Panel')}
@@ -460,7 +460,7 @@ export const AdminContactForm: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {messages.map((msg) => (
-                <div key={msg.id} className="p-5 rounded-[16px] bg-[#fbf9ef] border-2 border-[#171412]/25 shadow-sm space-y-3">
+                <div key={msg.id} className="p-5 rounded-[16px] bg-[#fbf9ef] border border-[#171412]/25 shadow-sm space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <span className="font-display text-[16px] font-extrabold text-[#171412]">{msg.name}</span>
@@ -539,9 +539,9 @@ export const AdminContactForm: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-[#171412]/75 backdrop-blur-xs overflow-y-auto"
         >
-          <div className="relative w-full max-w-md bg-[#ffffff] border-2 border-[#171412] rounded-[16px] shadow-[8px_8px_0px_#171412] p-6">
+          <div className="relative w-full h-full sm:h-auto sm:max-w-md bg-[#ffffff] sm:border border-[#171412] rounded-none sm:rounded-[16px] sm:shadow-[8px_8px_0px_#171412] p-6 overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-[#171412]/15 mb-4">
               <h3 className="font-display text-[20px] font-extrabold text-[#171412]">
                 {t('নতুন যোগাযোগ মাধ্যম যোগ করুন', 'Add New Contact Channel')}
@@ -563,7 +563,7 @@ export const AdminContactForm: React.FC = () => {
                 <select
                   value={newType}
                   onChange={(e) => setNewType(e.target.value as any)}
-                  className="w-full h-11 px-3.5 rounded-[10px] bg-[#fff] border-2 border-[#171412]/30 text-[14px] font-bold text-[#171412]"
+                  className="w-full h-11 px-3.5 rounded-[10px] bg-[#fff] border border-[#171412]/30 text-[14px] font-bold text-[#171412]"
                 >
                   <option value="email">Email</option>
                   <option value="phone">Phone / Hotline</option>

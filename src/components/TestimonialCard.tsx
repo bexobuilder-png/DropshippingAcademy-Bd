@@ -28,7 +28,7 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ item }) => {
       whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
-      className={`snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-full rounded-[20px] bg-[#f2f0e7] text-[#171412] p-6 border-2 border-[#171412] shadow-md flex flex-col justify-between transition-all duration-200 ease-out transform ${rotationClass} hover:rotate-0 focus-visible:rotate-0 hover:z-10`}
+      className={`snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-full rounded-[20px] bg-[#f2f0e7] text-[#171412] p-6 border border-[#171412] shadow-md flex flex-col justify-between transition-all duration-200 ease-out transform ${rotationClass} hover:rotate-0 focus-visible:rotate-0 hover:z-10`}
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-4">

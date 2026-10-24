@@ -141,7 +141,7 @@ export const RunningCourseCard: React.FC<RunningCourseCardProps> = ({
   return (
     <section
       aria-labelledby="featured-running-course-title"
-      className={`relative overflow-hidden rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] p-5 sm:p-7 md:p-8 text-[#171412] shadow-md transition-all hover:shadow-lg ${className}`}
+      className={`relative overflow-hidden rounded-[24px] bg-[#f2f0e7] border border-[#171412] p-5 sm:p-7 md:p-8 text-[#171412] shadow-md transition-all hover:shadow-lg ${className}`}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="space-y-2.5 max-w-2xl">
@@ -194,7 +194,7 @@ export const RunningCourseCard: React.FC<RunningCourseCardProps> = ({
           <button
             type="button"
             onClick={handleAction}
-            className="min-h-[44px] h-11 px-6 rounded-full bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-extrabold text-[14px] inline-flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer whitespace-nowrap"
+            className="min-h-[44px] h-11 px-6 rounded-full bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-extrabold text-[14px] inline-flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer whitespace-nowrap"
           >
             <span>{t('আরও জানুন', 'Learn more')}</span>
             <svg className="w-4 h-4 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">

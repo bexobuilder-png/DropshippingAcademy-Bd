@@ -15,6 +15,15 @@ import { JoinWaitlistPage } from './pages/JoinWaitlistPage';
 import { WaitlistConfirmedPage } from './pages/WaitlistConfirmedPage';
 import { getCurrentUserSession, subscribeToAuthSession, UserSession } from './services/auth';
 
+const LoginPage = React.lazy(() =>
+  import('./pages/LoginPage').then((m) => ({ default: m.LoginPage }))
+);
+const RegistrationPage = React.lazy(() =>
+  import('./pages/RegistrationPage').then((m) => ({ default: m.RegistrationPage }))
+);
+const ProfilePage = React.lazy(() =>
+  import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
+);
 const TermsPage = React.lazy(() =>
   import('./pages/TermsPage').then((m) => ({ default: m.TermsPage }))
 );
@@ -27,26 +36,17 @@ const ContactPage = React.lazy(() =>
 const AdminCheckPage = React.lazy(() =>
   import('./pages/AdminCheckPage').then((m) => ({ default: m.AdminCheckPage }))
 );
-const ProfilePage = React.lazy(() =>
-  import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
-);
 const NotFoundPage = React.lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 );
-const WaitlistPage = React.lazy(() =>
-  import('./pages/WaitlistPage').then((m) => ({ default: m.WaitlistPage }))
+const MyCoursesPage = React.lazy(() =>
+  import('./pages/MyCoursesPage').then((m) => ({ default: m.MyCoursesPage }))
 );
-const LoginPage = React.lazy(() =>
-  import('./pages/LoginPage').then((m) => ({ default: m.LoginPage }))
+const CertificatePage = React.lazy(() =>
+  import('./pages/CertificatePage').then((m) => ({ default: m.CertificatePage }))
 );
-const AlreadyRegisteredPage = React.lazy(() =>
-  import('./pages/AlreadyRegisteredPage').then((m) => ({ default: m.AlreadyRegisteredPage }))
-);
-const WelcomeCelebrationPage = React.lazy(() =>
-  import('./pages/WelcomeCelebrationPage').then((m) => ({ default: m.WelcomeCelebrationPage }))
-);
-const RegistrationPage = React.lazy(() =>
-  import('./pages/RegistrationPage').then((m) => ({ default: m.RegistrationPage }))
+const CourseDetailsPage = React.lazy(() =>
+  import('./pages/CourseDetailsPage').then((m) => ({ default: m.CourseDetailsPage }))
 );
 
 const ANIM_WORDS: Record<
@@ -89,38 +89,9 @@ function ScrollToTopOnRouteChange() {
 function LoggedInGuard({ children }: { children: React.ReactNode }) {
   const session = getCurrentUserSession();
   const location = useLocation();
-  const [showSplash, setShowSplash] = useState(false);
-
-  useEffect(() => {
-    if (session && location.pathname === '/') {
-      const shown = sessionStorage.getItem('da_welcome_splash_shown');
-      if (!shown) {
-        setShowSplash(true);
-        sessionStorage.setItem('da_welcome_splash_shown', 'true');
-        const t = setTimeout(() => setShowSplash(false), 1200);
-        return () => clearTimeout(t);
-      }
-    }
-  }, [session, location.pathname]);
 
   if (session) {
-    if (location.pathname === '/register' || location.pathname === '/join' || location.pathname === '/already-registered') {
-      return <AlreadyRegisteredPage />;
-    }
-    if (location.pathname === '/' || location.pathname === '/login') {
-      if (showSplash) {
-        return (
-          <div className="fixed inset-0 z-50 bg-[#fbf9ef] flex items-center justify-center p-4">
-            <div className="rounded-2xl bg-[#f2f0e7] border-2 border-[#171412] p-8 text-center shadow-lg animate-fade-in">
-              <span className="text-3xl mb-2 block">👋</span>
-              <h2 className="font-display text-[22px] font-extrabold text-[#171412]">
-                স্বাগতম ফিরে আসার জন্য, {session.firstName}!
-              </h2>
-              <p className="text-[13px] text-[#171412]/75 mt-1">আপনার ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...</p>
-            </div>
-          </div>
-        );
-      }
+    if (location.pathname === '/register' || location.pathname === '/login' || location.pathname === '/registration') {
       return <Navigate to="/dashboard" replace />;
     }
   }
@@ -142,8 +113,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppShell() {
   const [anim, setAnim] = useState<null | 'intro' | 'submit' | 'success'>(null);
   const [animRunKey, setAnimRunKey] = useState(0);
-  const [joinResetKey, setJoinResetKey] = useState(0);
-  const [alreadyOnWaitlist, setAlreadyOnWaitlist] = useState(false);
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const activeKind: AnimKind = anim ?? 'intro';
@@ -156,135 +125,37 @@ function AppShell() {
   return (
     <>
       <ScrollToTopOnRouteChange />
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:rounded-[50px] focus:bg-[#ff7722] focus:text-[#171412] focus:text-[13px] focus:font-bold"
-      >
-        Skip to main content
-      </a>
-
-      <div className="min-h-screen flex flex-col bg-[#fbf9ef] text-[#171412] pb-16 sm:pb-0 selection:bg-[#ff7722] selection:text-[#171412]">
-        <Navigation setAnim={setAnim} onRegisterClick={triggerRegister} />
+      <div className="min-h-screen flex flex-col bg-white text-[#171412] pb-16 sm:pb-0 selection:bg-[#059669] selection:text-white">
+        <Navigation />
         <div className="flex-1">
           <Suspense
             fallback={
-              <div
-                role="status"
-                aria-live="polite"
-                className="py-24 text-center font-display text-[18px] font-bold text-[#171412] flex items-center justify-center gap-3"
-              >
-                <span className="w-3 h-3 rounded-full bg-[#ff7722] animate-ping"></span>
-                <span>লোড হচ্ছে...</span>
+              <div className="py-24 text-center flex items-center justify-center gap-3">
+                <span className="w-3 h-3 rounded-full bg-[#006837] animate-ping"></span>
+                <span className="font-bold">লোড হচ্ছে...</span>
               </div>
             }
           >
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <LoggedInGuard>
-                    <HomePage
-                      setAnim={setAnim}
-                      onRegisterClick={triggerRegister}
-                    />
-                  </LoggedInGuard>
-                }
-              />
-              <Route
-                path="/courses"
-                element={
-                  <LoggedInGuard>
-                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
-                  </LoggedInGuard>
-                }
-              />
-              <Route
-                path="/registration"
-                element={
-                  <LoggedInGuard>
-                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
-                  </LoggedInGuard>
-                }
-              />
-              <Route path="/admin" element={<Navigate to="/check" replace />} />
-              <Route
-                path="/join"
-                element={
-                  <LoggedInGuard>
-                    <JoinWaitlistPage
-                      key={joinResetKey}
-                      setAnim={setAnim}
-                      onVerifiedSuccess={(alreadyExists) => {
-                        setAlreadyOnWaitlist(alreadyExists);
-                        setAnimRunKey((k) => k + 1);
-                        setAnim('success');
-                      }}
-                    />
-                  </LoggedInGuard>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <LoggedInGuard>
-                    <RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} />
-                  </LoggedInGuard>
-                }
-              />
-              <Route path="/waitlist-confirmed" element={<WaitlistConfirmedPage />} />
-              <Route path="/waitlist" element={<WaitlistPage />} />
-              <Route
-                path="/login"
-                element={
-                  <LoggedInGuard>
-                    <LoginPage />
-                  </LoggedInGuard>
-                }
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/welcome"
-                element={
-                  <ProtectedRoute>
-                    <WelcomeCelebrationPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/already-registered"
-                element={
-                  <ProtectedRoute>
-                    <AlreadyRegisteredPage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/" element={<HomePage setAnim={setAnim} onRegisterClick={triggerRegister} />} />
+              <Route path="/login" element={<LoggedInGuard><LoginPage /></LoggedInGuard>} />
+              <Route path="/register" element={<LoggedInGuard><RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} /></LoggedInGuard>} />
+              <Route path="/registration" element={<LoggedInGuard><RegistrationPage setAnim={setAnim} setAnimRunKey={setAnimRunKey} /></LoggedInGuard>} />
+              
+              <Route path="/dashboard" element={<ProtectedRoute><HomePage setAnim={setAnim} /></ProtectedRoute>} />
+              <Route path="/course/:id" element={<CourseDetailsPage />} />
+              <Route path="/my-courses" element={<ProtectedRoute><MyCoursesPage /></ProtectedRoute>} />
+              <Route path="/certificates" element={<ProtectedRoute><CertificatePage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/check" element={<AdminCheckPage />} />
-              <Route
-                path="*"
-                element={<NotFoundPage onRegisterClick={triggerRegister} />}
-              />
+              <Route path="*" element={<NotFoundPage onRegisterClick={triggerRegister} />} />
             </Routes>
           </Suspense>
         </div>
-        <Footer />
       </div>
 
       <EduAnimation
@@ -298,19 +169,12 @@ function AppShell() {
           const finished = anim;
           setAnim(null);
           if (finished === 'intro') {
-            setJoinResetKey((k) => k + 1);
-            // If we are not already on registration or courses page, go there
-            if (!window.location.pathname.includes('/registration') && !window.location.pathname.includes('/courses')) {
+            if (!window.location.pathname.includes('/registration')) {
               navigate('/registration');
             }
-            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-          } else if (finished === 'success') {
-            // Success animation can lead to welcome or dashboard
-            // But usually the page handles its own state change after animation
           }
         }}
       />
-
     </>
   );
 }

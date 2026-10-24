@@ -162,7 +162,7 @@ export const WaitlistPage: React.FC = () => {
         </div>
 
         {/* Page Heading & Metric Banner */}
-        <div className="rounded-[24px] bg-[#f2f0e7] border-2 border-[#171412] p-6 sm:p-8 mb-8 shadow-[4px_4px_0px_#171412]">
+        <div className="rounded-[24px] bg-[#f2f0e7] border border-[#171412] p-6 sm:p-8 mb-8 shadow-[4px_4px_0px_#171412]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-[#ff7722]/20 text-[#813502] border border-[#ff7722]/40 mb-2.5">
@@ -181,7 +181,7 @@ export const WaitlistPage: React.FC = () => {
             </div>
 
             {/* Total Registered Count Metric ONLY (No status breakdown!) */}
-            <div className="shrink-0 bg-[#fbf9ef] border-2 border-[#171412] rounded-[18px] p-4 text-center min-w-[150px] shadow-sm">
+            <div className="shrink-0 bg-[#fbf9ef] border border-[#171412] rounded-[18px] p-4 text-center min-w-[150px] shadow-sm">
               <span className="text-[11px] font-black text-[#813502] uppercase tracking-wider block mb-0.5">
                 {t('মোট নিবন্ধিত', 'Total Registered')}
               </span>
@@ -209,7 +209,7 @@ export const WaitlistPage: React.FC = () => {
                 setVisibleCount(PAGE_SIZE);
               }}
               placeholder={t('প্রথম নাম দিয়ে খুঁজুন (যেমন: তানভীর, রহিম)...', 'Search by first name (e.g. Tanvir, Rohit)...')}
-              className="w-full h-12 pl-10 pr-4 rounded-[14px] bg-[#f2f0e7] border-2 border-[#171412]/25 text-[14px] font-semibold text-[#171412] placeholder-[#171412]/45 focus:outline-none focus:border-[#ff7722] focus:bg-[#ffffff] transition-colors"
+              className="w-full h-12 pl-10 pr-4 rounded-[14px] bg-[#f2f0e7] border border-[#171412]/25 text-[14px] font-semibold text-[#171412] placeholder-[#171412]/45 focus:outline-none focus:border-[#ff7722] focus:bg-[#ffffff] transition-colors"
             />
             {searchTerm && (
               <button
@@ -237,7 +237,7 @@ export const WaitlistPage: React.FC = () => {
             ))}
           </div>
         ) : displayedItems.length === 0 ? (
-          <div className="rounded-[18px] bg-[#f2f0e7] border-2 border-dashed border-[#171412]/25 p-8 text-center text-[#171412]">
+          <div className="rounded-[18px] bg-[#f2f0e7] border border-dashed border-[#171412]/25 p-8 text-center text-[#171412]">
             <p className="text-[15px] font-bold">
               {searchTerm
                 ? t('এই নামে কোনো নিবন্ধিত শিক্ষার্থী পাওয়া যায়নি।', 'No matching student found by this first name.')
@@ -261,7 +261,7 @@ export const WaitlistPage: React.FC = () => {
               return (
                 <div
                   key={applicant.id || `app-${index}`}
-                  className={`flex items-center justify-between p-3.5 sm:p-4 rounded-[14px] border-2 transition-all ${
+                  className={`flex items-center justify-between p-3.5 sm:p-4 rounded-[14px] border transition-all ${
                     isCurrentUser
                       ? 'bg-[#ff7722]/15 border-[#ff7722] shadow-[2px_2px_0px_#ff7722]'
                       : 'bg-[#f2f0e7] border-[#171412]/15 hover:border-[#171412]/35'
@@ -270,7 +270,7 @@ export const WaitlistPage: React.FC = () => {
                   <div className="flex items-center gap-3.5 min-w-0">
                     {/* Avatar Initial */}
                     <div
-                      className={`w-9 h-9 rounded-full border-2 flex items-center justify-center font-black text-[14px] shrink-0 ${
+                      className={`w-9 h-9 rounded-full border flex items-center justify-center font-black text-[14px] shrink-0 ${
                         isCurrentUser
                           ? 'bg-[#ff7722] text-[#171412] border-[#171412]'
                           : 'bg-[#fbf9ef] text-[#813502] border-[#171412]/20'
@@ -303,7 +303,7 @@ export const WaitlistPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleLoadMore}
-                  className="min-h-[44px] px-8 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] text-[#171412] border-2 border-[#171412] font-display text-[14px] font-extrabold cursor-pointer transition-transform active:translate-y-0.5 shadow-sm"
+                  className="min-h-[44px] px-8 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] text-[#171412] border border-[#171412] font-display text-[14px] font-extrabold cursor-pointer transition-transform active:translate-y-0.5 shadow-sm"
                 >
                   {t(
                     `আরও দেখুন (বাকি ${filteredItems.length - visibleCount} জন) ↓`,

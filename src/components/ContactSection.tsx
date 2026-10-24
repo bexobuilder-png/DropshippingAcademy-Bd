@@ -202,7 +202,7 @@ export const ContactSection: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="p-6 rounded-[16px] bg-[#fbf9ef] border-2 border-[#171412]/20 hover:border-[#ff7722] transition-all flex flex-col justify-between group shadow-sm"
+                className="p-6 rounded-[16px] bg-[#fbf9ef] border border-[#171412]/20 hover:border-[#ff7722] transition-all flex flex-col justify-between group shadow-sm"
               >
                 <div>
                   <div className="w-12 h-12 rounded-full bg-[#ff7722]/15 text-[#813502] border border-[#171412]/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -256,7 +256,7 @@ export const ContactSection: React.FC = () => {
         </div>
 
         {/* Quick Inquiry Form */}
-        <div className="max-w-2xl mx-auto rounded-[24px] bg-[#fbf9ef] border-2 border-[#171412] p-6 sm:p-10 shadow-lg">
+        <div className="max-w-2xl mx-auto rounded-[24px] bg-[#fbf9ef] border border-[#171412] p-6 sm:p-10 shadow-lg">
           <div className="mb-6 text-center sm:text-left">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wide bg-[#25D366]/15 text-[#1b7e3b] border border-[#25D366]/40 mb-2">
               <span className="w-2 h-2 rounded-full bg-[#25D366]"></span>
@@ -274,7 +274,7 @@ export const ContactSection: React.FC = () => {
           </div>
 
           {formError && (
-            <div className="mb-5 p-3.5 rounded-[12px] bg-[#fff8f8] border-2 border-[#ff3c34] text-[#ff3c34] text-[13px] font-bold">
+            <div className="mb-5 p-3.5 rounded-[12px] bg-[#fff8f8] border border-[#ff3c34] text-[#ff3c34] text-[13px] font-bold">
               {formError}
             </div>
           )}
@@ -282,7 +282,7 @@ export const ContactSection: React.FC = () => {
           {submittedData?.success ? (
             <div
               role="status"
-              className="p-6 rounded-[16px] bg-[#f2f0e7] border-2 border-[#171412] text-[#171412] space-y-4"
+              className="p-6 rounded-[16px] bg-[#f2f0e7] border border-[#171412] text-[#171412] space-y-4"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -324,7 +324,7 @@ export const ContactSection: React.FC = () => {
                   href={submittedData.whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:flex-1 h-12 rounded-[50px] bg-[#25D366] hover:bg-[#20ba59] text-white border-2 border-[#171412] font-display text-[15px] font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_#171412] transition-transform active:translate-y-0.5"
+                  className="w-full sm:flex-1 h-12 rounded-[50px] bg-[#25D366] hover:bg-[#20ba59] text-white border border-[#171412] font-display text-[15px] font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_#171412] transition-transform active:translate-y-0.5"
                 >
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                     <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.942 2.796.943 3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.769-5.768zm3.364 8.163c-.141.396-.713.727-1.026.772-.313.045-.719.064-2.179-.533-1.46-.597-2.385-2.096-2.456-2.19-.071-.094-.576-.767-.576-1.464 0-.697.365-1.039.495-1.18.13-.141.284-.177.378-.177.094 0 .189.001.272.005.087.005.203-.033.317.241.118.283.402.981.437 1.052.035.071.059.153.012.247-.047.094-.071.153-.142.236-.071.082-.149.183-.213.246-.071.071-.145.148-.062.29.083.142.368.608.79 1.002.544.509 1.004.667 1.146.738.142.071.224.059.307-.035.082-.095.354-.413.448-.555.094-.141.189-.118.318-.071.13.047.826.39.968.461.142.071.236.106.271.165.035.059.035.342-.106.738z" />
@@ -341,7 +341,7 @@ export const ContactSection: React.FC = () => {
                     setContactInfo('');
                     setMessage('');
                   }}
-                  className="w-full sm:w-auto h-12 px-6 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] text-[#171412] border-2 border-[#171412] font-bold text-[14px] cursor-pointer"
+                  className="w-full sm:w-auto h-12 px-6 rounded-[50px] bg-[#f2f0e7] hover:bg-[#e5e2d6] text-[#171412] border border-[#171412] font-bold text-[14px] cursor-pointer"
                 >
                   {t('নতুন বার্তা পাঠান', 'Send Another Message')}
                 </button>
@@ -375,7 +375,7 @@ export const ContactSection: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t('যেমন: তানভীর আহমেদ', 'e.g. Tanvir Ahmed')}
-                    className="w-full h-11 px-3.5 rounded-[12px] bg-[#ffffff] border-2 border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
+                    className="w-full h-11 px-3.5 rounded-[12px] bg-[#ffffff] border border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
                   />
                 </div>
                 <div>
@@ -389,7 +389,7 @@ export const ContactSection: React.FC = () => {
                     value={contactInfo}
                     onChange={(e) => setContactInfo(e.target.value)}
                     placeholder="01XXXXXXXXX / email@example.com"
-                    className="w-full h-11 px-3.5 rounded-[12px] bg-[#ffffff] border-2 border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
+                    className="w-full h-11 px-3.5 rounded-[12px] bg-[#ffffff] border border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
                   />
                 </div>
               </div>
@@ -405,14 +405,14 @@ export const ContactSection: React.FC = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={t('কোর্স, ব্যাচ বা ভর্তি বিষয়ে যা জানতে চান...', 'Tell us what you would like to know...')}
-                  className="w-full p-3.5 rounded-[12px] bg-[#ffffff] border-2 border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
+                  className="w-full p-3.5 rounded-[12px] bg-[#ffffff] border border-[#171412]/30 text-[#171412] placeholder:text-[#171412]/45 text-[14px] font-medium focus:outline-none focus:border-[#ff7722]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-2 w-full h-12 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border-2 border-[#171412] font-display text-[15px] font-extrabold transition-all cursor-pointer shadow-[3px_3px_0px_#171412] flex items-center justify-center gap-2 active:translate-y-0.5"
+                className="mt-2 w-full h-12 rounded-[50px] bg-[#ff7722] hover:bg-[#e56310] text-[#171412] border border-[#171412] font-display text-[15px] font-extrabold transition-all cursor-pointer shadow-[3px_3px_0px_#171412] flex items-center justify-center gap-2 active:translate-y-0.5"
               >
                 {isSubmitting ? (
                   <span>{t('সংরক্ষণ ও সংযোগ হচ্ছে...', 'Saving & Connecting...')}</span>

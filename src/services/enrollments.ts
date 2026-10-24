@@ -22,57 +22,7 @@ export interface StudentEnrollment {
 
 const ENROLLMENTS_STORAGE_KEY = 'da_student_enrollments_v1';
 
-export const INITIAL_ENROLLMENTS: StudentEnrollment[] = [
-  {
-    id: 'enr-sample-1',
-    courseId: 'course-dropship-ecommerce',
-    courseTitle: 'ড্রপশিপিং ই-কমার্স ব্যবসা মাস্টারক্লাস',
-    courseCategory: 'ড্রপশিপিং ই-কমার্স ব্যবসা',
-    studentName: 'রাকিবুল হাসান',
-    studentPhone: '01712345678',
-    studentEmail: 'rakib@gmail.com',
-    district: 'ঢাকা',
-    enrollmentType: 'payment',
-    paymentMethod: 'bKash',
-    senderPhone: '01712345678',
-    trxId: '9K8J7H6G5F',
-    amountPaid: 1000,
-    status: 'approved',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: 'enr-sample-2',
-    courseId: 'course-dropship-reseller',
-    courseTitle: 'ড্রপশিপিং রিসেলার ব্যবসা ও সাপ্লায়ার সোর্সিং',
-    courseCategory: 'ড্রপশিপিং রিসেলার ব্যবসা',
-    studentName: 'তানজিলা আক্তার',
-    studentPhone: '01898765432',
-    studentEmail: 'tanjila@yahoo.com',
-    district: 'চট্টগ্রাম',
-    enrollmentType: 'promo_only',
-    promoCodeUsed: 'RESELLER500',
-    amountPaid: 0,
-    status: 'approved',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-  },
-  {
-    id: 'enr-sample-3',
-    courseId: 'course-dropship-ecommerce',
-    courseTitle: 'ড্রপশিপিং ই-কমার্স ব্যবসা মাস্টারক্লাস',
-    courseCategory: 'ড্রপশিপিং ই-কমার্স ব্যবসা',
-    studentName: 'মেহেদী হাসান সুমন',
-    studentPhone: '01911223344',
-    studentEmail: 'mehedi.sumon@gmail.com',
-    district: 'রাজশাহী',
-    enrollmentType: 'payment',
-    paymentMethod: 'Nagad',
-    senderPhone: '01911223344',
-    trxId: '8N7B6V5C4X',
-    amountPaid: 1000,
-    status: 'pending',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-];
+export const INITIAL_ENROLLMENTS: StudentEnrollment[] = [];
 
 export async function fetchStudentEnrollments(): Promise<StudentEnrollment[]> {
   // 1. Try Supabase if available
@@ -83,7 +33,7 @@ export async function fetchStudentEnrollments(): Promise<StudentEnrollment[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         const mapped: StudentEnrollment[] = data.map((d) => ({
           id: d.id,
           courseId: d.course_id || '',
@@ -120,7 +70,7 @@ export async function fetchStudentEnrollments(): Promise<StudentEnrollment[]> {
     const raw = localStorage.getItem(ENROLLMENTS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
@@ -128,13 +78,7 @@ export async function fetchStudentEnrollments(): Promise<StudentEnrollment[]> {
     // Ignore
   }
 
-  // 3. Initialize default samples
-  try {
-    localStorage.setItem(ENROLLMENTS_STORAGE_KEY, JSON.stringify(INITIAL_ENROLLMENTS));
-  } catch {
-    // Ignore
-  }
-  return INITIAL_ENROLLMENTS;
+  return [];
 }
 
 export async function submitStudentEnrollment(
@@ -241,6 +185,7 @@ export async function deleteStudentEnrollment(id: string): Promise<boolean> {
 
   return true;
 }
+
 export async function verifyEmailOtpAndEnroll(
   token: string,
   email: string,

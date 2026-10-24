@@ -26,7 +26,7 @@ export class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <main className="min-h-screen bg-[#fbf9ef] text-[#171412] flex items-center justify-center p-6">
-          <div className="max-w-lg w-full rounded-[12px] bg-[#f2f0e7] border-2 border-[#171412] p-8 text-center">
+          <div className="max-w-lg w-full rounded-[12px] bg-[#f2f0e7] border border-[#171412] p-8 text-center">
             <div className="flex justify-center mb-4">
               <BrandBadgeMark className="w-14 h-14" />
             </div>

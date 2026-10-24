@@ -45,10 +45,10 @@ export const WelcomeCelebrationPage: React.FC = () => {
       </div>
 
       <div className="specimen-container max-w-lg w-full px-4 text-center z-10">
-        <div className="rounded-[32px] bg-[#f2f0e7] border-2 border-[#171412] p-8 sm:p-12 shadow-[8px_8px_0px_#171412] animate-fade-in">
+        <div className="rounded-[32px] bg-[#f2f0e7] border border-[#171412] p-8 sm:p-12 shadow-[8px_8px_0px_#171412] animate-fade-in">
           
           {/* Animated Seal Pop Tick */}
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#ff7722]/20 border-2 border-[#ff7722] flex items-center justify-center text-[#ff7722] text-3xl font-black animate-scale-up">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#ff7722]/20 border border-[#ff7722] flex items-center justify-center text-[#ff7722] text-3xl font-black animate-scale-up">
             🎉
           </div>
 
@@ -68,7 +68,7 @@ export const WelcomeCelebrationPage: React.FC = () => {
           </p>
 
           {/* Queue Position Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#fbf9ef] border-2 border-[#171412]/20 mb-8 shadow-xs">
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#fbf9ef] border border-[#171412]/20 mb-8 shadow-xs">
             <span className="text-[12px] font-bold text-[#171412]/70">
               {t('আপনার ওয়েটলিস্ট সিরিয়াল:', 'Your Queue Position:')}
             </span>

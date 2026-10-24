@@ -39,10 +39,10 @@ export const AlreadyRegisteredPage: React.FC = () => {
   return (
     <main id="main-content" className="py-16 md:py-24 bg-[#fbf9ef] text-[#171412] min-h-[85vh] flex items-center justify-center">
       <div className="specimen-container max-w-md w-full px-4 text-center">
-        <div className="rounded-[28px] bg-[#f2f0e7] border-2 border-[#171412] p-8 sm:p-10 shadow-[6px_6px_0px_#171412]">
+        <div className="rounded-[28px] bg-[#f2f0e7] border border-[#171412] p-8 sm:p-10 shadow-[6px_6px_0px_#171412]">
           
           {/* Green Tick Badge */}
-          <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-[#2e7d32]/20 border-2 border-[#2e7d32] flex items-center justify-center text-[#2e7d32] text-2xl font-black">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-[#2e7d32]/20 border border-[#2e7d32] flex items-center justify-center text-[#2e7d32] text-2xl font-black">
             ✓
           </div>
 

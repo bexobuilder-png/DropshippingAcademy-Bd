@@ -152,6 +152,21 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
       ),
     },
     {
+      id: 'profile',
+      labelBn: 'ব্যক্তিগত প্রোফাইল',
+      labelEn: 'Personal Profile',
+      action: () => {
+        onClose();
+        navigate('/profile');
+      },
+      isActive: location.pathname === '/profile',
+      icon: (
+        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+    {
       id: 'courses',
       labelBn: 'কোর্স ক্যাটালগ ও ভর্তি',
       labelEn: 'Courses Catalog',
@@ -266,7 +281,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label={t('মূল মেনু', 'Main Menu')}
-          className={`fixed inset-y-0 right-0 z-50 flex flex-col w-[84vw] max-w-[380px] bg-[#fbf9ef] border-l-2 border-[#171412] shadow-2xl text-[#171412] transform transition-transform duration-400 ease-out select-none ${
+          className={`fixed inset-y-0 right-0 z-50 flex flex-col w-full sm:w-[84vw] sm:max-w-[380px] bg-[#fbf9ef] sm:border-l-2 border-[#171412] shadow-2xl text-[#171412] transform transition-transform duration-400 ease-out select-none ${
             reducedMotion ? '' : 'animate-slide-in-right'
           }`}
           style={{

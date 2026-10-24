@@ -5,19 +5,40 @@ export const USER_SESSION_KEY = 'da_user_session_v2';
 export const AUTH_SESSION_EVENT = 'da-auth-session-updated';
 const TEMP_OTP_STORE_KEY = 'da_temp_quick_otp_v2';
 
+export interface Certificate {
+  id: string;
+  title: string;
+  issuedAt: string;
+  downloadUrl: string;
+}
+
 export interface UserSession {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  whatsapp: string;
+  whatsapp?: string;
   district?: string;
   status: 'pending' | 'approved' | 'rejected' | 'contacted';
   registeredAt: string;
+  profilePic?: string;
+  certificates?: Certificate[];
 }
 
 /**
+ * Updates the current user session fields.
+ */
+export function updateUserProfile(updates: Partial<UserSession>): void {
+  const current = getCurrentUserSession();
+  if (current) {
+    const updated = { ...current, ...updates };
+    setCurrentUserSession(updated);
+  }
+}
+
+/**
+
  * Normalizes Bangladesh phone numbers into canonical '01XXXXXXXXX' format:
  * - Converts Bangla digits (০-৯) to Western digits (0-9)
  * - Strips all non-digit characters (spaces, dashes, parens, +)

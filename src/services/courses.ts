@@ -33,34 +33,31 @@ export interface CourseDbRow {
 }
 
 function mapDbRowToCourse(row: CourseDbRow): CourseItem {
-  // Find default fallback to preserve UI visual assets if needed
-  const defaultMatch = DEFAULT_COURSES.find((d) => d.id === row.id);
-
   return {
     id: row.id,
     title: row.title,
     batchName: row.batch_name || undefined,
-    category: row.category || defaultMatch?.category || 'ড্রপশিপিং রিসেলিং',
-    subtitle: row.subtitle || defaultMatch?.subtitle || '',
-    description: row.description || defaultMatch?.description || '',
-    price: typeof row.price === 'number' ? row.price : 1000,
+    category: row.category || 'ড্রপশিপিং রিসেলিং',
+    subtitle: row.subtitle || '',
+    description: row.description || '',
+    price: typeof row.price === 'number' ? row.price : 0,
     discountPrice:
       typeof row.discount_price === 'number'
         ? row.discount_price
-        : defaultMatch?.discountPrice,
+        : undefined,
     promoCodeEligible: true,
-    duration: row.duration || defaultMatch?.duration || '৮ সপ্তাহ · লাইভ ক্লাস',
+    duration: row.duration || '৮ সপ্তাহ · লাইভ ক্লাস',
     highlights: Array.isArray(row.highlights) && row.highlights.length > 0
       ? row.highlights
-      : defaultMatch?.highlights || ['হ্যান্ডস-অন প্রজেক্ট ও লাইভ সাপোর্ট'],
-    badge: row.badge || defaultMatch?.badge || undefined,
+      : ['হ্যান্ডস-অন প্রজেক্ট ও লাইভ সাপোর্ট'],
+    badge: row.badge || undefined,
     isActive: row.is_active !== false,
     isRunning: Boolean(row.is_running),
     isVisible: row.is_visible !== false,
     sortOrder: typeof row.sort_order === 'number' ? row.sort_order : 0,
-    thumbnailUrl: row.thumbnail_url || defaultMatch?.thumbnailUrl || '/images/course_dropshipping_basic_1791567728755.jpg',
-    enrollmentType: (row.enrollment_type as 'payment' | 'promo_only' | 'both') || defaultMatch?.enrollmentType || 'payment',
-    requiredPromoCode: row.required_promo_code || defaultMatch?.requiredPromoCode || undefined,
+    thumbnailUrl: row.thumbnail_url || '/images/course_placeholder.jpg',
+    enrollmentType: (row.enrollment_type as 'payment' | 'promo_only' | 'both') || 'payment',
+    requiredPromoCode: row.required_promo_code || undefined,
   };
 }
 
@@ -90,7 +87,7 @@ function mapCourseToDbRow(course: CourseItem, index: number): CourseDbRow {
 
 /**
  * Fetches courses from the shared Supabase 'courses' table with no-cache guarantees.
- * Falls back to localStorage and default courses when offline or unconfigured.
+ * Falls back to localStorage when offline or unconfigured. No demo data fallback.
  */
 export async function fetchCoursesList(): Promise<CourseItem[]> {
   // 1. Try fetching directly from the shared Supabase database table
@@ -112,13 +109,13 @@ export async function fetchCoursesList(): Promise<CourseItem[]> {
         return mapped;
       }
     } catch {
-      // Fall through to cache/defaults
+      // Fall through to cache
     }
   }
 
   // 2. Try fetching from site_content table
   try {
-    const data = await fetchSiteSectionContent<CourseItem[]>('courses_list', DEFAULT_COURSES);
+    const data = await fetchSiteSectionContent<CourseItem[]>('courses_list', []);
     if (Array.isArray(data) && data.length > 0) {
       return data;
     }
@@ -139,7 +136,7 @@ export async function fetchCoursesList(): Promise<CourseItem[]> {
     // Ignore
   }
 
-  return DEFAULT_COURSES;
+  return [];
 }
 
 /**
@@ -281,7 +278,7 @@ export async function fetchPromoCodesList(): Promise<PromoCodeItem[]> {
   try {
     const data = await fetchSiteSectionContent<PromoCodeItem[]>(
       'promo_codes_list',
-      DEFAULT_PROMO_CODES
+      []
     );
     if (Array.isArray(data) && data.length > 0) {
       return data;
@@ -302,7 +299,7 @@ export async function fetchPromoCodesList(): Promise<PromoCodeItem[]> {
     // Ignore
   }
 
-  return DEFAULT_PROMO_CODES;
+  return [];
 }
 
 export async function savePromoCodesList(
